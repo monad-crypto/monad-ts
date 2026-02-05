@@ -460,6 +460,8 @@ export const stakingAbi = [
 
 export const STAKING_ADDRESS = "0x0000000000000000000000000000000000001000";
 
+export type { MonadActions } from "./decorator.ts";
+export { monadActions } from "./decorator.ts";
 export type {
   GetConsensusValidatorSetErrorType,
   GetConsensusValidatorSetParameters,
