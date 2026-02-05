@@ -1,43 +1,47 @@
-import type { Client } from "viem";
-import { readContract } from "viem/actions";
-import { stakingAbi, STAKING_ADDRESS } from "./abi";
+import type { Chain, Client, ContractFunctionArgs, Transport } from "viem";
 import type {
-  GetValidatorSetParameters,
-  GetValidatorSetReturnType,
-} from "./types";
+  ReadContractErrorType,
+  ReadContractParameters,
+  ReadContractReturnType,
+} from "viem/actions";
+import { readContract } from "viem/actions";
+import { STAKING_ADDRESS, stakingAbi } from ".";
 
-/**
- * Gets the execution validator set (paginated).
- *
- * @example
- * ```ts
- * import { createPublicClient, http } from 'viem'
- * import { monad } from 'viem/chains'
- * import { getExecutionValidatorSet } from 'monad-ext'
- *
- * const client = createPublicClient({
- *   chain: monad,
- *   transport: http(),
- * })
- *
- * const result = await getExecutionValidatorSet(client, {
- *   startIndex: 0,
- * })
- * ```
- */
-export async function getExecutionValidatorSet(
-  client: Client,
-  parameters: GetValidatorSetParameters,
-): Promise<GetValidatorSetReturnType> {
-  const result = (await readContract(client, {
-    address: STAKING_ADDRESS,
+export type GetExecutionValidatorSetParameters<
+  args extends ContractFunctionArgs<
+    typeof stakingAbi,
+    "pure" | "view",
+    "getExecutionValidatorSet"
+  > = ContractFunctionArgs<
+    typeof stakingAbi,
+    "pure" | "view",
+    "getExecutionValidatorSet"
+  >,
+> = Omit<
+  ReadContractParameters<typeof stakingAbi, "getExecutionValidatorSet", args>,
+  "abi" | "address" | "functionName"
+>;
+export type GetExecutionValidatorSetReturnType = ReadContractReturnType<
+  typeof stakingAbi,
+  "getExecutionValidatorSet"
+>;
+export type GetExecutionValidatorSetErrorType = ReadContractErrorType;
+
+export async function getExecutionValidatorSet<
+  chain extends Chain | undefined,
+  const args extends ContractFunctionArgs<
+    typeof stakingAbi,
+    "pure" | "view",
+    "getExecutionValidatorSet"
+  >,
+>(
+  client: Client<Transport, chain>,
+  parameters: GetExecutionValidatorSetParameters<args>,
+): Promise<GetExecutionValidatorSetReturnType> {
+  return readContract(client, {
+    ...parameters,
     abi: stakingAbi,
+    address: STAKING_ADDRESS,
     functionName: "getExecutionValidatorSet",
-    args: [parameters.startIndex],
-  } as any)) as readonly [boolean, number, readonly bigint[]];
-  return {
-    isDone: result[0],
-    nextIndex: result[1],
-    valIds: result[2],
-  };
+  });
 }

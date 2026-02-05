@@ -1,43 +1,47 @@
-import type { Client } from "viem";
-import { readContract } from "viem/actions";
-import { stakingAbi, STAKING_ADDRESS } from "./abi";
+import type { Chain, Client, ContractFunctionArgs, Transport } from "viem";
 import type {
-  GetValidatorSetParameters,
-  GetValidatorSetReturnType,
-} from "./types";
+  ReadContractErrorType,
+  ReadContractParameters,
+  ReadContractReturnType,
+} from "viem/actions";
+import { readContract } from "viem/actions";
+import { STAKING_ADDRESS, stakingAbi } from ".";
 
-/**
- * Gets the snapshot validator set (paginated).
- *
- * @example
- * ```ts
- * import { createPublicClient, http } from 'viem'
- * import { monad } from 'viem/chains'
- * import { getSnapshotValidatorSet } from 'monad-ext'
- *
- * const client = createPublicClient({
- *   chain: monad,
- *   transport: http(),
- * })
- *
- * const result = await getSnapshotValidatorSet(client, {
- *   startIndex: 0,
- * })
- * ```
- */
-export async function getSnapshotValidatorSet(
-  client: Client,
-  parameters: GetValidatorSetParameters,
-): Promise<GetValidatorSetReturnType> {
-  const result = (await readContract(client, {
-    address: STAKING_ADDRESS,
+export type GetSnapshotValidatorSetParameters<
+  args extends ContractFunctionArgs<
+    typeof stakingAbi,
+    "pure" | "view",
+    "getSnapshotValidatorSet"
+  > = ContractFunctionArgs<
+    typeof stakingAbi,
+    "pure" | "view",
+    "getSnapshotValidatorSet"
+  >,
+> = Omit<
+  ReadContractParameters<typeof stakingAbi, "getSnapshotValidatorSet", args>,
+  "abi" | "address" | "functionName"
+>;
+export type GetSnapshotValidatorSetReturnType = ReadContractReturnType<
+  typeof stakingAbi,
+  "getSnapshotValidatorSet"
+>;
+export type GetSnapshotValidatorSetErrorType = ReadContractErrorType;
+
+export async function getSnapshotValidatorSet<
+  chain extends Chain | undefined,
+  const args extends ContractFunctionArgs<
+    typeof stakingAbi,
+    "pure" | "view",
+    "getSnapshotValidatorSet"
+  >,
+>(
+  client: Client<Transport, chain>,
+  parameters: GetSnapshotValidatorSetParameters<args>,
+): Promise<GetSnapshotValidatorSetReturnType> {
+  return readContract(client, {
+    ...parameters,
     abi: stakingAbi,
+    address: STAKING_ADDRESS,
     functionName: "getSnapshotValidatorSet",
-    args: [parameters.startIndex],
-  } as any)) as readonly [boolean, number, readonly bigint[]];
-  return {
-    isDone: result[0],
-    nextIndex: result[1],
-    valIds: result[2],
-  };
+  });
 }

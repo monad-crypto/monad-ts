@@ -1,45 +1,43 @@
-import type { Client } from "viem";
+import type { Chain, Client, ContractFunctionArgs, Transport } from "viem";
+import type {
+  ReadContractErrorType,
+  ReadContractParameters,
+  ReadContractReturnType,
+} from "viem/actions";
 import { readContract } from "viem/actions";
-import { stakingAbi, STAKING_ADDRESS } from "./abi";
-import type { GetDelegatorParameters, GetDelegatorReturnType } from "./types";
+import { STAKING_ADDRESS, stakingAbi } from ".";
 
-/**
- * Gets information about a delegator's stake with a specific validator.
- *
- * @example
- * ```ts
- * import { createPublicClient, http } from 'viem'
- * import { monad } from 'viem/chains'
- * import { getDelegator } from 'monad-ext'
- *
- * const client = createPublicClient({
- *   chain: monad,
- *   transport: http(),
- * })
- *
- * const delegator = await getDelegator(client, {
- *   validatorId: 1n,
- *   delegator: '0x...',
- * })
- * ```
- */
-export async function getDelegator(
-  client: Client,
-  parameters: GetDelegatorParameters,
+export type GetDelegatorParameters<
+  args extends ContractFunctionArgs<
+    typeof stakingAbi,
+    "pure" | "view",
+    "getDelegator"
+  > = ContractFunctionArgs<typeof stakingAbi, "pure" | "view", "getDelegator">,
+> = Omit<
+  ReadContractParameters<typeof stakingAbi, "getDelegator", args>,
+  "abi" | "address" | "functionName"
+>;
+export type GetDelegatorReturnType = ReadContractReturnType<
+  typeof stakingAbi,
+  "getDelegator"
+>;
+export type GetDelegatorErrorType = ReadContractErrorType;
+
+export async function getDelegator<
+  chain extends Chain | undefined,
+  const args extends ContractFunctionArgs<
+    typeof stakingAbi,
+    "pure" | "view",
+    "getDelegator"
+  >,
+>(
+  client: Client<Transport, chain>,
+  parameters: GetDelegatorParameters<args>,
 ): Promise<GetDelegatorReturnType> {
-  const result = (await readContract(client, {
-    address: STAKING_ADDRESS,
+  return readContract(client, {
+    ...parameters,
     abi: stakingAbi,
+    address: STAKING_ADDRESS,
     functionName: "getDelegator",
-    args: [parameters.validatorId, parameters.delegator],
-  } as any)) as readonly [bigint, bigint, bigint, bigint, bigint, bigint, bigint];
-  return {
-    stake: result[0],
-    accRewardPerToken: result[1],
-    unclaimedRewards: result[2],
-    deltaStake: result[3],
-    nextDeltaStake: result[4],
-    deltaEpoch: result[5],
-    nextDeltaEpoch: result[6],
-  };
+  });
 }

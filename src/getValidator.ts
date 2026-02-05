@@ -1,62 +1,43 @@
-import type { Address, Client, Hex } from "viem";
+import type { Chain, Client, ContractFunctionArgs, Transport } from "viem";
+import type {
+  ReadContractErrorType,
+  ReadContractParameters,
+  ReadContractReturnType,
+} from "viem/actions";
 import { readContract } from "viem/actions";
-import { stakingAbi, STAKING_ADDRESS } from "./abi";
-import type { GetValidatorParameters, GetValidatorReturnType } from "./types";
+import { STAKING_ADDRESS, stakingAbi } from ".";
 
-/**
- * Gets information about a validator.
- *
- * @example
- * ```ts
- * import { createPublicClient, http } from 'viem'
- * import { monad } from 'viem/chains'
- * import { getValidator } from 'monad-ext'
- *
- * const client = createPublicClient({
- *   chain: monad,
- *   transport: http(),
- * })
- *
- * const validator = await getValidator(client, {
- *   validatorId: 1n,
- * })
- * ```
- */
-export async function getValidator(
-  client: Client,
-  parameters: GetValidatorParameters,
+export type GetValidatorParameters<
+  args extends ContractFunctionArgs<
+    typeof stakingAbi,
+    "pure" | "view",
+    "getValidator"
+  > = ContractFunctionArgs<typeof stakingAbi, "pure" | "view", "getValidator">,
+> = Omit<
+  ReadContractParameters<typeof stakingAbi, "getValidator", args>,
+  "abi" | "address" | "functionName"
+>;
+export type GetValidatorReturnType = ReadContractReturnType<
+  typeof stakingAbi,
+  "getValidator"
+>;
+export type GetValidatorErrorType = ReadContractErrorType;
+
+export async function getValidator<
+  chain extends Chain | undefined,
+  const args extends ContractFunctionArgs<
+    typeof stakingAbi,
+    "pure" | "view",
+    "getValidator"
+  >,
+>(
+  client: Client<Transport, chain>,
+  parameters: GetValidatorParameters<args>,
 ): Promise<GetValidatorReturnType> {
-  const result = (await readContract(client, {
-    address: STAKING_ADDRESS,
+  return readContract(client, {
+    ...parameters,
     abi: stakingAbi,
+    address: STAKING_ADDRESS,
     functionName: "getValidator",
-    args: [parameters.validatorId],
-  } as any)) as readonly [
-    Address,
-    bigint,
-    bigint,
-    bigint,
-    bigint,
-    bigint,
-    bigint,
-    bigint,
-    bigint,
-    bigint,
-    Hex,
-    Hex,
-  ];
-  return {
-    authAddress: result[0],
-    flags: result[1],
-    stake: result[2],
-    accRewardPerToken: result[3],
-    commission: result[4],
-    unclaimedRewards: result[5],
-    consensusStake: result[6],
-    consensusCommission: result[7],
-    snapshotStake: result[8],
-    snapshotCommission: result[9],
-    secpPubkey: result[10],
-    blsPubkey: result[11],
-  };
+  });
 }

@@ -1,34 +1,43 @@
-import type { Client } from "viem";
+import type { Chain, Client, ContractFunctionArgs, Transport } from "viem";
+import type {
+  ReadContractErrorType,
+  ReadContractParameters,
+  ReadContractReturnType,
+} from "viem/actions";
 import { readContract } from "viem/actions";
-import { stakingAbi, STAKING_ADDRESS } from "./abi";
-import type { GetEpochReturnType } from "./types";
+import { STAKING_ADDRESS, stakingAbi } from ".";
 
-/**
- * Gets the current epoch and whether we are in the epoch delay period.
- *
- * @example
- * ```ts
- * import { createPublicClient, http } from 'viem'
- * import { monad } from 'viem/chains'
- * import { getEpoch } from 'monad-ext'
- *
- * const client = createPublicClient({
- *   chain: monad,
- *   transport: http(),
- * })
- *
- * const { epoch, inEpochDelayPeriod } = await getEpoch(client)
- * ```
- */
-export async function getEpoch(client: Client): Promise<GetEpochReturnType> {
-  const result = (await readContract(client, {
-    address: STAKING_ADDRESS,
+export type GetEpochParameters<
+  args extends ContractFunctionArgs<
+    typeof stakingAbi,
+    "pure" | "view",
+    "getEpoch"
+  > = ContractFunctionArgs<typeof stakingAbi, "pure" | "view", "getEpoch">,
+> = Omit<
+  ReadContractParameters<typeof stakingAbi, "getEpoch", args>,
+  "abi" | "address" | "functionName"
+>;
+export type GetEpochReturnType = ReadContractReturnType<
+  typeof stakingAbi,
+  "getEpoch"
+>;
+export type GetEpochErrorType = ReadContractErrorType;
+
+export async function getEpoch<
+  chain extends Chain | undefined,
+  const args extends ContractFunctionArgs<
+    typeof stakingAbi,
+    "pure" | "view",
+    "getEpoch"
+  >,
+>(
+  client: Client<Transport, chain>,
+  parameters?: GetEpochParameters<args>,
+): Promise<GetEpochReturnType> {
+  return readContract(client, {
+    ...parameters,
     abi: stakingAbi,
+    address: STAKING_ADDRESS,
     functionName: "getEpoch",
-    args: [],
-  } as any)) as readonly [bigint, boolean];
-  return {
-    epoch: result[0],
-    inEpochDelayPeriod: result[1],
-  };
+  });
 }

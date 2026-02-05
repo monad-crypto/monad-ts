@@ -1,44 +1,47 @@
-import type { Client } from "viem";
-import { readContract } from "viem/actions";
-import { stakingAbi, STAKING_ADDRESS } from "./abi";
+import type { Chain, Client, ContractFunctionArgs, Transport } from "viem";
 import type {
-  GetDelegationsParameters,
-  GetDelegationsReturnType,
-} from "./types";
+  ReadContractErrorType,
+  ReadContractParameters,
+  ReadContractReturnType,
+} from "viem/actions";
+import { readContract } from "viem/actions";
+import { STAKING_ADDRESS, stakingAbi } from ".";
 
-/**
- * Gets the validators that a delegator has delegated to (paginated).
- *
- * @example
- * ```ts
- * import { createPublicClient, http } from 'viem'
- * import { monad } from 'viem/chains'
- * import { getDelegations } from 'monad-ext'
- *
- * const client = createPublicClient({
- *   chain: monad,
- *   transport: http(),
- * })
- *
- * const result = await getDelegations(client, {
- *   delegator: '0x...',
- *   startValId: 0n,
- * })
- * ```
- */
-export async function getDelegations(
-  client: Client,
-  parameters: GetDelegationsParameters,
+export type GetDelegationsParameters<
+  args extends ContractFunctionArgs<
+    typeof stakingAbi,
+    "pure" | "view",
+    "getDelegations"
+  > = ContractFunctionArgs<
+    typeof stakingAbi,
+    "pure" | "view",
+    "getDelegations"
+  >,
+> = Omit<
+  ReadContractParameters<typeof stakingAbi, "getDelegations", args>,
+  "abi" | "address" | "functionName"
+>;
+export type GetDelegationsReturnType = ReadContractReturnType<
+  typeof stakingAbi,
+  "getDelegations"
+>;
+export type GetDelegationsErrorType = ReadContractErrorType;
+
+export async function getDelegations<
+  chain extends Chain | undefined,
+  const args extends ContractFunctionArgs<
+    typeof stakingAbi,
+    "pure" | "view",
+    "getDelegations"
+  >,
+>(
+  client: Client<Transport, chain>,
+  parameters: GetDelegationsParameters<args>,
 ): Promise<GetDelegationsReturnType> {
-  const result = (await readContract(client, {
-    address: STAKING_ADDRESS,
+  return readContract(client, {
+    ...parameters,
     abi: stakingAbi,
+    address: STAKING_ADDRESS,
     functionName: "getDelegations",
-    args: [parameters.delegator, parameters.startValId],
-  } as any)) as readonly [boolean, bigint, readonly bigint[]];
-  return {
-    isDone: result[0],
-    nextValId: result[1],
-    valIds: result[2],
-  };
+  });
 }

@@ -1,43 +1,47 @@
-import type { Client } from "viem";
-import { readContract } from "viem/actions";
-import { stakingAbi, STAKING_ADDRESS } from "./abi";
+import type { Chain, Client, ContractFunctionArgs, Transport } from "viem";
 import type {
-  GetValidatorSetParameters,
-  GetValidatorSetReturnType,
-} from "./types";
+  ReadContractErrorType,
+  ReadContractParameters,
+  ReadContractReturnType,
+} from "viem/actions";
+import { readContract } from "viem/actions";
+import { STAKING_ADDRESS, stakingAbi } from ".";
 
-/**
- * Gets the consensus validator set (paginated).
- *
- * @example
- * ```ts
- * import { createPublicClient, http } from 'viem'
- * import { monad } from 'viem/chains'
- * import { getConsensusValidatorSet } from 'monad-ext'
- *
- * const client = createPublicClient({
- *   chain: monad,
- *   transport: http(),
- * })
- *
- * const result = await getConsensusValidatorSet(client, {
- *   startIndex: 0,
- * })
- * ```
- */
-export async function getConsensusValidatorSet(
-  client: Client,
-  parameters: GetValidatorSetParameters,
-): Promise<GetValidatorSetReturnType> {
-  const result = (await readContract(client, {
-    address: STAKING_ADDRESS,
+export type GetConsensusValidatorSetParameters<
+  args extends ContractFunctionArgs<
+    typeof stakingAbi,
+    "pure" | "view",
+    "getConsensusValidatorSet"
+  > = ContractFunctionArgs<
+    typeof stakingAbi,
+    "pure" | "view",
+    "getConsensusValidatorSet"
+  >,
+> = Omit<
+  ReadContractParameters<typeof stakingAbi, "getConsensusValidatorSet", args>,
+  "abi" | "address" | "functionName"
+>;
+export type GetConsensusValidatorSetReturnType = ReadContractReturnType<
+  typeof stakingAbi,
+  "getConsensusValidatorSet"
+>;
+export type GetConsensusValidatorSetErrorType = ReadContractErrorType;
+
+export async function getConsensusValidatorSet<
+  chain extends Chain | undefined,
+  const args extends ContractFunctionArgs<
+    typeof stakingAbi,
+    "pure" | "view",
+    "getConsensusValidatorSet"
+  >,
+>(
+  client: Client<Transport, chain>,
+  parameters: GetConsensusValidatorSetParameters<args>,
+): Promise<GetConsensusValidatorSetReturnType> {
+  return readContract(client, {
+    ...parameters,
     abi: stakingAbi,
+    address: STAKING_ADDRESS,
     functionName: "getConsensusValidatorSet",
-    args: [parameters.startIndex],
-  } as any)) as readonly [boolean, number, readonly bigint[]];
-  return {
-    isDone: result[0],
-    nextIndex: result[1],
-    valIds: result[2],
-  };
+  });
 }

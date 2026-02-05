@@ -1,49 +1,47 @@
-import type { Client } from "viem";
-import { readContract } from "viem/actions";
-import { stakingAbi, STAKING_ADDRESS } from "./abi";
+import type { Chain, Client, ContractFunctionArgs, Transport } from "viem";
 import type {
-  GetWithdrawalRequestParameters,
-  GetWithdrawalRequestReturnType,
-} from "./types";
+  ReadContractErrorType,
+  ReadContractParameters,
+  ReadContractReturnType,
+} from "viem/actions";
+import { readContract } from "viem/actions";
+import { STAKING_ADDRESS, stakingAbi } from ".";
 
-/**
- * Gets information about a pending withdrawal request.
- *
- * @example
- * ```ts
- * import { createPublicClient, http } from 'viem'
- * import { monad } from 'viem/chains'
- * import { getWithdrawalRequest } from 'monad-ext'
- *
- * const client = createPublicClient({
- *   chain: monad,
- *   transport: http(),
- * })
- *
- * const withdrawal = await getWithdrawalRequest(client, {
- *   validatorId: 1n,
- *   delegator: '0x...',
- *   withdrawId: 0,
- * })
- * ```
- */
-export async function getWithdrawalRequest(
-  client: Client,
-  parameters: GetWithdrawalRequestParameters,
+export type GetWithdrawalRequestParameters<
+  args extends ContractFunctionArgs<
+    typeof stakingAbi,
+    "pure" | "view",
+    "getWithdrawalRequest"
+  > = ContractFunctionArgs<
+    typeof stakingAbi,
+    "pure" | "view",
+    "getWithdrawalRequest"
+  >,
+> = Omit<
+  ReadContractParameters<typeof stakingAbi, "getWithdrawalRequest", args>,
+  "abi" | "address" | "functionName"
+>;
+export type GetWithdrawalRequestReturnType = ReadContractReturnType<
+  typeof stakingAbi,
+  "getWithdrawalRequest"
+>;
+export type GetWithdrawalRequestErrorType = ReadContractErrorType;
+
+export async function getWithdrawalRequest<
+  chain extends Chain | undefined,
+  const args extends ContractFunctionArgs<
+    typeof stakingAbi,
+    "pure" | "view",
+    "getWithdrawalRequest"
+  >,
+>(
+  client: Client<Transport, chain>,
+  parameters: GetWithdrawalRequestParameters<args>,
 ): Promise<GetWithdrawalRequestReturnType> {
-  const result = (await readContract(client, {
-    address: STAKING_ADDRESS,
+  return readContract(client, {
+    ...parameters,
     abi: stakingAbi,
+    address: STAKING_ADDRESS,
     functionName: "getWithdrawalRequest",
-    args: [
-      parameters.validatorId,
-      parameters.delegator,
-      parameters.withdrawId,
-    ],
-  } as any)) as readonly [bigint, bigint, bigint];
-  return {
-    withdrawalAmount: result[0],
-    accRewardPerToken: result[1],
-    withdrawEpoch: result[2],
-  };
+  });
 }
