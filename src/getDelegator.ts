@@ -28,10 +28,8 @@ export type GetDelegatorErrorType = ReadContractErrorType;
  *
  * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#getdelegator
  *
- * @param client - Viem {@link Client}
+ * @param client - {@link Client}
  * @param parameters - {@link GetDelegatorParameters}
- * @param parameters.args.validatorId - ID of the validator
- * @param parameters.args.delegator - Address of the delegator
  * @returns Delegator's active stake, accumulator, unclaimed rewards, and pending delta stakes and epochs. {@link GetDelegatorReturnType}
  *
  * @example

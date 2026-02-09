@@ -32,7 +32,7 @@ export type GetProposerValIdErrorType = ReadContractErrorType;
  *
  * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#getproposervalid
  *
- * @param client - Viem {@link Client}
+ * @param client - {@link Client}
  * @returns Validator ID of the current block proposer. {@link GetProposerValIdReturnType}
  *
  * @example

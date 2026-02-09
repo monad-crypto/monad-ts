@@ -76,7 +76,6 @@ export type MonadActions = {
    * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#getvalidator
    *
    * @param parameters - {@link GetValidatorParameters}
-   * @param parameters.args.validatorId - ID of the validator to query
    * @returns Validator state including auth address, flags, stake, accumulator, commission, unclaimed rewards, consensus/snapshot stake and commission, and public keys. {@link GetValidatorReturnType}
    *
    * @example
@@ -104,8 +103,6 @@ export type MonadActions = {
    * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#getdelegator
    *
    * @param parameters - {@link GetDelegatorParameters}
-   * @param parameters.args.validatorId - ID of the validator
-   * @param parameters.args.delegator - Address of the delegator
    * @returns Delegator's active stake, accumulator, unclaimed rewards, and pending delta stakes and epochs. {@link GetDelegatorReturnType}
    *
    * @example
@@ -133,9 +130,6 @@ export type MonadActions = {
    * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#getwithdrawalrequest
    *
    * @param parameters - {@link GetWithdrawalRequestParameters}
-   * @param parameters.args.validatorId - ID of the validator
-   * @param parameters.args.delegator - Address of the delegator
-   * @param parameters.args.withdrawId - Withdrawal identifier (0-255)
    * @returns Withdrawal amount, accumulator value at time of undelegation, and the epoch when the withdrawal becomes claimable. {@link GetWithdrawalRequestReturnType}
    *
    * @example
@@ -163,7 +157,6 @@ export type MonadActions = {
    * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#get-validatorset
    *
    * @param parameters - {@link GetConsensusValidatorSetParameters}
-   * @param parameters.args.startIndex - Index to start paginating from
    * @returns `(isDone, nextIndex, valIds)` tuple of consensus validator IDs. {@link GetConsensusValidatorSetReturnType}
    *
    * @example
@@ -191,7 +184,6 @@ export type MonadActions = {
    * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#get-validatorset
    *
    * @param parameters - {@link GetSnapshotValidatorSetParameters}
-   * @param parameters.args.startIndex - Index to start paginating from
    * @returns `(isDone, nextIndex, valIds)` tuple of snapshot validator IDs. {@link GetSnapshotValidatorSetReturnType}
    *
    * @example
@@ -219,7 +211,6 @@ export type MonadActions = {
    * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#get-validatorset
    *
    * @param parameters - {@link GetExecutionValidatorSetParameters}
-   * @param parameters.args.startIndex - Index to start paginating from
    * @returns `(isDone, nextIndex, valIds)` tuple of execution validator IDs. {@link GetExecutionValidatorSetReturnType}
    *
    * @example
@@ -247,8 +238,6 @@ export type MonadActions = {
    * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#getdelegations
    *
    * @param parameters - {@link GetDelegationsParameters}
-   * @param parameters.args.delegator - Address of the delegator
-   * @param parameters.args.startValId - Validator ID to start paginating from
    * @returns `(isDone, nextValId, valIds)` tuple of validator IDs the address has delegated to. {@link GetDelegationsReturnType}
    *
    * @example
@@ -276,8 +265,6 @@ export type MonadActions = {
    * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#getdelegators
    *
    * @param parameters - {@link GetDelegatorsParameters}
-   * @param parameters.args.validatorId - ID of the validator
-   * @param parameters.args.startDelegator - Address to start paginating from
    * @returns `(isDone, nextDelegator, delegators)` tuple of delegator addresses. {@link GetDelegatorsReturnType}
    *
    * @example

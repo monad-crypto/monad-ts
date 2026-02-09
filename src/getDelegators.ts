@@ -28,10 +28,8 @@ export type GetDelegatorsErrorType = ReadContractErrorType;
  *
  * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#getdelegators
  *
- * @param client - Viem {@link Client}
+ * @param client - {@link Client}
  * @param parameters - {@link GetDelegatorsParameters}
- * @param parameters.args.validatorId - ID of the validator
- * @param parameters.args.startDelegator - Address to start paginating from
  * @returns `(isDone, nextDelegator, delegators)` tuple of delegator addresses. {@link GetDelegatorsReturnType}
  *
  * @example
