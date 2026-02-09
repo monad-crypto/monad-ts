@@ -32,7 +32,7 @@ export type GetWithdrawalRequestErrorType = ReadContractErrorType;
  *
  * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#getwithdrawalrequest
  *
- * @param client - {@link Client}
+ * @param client - Viem {@link Client}
  * @param parameters - {@link GetWithdrawalRequestParameters}
  * @returns Withdrawal amount, accumulator value at time of undelegation, and the epoch when the withdrawal becomes claimable. {@link GetWithdrawalRequestReturnType}
  *

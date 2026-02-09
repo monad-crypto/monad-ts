@@ -32,7 +32,7 @@ export type GetConsensusValidatorSetErrorType = ReadContractErrorType;
  *
  * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#get-validatorset
  *
- * @param client - {@link Client}
+ * @param client - Viem {@link Client}
  * @param parameters - {@link GetConsensusValidatorSetParameters}
  * @returns `(isDone, nextIndex, valIds)` tuple of consensus validator IDs. {@link GetConsensusValidatorSetReturnType}
  *

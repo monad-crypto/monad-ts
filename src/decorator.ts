@@ -260,7 +260,9 @@ export type MonadActions = {
     parameters: GetDelegationsParameters,
   ) => Promise<GetDelegationsReturnType>;
   /**
-   * Returns the delegator addresses for a given validator. Results are paginated; when `isDone` is false, call again with `nextDelegator` as `startDelegator`. The number of delegators can be very large; consider maintaining an updated list via events rather than periodically calling this.
+   * Returns the delegator addresses for a given validator. Results are paginated; when `isDone` is false, call again with `nextDelegator` as `startDelegator`.
+   *
+   * @dev The number of delegators can be very large; consider maintaining an updated list via events rather than periodically calling this.
    *
    * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#getdelegators
    *

@@ -32,7 +32,7 @@ export type GetSnapshotValidatorSetErrorType = ReadContractErrorType;
  *
  * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#get-validatorset
  *
- * @param client - {@link Client}
+ * @param client - Viem {@link Client}
  * @param parameters - {@link GetSnapshotValidatorSetParameters}
  * @returns `(isDone, nextIndex, valIds)` tuple of snapshot validator IDs. {@link GetSnapshotValidatorSetReturnType}
  *

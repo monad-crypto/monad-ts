@@ -32,7 +32,7 @@ export type GetExecutionValidatorSetErrorType = ReadContractErrorType;
  *
  * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#get-validatorset
  *
- * @param client - {@link Client}
+ * @param client - Viem {@link Client}
  * @param parameters - {@link GetExecutionValidatorSetParameters}
  * @returns `(isDone, nextIndex, valIds)` tuple of execution validator IDs. {@link GetExecutionValidatorSetReturnType}
  *

@@ -28,7 +28,7 @@ export type GetEpochErrorType = ReadContractErrorType;
  *
  * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#getepoch
  *
- * @param client - {@link Client}
+ * @param client - Viem {@link Client}
  * @returns `(epoch, inEpochDelayPeriod)` tuple. {@link GetEpochReturnType}
  *
  * @example
