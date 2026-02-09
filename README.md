@@ -5,11 +5,11 @@ TypeScript library for Monad-specific protocol features. Provides [Viem](https:/
 ## Installation
 
 ```bash
-bun add monad-ext
+bun add monad-ts
 ```
 
 ```bash
-npm install monad-ext
+npm install monad-ts
 ```
 
 ## Quick Start
@@ -17,7 +17,7 @@ npm install monad-ext
 ```ts
 import { createPublicClient, http } from "viem";
 import { monad } from "viem/chains";
-import { monadActions } from "monad-ext";
+import { monadActions } from "monad-ts";
 
 const client = createPublicClient({
   transport: http("https://rpc.monad.xyz"),
@@ -55,7 +55,7 @@ All actions query the staking precompile at `0x000000000000000000000000000000000
 The staking precompile ABI is exported directly:
 
 ```ts
-import { stakingAbi } from "monad-ext";
+import { stakingAbi } from "monad-ts";
 ```
 
 ## Staking Precompile Address
@@ -63,7 +63,7 @@ import { stakingAbi } from "monad-ext";
 The staking precompile address is exported directly:
 
 ```ts
-import { STAKING_ADDRESS } from "monad-ext";
+import { STAKING_ADDRESS } from "monad-ts";
 ```
 
 ## Links
