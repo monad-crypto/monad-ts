@@ -1,15 +1,71 @@
-# monad-ext
+# monad-ts
 
-To install dependencies:
+TypeScript library for Monad-specific protocol features. Provides [Viem](https://viem.sh) actions for interacting with the staking precompile on Monad.
 
-```bash
-bun install
-```
-
-To run:
+## Installation
 
 ```bash
-bun run index.ts
+bun add monad-ext
 ```
 
-This project was created using `bun init` in bun v1.3.8. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+```bash
+npm install monad-ext
+```
+
+## Quick Start
+
+```ts
+import { createPublicClient, http } from "viem";
+import { monad } from "viem/chains";
+import { monadActions } from "monad-ext";
+
+const client = createPublicClient({
+  transport: http("https://rpc.monad.xyz"),
+  chain: monad,
+}).extend(monadActions());
+
+const validator = await client.getValidator({ args: [10] });
+console.log(validator);
+
+const epoch = await client.getEpoch();
+console.log(epoch);
+```
+
+## API Reference
+
+### Staking Precompile Actions
+
+All actions query the staking precompile at `0x0000000000000000000000000000000000001000`.
+
+| Action | Description |
+| --- | --- |
+| `getValidator` | Get details for a validator by ID |
+| `getDelegator` | Get delegator information |
+| `getDelegations` | Get all delegations for an address |
+| `getDelegators` | Get all delegators for a validator |
+| `getConsensusValidatorSet` | Get the current consensus validator set |
+| `getExecutionValidatorSet` | Get the current execution validator set |
+| `getSnapshotValidatorSet` | Get the snapshot validator set |
+| `getEpoch` | Get the current epoch info |
+| `getProposerValId` | Get the current block proposer's validator ID |
+| `getWithdrawalRequest` | Get withdrawal request details |
+
+## Staking Precompile ABI
+
+The staking precompile ABI is exported directly:
+
+```ts
+import { stakingAbi } from "monad-ext";
+```
+
+## Staking Precompile Address
+
+The staking precompile address is exported directly:
+
+```ts
+import { STAKING_ADDRESS } from "monad-ext";
+```
+
+## Links
+
+- [Monad Staking Precompile Docs](https://docs.monad.xyz/developer-essentials/staking/staking-precompile)
