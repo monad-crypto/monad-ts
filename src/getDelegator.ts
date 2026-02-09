@@ -26,13 +26,13 @@ export type GetDelegatorErrorType = ReadContractErrorType;
 /**
  * Returns a delegator's stake, accumulated rewards, and pending stake changes for a specified validator.
  *
- * - Provides a view of the delegator's active stake, accumulator, unclaimed rewards, and pending delta stakes and epochs.
- *
  * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#getdelegator
  *
- * @param client - {@link Client}
+ * @param client - Viem {@link Client}
  * @param parameters - {@link GetDelegatorParameters}
- * @returns Delegator info. {@link GetDelegatorReturnType}
+ * @param parameters.args.validatorId - ID of the validator
+ * @param parameters.args.delegator - Address of the delegator
+ * @returns Delegator's active stake, accumulator, unclaimed rewards, and pending delta stakes and epochs. {@link GetDelegatorReturnType}
  *
  * @example
  * ```ts

@@ -28,16 +28,14 @@ export type GetConsensusValidatorSetReturnType = ReadContractReturnType<
 export type GetConsensusValidatorSetErrorType = ReadContractErrorType;
 
 /**
- * Returns the consensus validator set IDs, paginated.
- *
- * - Each call retrieves up to `PAGINATED_RESULTS_SIZE` validator IDs starting from `startIndex`.
- * - Returns `(isDone, nextIndex, valIds)`. When `isDone` is false, call again with `nextIndex` as `startIndex`.
+ * Returns the consensus validator set IDs. Results are paginated; when `isDone` is false, call again with `nextIndex` as `startIndex`.
  *
  * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#get-validatorset
  *
- * @param client - {@link Client}
+ * @param client - Viem {@link Client}
  * @param parameters - {@link GetConsensusValidatorSetParameters}
- * @returns Paginated consensus validator IDs. {@link GetConsensusValidatorSetReturnType}
+ * @param parameters.args.startIndex - Index to start paginating from
+ * @returns `(isDone, nextIndex, valIds)` tuple of consensus validator IDs. {@link GetConsensusValidatorSetReturnType}
  *
  * @example
  * ```ts

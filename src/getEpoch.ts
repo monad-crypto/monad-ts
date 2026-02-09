@@ -24,16 +24,12 @@ export type GetEpochReturnType = ReadContractReturnType<
 export type GetEpochErrorType = ReadContractErrorType;
 
 /**
- * Returns the current epoch and whether the network is in the epoch delay period.
- *
- * - If `inEpochDelayPeriod` is false, the boundary block has not been reached and write operations should be effective for `epoch + 1`.
- * - If `inEpochDelayPeriod` is true, the network is past the boundary block and write operations should be effective for `epoch + 2`.
+ * Returns the current epoch and whether the network is in the epoch delay period. If `inEpochDelayPeriod` is false, write operations are effective for `epoch + 1`; if true, for `epoch + 2`.
  *
  * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#getepoch
  *
- * @param client - {@link Client}
- * @param parameters - {@link GetEpochParameters}
- * @returns Current epoch and delay period flag. {@link GetEpochReturnType}
+ * @param client - Viem {@link Client}
+ * @returns `(epoch, inEpochDelayPeriod)` tuple. {@link GetEpochReturnType}
  *
  * @example
  * ```ts

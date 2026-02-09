@@ -28,17 +28,15 @@ export type GetDelegationsReturnType = ReadContractReturnType<
 export type GetDelegationsErrorType = ReadContractErrorType;
 
 /**
- * Returns the validator IDs to which an address has delegated, paginated.
- *
- * - Each call retrieves up to `PAGINATED_RESULTS_SIZE` validator IDs starting from `startValId`.
- * - Returns `(isDone, nextValId, valIds)`. When `isDone` is false, call again with `nextValId` as `startValId`.
- * - To capture the full set, make the first call with `startValId = 0`.
+ * Returns the validator IDs to which an address has delegated. Results are paginated; when `isDone` is false, call again with `nextValId` as `startValId`.
  *
  * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#getdelegations
  *
- * @param client - {@link Client}
+ * @param client - Viem {@link Client}
  * @param parameters - {@link GetDelegationsParameters}
- * @returns Paginated validator IDs the address has delegated to. {@link GetDelegationsReturnType}
+ * @param parameters.args.delegator - Address of the delegator
+ * @param parameters.args.startValId - Validator ID to start paginating from
+ * @returns `(isDone, nextValId, valIds)` tuple of validator IDs the address has delegated to. {@link GetDelegationsReturnType}
  *
  * @example
  * ```ts

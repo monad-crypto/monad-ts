@@ -28,16 +28,14 @@ export type GetSnapshotValidatorSetReturnType = ReadContractReturnType<
 export type GetSnapshotValidatorSetErrorType = ReadContractErrorType;
 
 /**
- * Returns the snapshot validator set IDs, paginated.
- *
- * - Each call retrieves up to `PAGINATED_RESULTS_SIZE` validator IDs starting from `startIndex`.
- * - Returns `(isDone, nextIndex, valIds)`. When `isDone` is false, call again with `nextIndex` as `startIndex`.
+ * Returns the snapshot validator set IDs. Results are paginated; when `isDone` is false, call again with `nextIndex` as `startIndex`.
  *
  * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#get-validatorset
  *
- * @param client - {@link Client}
+ * @param client - Viem {@link Client}
  * @param parameters - {@link GetSnapshotValidatorSetParameters}
- * @returns Paginated snapshot validator IDs. {@link GetSnapshotValidatorSetReturnType}
+ * @param parameters.args.startIndex - Index to start paginating from
+ * @returns `(isDone, nextIndex, valIds)` tuple of snapshot validator IDs. {@link GetSnapshotValidatorSetReturnType}
  *
  * @example
  * ```ts

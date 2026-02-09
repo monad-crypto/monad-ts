@@ -30,13 +30,14 @@ export type GetWithdrawalRequestErrorType = ReadContractErrorType;
 /**
  * Returns the pending withdrawal request for a (validatorId, delegator, withdrawId) tuple.
  *
- * - Returns the withdrawal amount, accumulator value at time of undelegation, and the epoch when the withdrawal becomes claimable.
- *
  * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#getwithdrawalrequest
  *
- * @param client - {@link Client}
+ * @param client - Viem {@link Client}
  * @param parameters - {@link GetWithdrawalRequestParameters}
- * @returns Withdrawal request info. {@link GetWithdrawalRequestReturnType}
+ * @param parameters.args.validatorId - ID of the validator
+ * @param parameters.args.delegator - Address of the delegator
+ * @param parameters.args.withdrawId - Withdrawal identifier (0-255)
+ * @returns Withdrawal amount, accumulator value at time of undelegation, and the epoch when the withdrawal becomes claimable. {@link GetWithdrawalRequestReturnType}
  *
  * @example
  * ```ts

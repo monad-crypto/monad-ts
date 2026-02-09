@@ -24,15 +24,14 @@ export type GetValidatorReturnType = ReadContractReturnType<
 export type GetValidatorErrorType = ReadContractErrorType;
 
 /**
- * Returns the complete state of a validator across execution, consensus, and snapshot contexts.
- *
- * - Includes the validator's auth address, flags, stake, accumulator, commission, unclaimed rewards, consensus/snapshot stake and commission, and public keys.
+ * Returns a validator's complete state across execution, consensus, and snapshot contexts.
  *
  * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#getvalidator
  *
- * @param client - {@link Client}
+ * @param client - Viem {@link Client}
  * @param parameters - {@link GetValidatorParameters}
- * @returns Validator state. {@link GetValidatorReturnType}
+ * @param parameters.args.validatorId - ID of the validator to query
+ * @returns Validator state including auth address, flags, stake, accumulator, commission, unclaimed rewards, consensus/snapshot stake and commission, and public keys. {@link GetValidatorReturnType}
  *
  * @example
  * ```ts
