@@ -23,6 +23,28 @@ export type GetEpochReturnType = ReadContractReturnType<
 >;
 export type GetEpochErrorType = ReadContractErrorType;
 
+/**
+ * Returns the current epoch and whether the network is in the epoch delay period. If `inEpochDelayPeriod` is false, write operations are effective for `epoch + 1`; if true, for `epoch + 2`.
+ *
+ * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#getepoch
+ *
+ * @param client - Viem {@link Client}
+ * @returns `(epoch, inEpochDelayPeriod)` tuple. {@link GetEpochReturnType}
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { monad } from 'viem/chains'
+ * import { getEpoch } from 'monad-ts-docs'
+ *
+ * const client = createClient({
+ *   chain: monad,
+ *   transport: http(),
+ * })
+ *
+ * const [epoch, inEpochDelayPeriod] = await getEpoch(client)
+ * ```
+ */
 export async function getEpoch<
   chain extends Chain | undefined,
   const args extends ContractFunctionArgs<

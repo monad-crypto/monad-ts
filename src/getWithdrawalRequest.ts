@@ -27,6 +27,31 @@ export type GetWithdrawalRequestReturnType = ReadContractReturnType<
 >;
 export type GetWithdrawalRequestErrorType = ReadContractErrorType;
 
+/**
+ * Returns the pending withdrawal request for a (validatorId, delegator, withdrawId) tuple.
+ *
+ * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#getwithdrawalrequest
+ *
+ * @param client - Viem {@link Client}
+ * @param parameters - {@link GetWithdrawalRequestParameters}
+ * @returns Withdrawal amount, accumulator value at time of undelegation, and the epoch when the withdrawal becomes claimable. {@link GetWithdrawalRequestReturnType}
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { monad } from 'viem/chains'
+ * import { getWithdrawalRequest } from 'monad-ts-docs'
+ *
+ * const client = createClient({
+ *   chain: monad,
+ *   transport: http(),
+ * })
+ *
+ * const withdrawal = await getWithdrawalRequest(client, {
+ *   args: [1n, '0x...', 0],
+ * })
+ * ```
+ */
 export async function getWithdrawalRequest<
   chain extends Chain | undefined,
   const args extends ContractFunctionArgs<

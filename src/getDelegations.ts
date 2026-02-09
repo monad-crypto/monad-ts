@@ -27,6 +27,31 @@ export type GetDelegationsReturnType = ReadContractReturnType<
 >;
 export type GetDelegationsErrorType = ReadContractErrorType;
 
+/**
+ * Returns the validator IDs to which an address has delegated. Results are paginated; when `isDone` is false, call again with `nextValId` as `startValId`.
+ *
+ * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#getdelegations
+ *
+ * @param client - Viem {@link Client}
+ * @param parameters - {@link GetDelegationsParameters}
+ * @returns `(isDone, nextValId, valIds)` tuple of validator IDs the address has delegated to. {@link GetDelegationsReturnType}
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { monad } from 'viem/chains'
+ * import { getDelegations } from 'monad-ts-docs'
+ *
+ * const client = createClient({
+ *   chain: monad,
+ *   transport: http(),
+ * })
+ *
+ * const result = await getDelegations(client, {
+ *   args: ['0x...', 0n],
+ * })
+ * ```
+ */
 export async function getDelegations<
   chain extends Chain | undefined,
   const args extends ContractFunctionArgs<

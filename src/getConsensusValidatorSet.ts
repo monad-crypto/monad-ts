@@ -27,6 +27,31 @@ export type GetConsensusValidatorSetReturnType = ReadContractReturnType<
 >;
 export type GetConsensusValidatorSetErrorType = ReadContractErrorType;
 
+/**
+ * Returns the consensus validator set IDs. Results are paginated; when `isDone` is false, call again with `nextIndex` as `startIndex`.
+ *
+ * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#get-validatorset
+ *
+ * @param client - Viem {@link Client}
+ * @param parameters - {@link GetConsensusValidatorSetParameters}
+ * @returns `(isDone, nextIndex, valIds)` tuple of consensus validator IDs. {@link GetConsensusValidatorSetReturnType}
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { monad } from 'viem/chains'
+ * import { getConsensusValidatorSet } from 'monad-ts-docs'
+ *
+ * const client = createClient({
+ *   chain: monad,
+ *   transport: http(),
+ * })
+ *
+ * const result = await getConsensusValidatorSet(client, {
+ *   args: [0],
+ * })
+ * ```
+ */
 export async function getConsensusValidatorSet<
   chain extends Chain | undefined,
   const args extends ContractFunctionArgs<

@@ -23,6 +23,31 @@ export type GetDelegatorReturnType = ReadContractReturnType<
 >;
 export type GetDelegatorErrorType = ReadContractErrorType;
 
+/**
+ * Returns a delegator's stake, accumulated rewards, and pending stake changes for a specified validator.
+ *
+ * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#getdelegator
+ *
+ * @param client - Viem {@link Client}
+ * @param parameters - {@link GetDelegatorParameters}
+ * @returns Delegator's active stake, accumulator, unclaimed rewards, and pending delta stakes and epochs. {@link GetDelegatorReturnType}
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { monad } from 'viem/chains'
+ * import { getDelegator } from 'monad-ts-docs'
+ *
+ * const client = createClient({
+ *   chain: monad,
+ *   transport: http(),
+ * })
+ *
+ * const delegator = await getDelegator(client, {
+ *   args: [1n, '0x...'],
+ * })
+ * ```
+ */
 export async function getDelegator<
   chain extends Chain | undefined,
   const args extends ContractFunctionArgs<

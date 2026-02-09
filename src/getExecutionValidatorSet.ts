@@ -27,6 +27,31 @@ export type GetExecutionValidatorSetReturnType = ReadContractReturnType<
 >;
 export type GetExecutionValidatorSetErrorType = ReadContractErrorType;
 
+/**
+ * Returns the execution validator set IDs. Results are paginated; when `isDone` is false, call again with `nextIndex` as `startIndex`.
+ *
+ * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#get-validatorset
+ *
+ * @param client - Viem {@link Client}
+ * @param parameters - {@link GetExecutionValidatorSetParameters}
+ * @returns `(isDone, nextIndex, valIds)` tuple of execution validator IDs. {@link GetExecutionValidatorSetReturnType}
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { monad } from 'viem/chains'
+ * import { getExecutionValidatorSet } from 'monad-ts-docs'
+ *
+ * const client = createClient({
+ *   chain: monad,
+ *   transport: http(),
+ * })
+ *
+ * const result = await getExecutionValidatorSet(client, {
+ *   args: [0],
+ * })
+ * ```
+ */
 export async function getExecutionValidatorSet<
   chain extends Chain | undefined,
   const args extends ContractFunctionArgs<
