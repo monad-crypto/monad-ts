@@ -456,6 +456,69 @@ export const stakingAbi = [
     ],
     anonymous: false,
   },
-];
+] as const;
 
 export const STAKING_ADDRESS = "0x0000000000000000000000000000000000001000";
+
+export type { MonadActions } from "./decorator.ts";
+export { monadActions } from "./decorator.ts";
+export type {
+  GetConsensusValidatorSetErrorType,
+  GetConsensusValidatorSetParameters,
+  GetConsensusValidatorSetReturnType,
+} from "./getConsensusValidatorSet.ts";
+export { getConsensusValidatorSet } from "./getConsensusValidatorSet.ts";
+export type {
+  GetDelegationsErrorType,
+  GetDelegationsParameters,
+  GetDelegationsReturnType,
+} from "./getDelegations.ts";
+export { getDelegations } from "./getDelegations.ts";
+export type {
+  GetDelegatorErrorType,
+  GetDelegatorParameters,
+  GetDelegatorReturnType,
+} from "./getDelegator.ts";
+export { getDelegator } from "./getDelegator.ts";
+export type {
+  GetDelegatorsErrorType,
+  GetDelegatorsParameters,
+  GetDelegatorsReturnType,
+} from "./getDelegators.ts";
+export { getDelegators } from "./getDelegators.ts";
+export type {
+  GetEpochErrorType,
+  GetEpochParameters,
+  GetEpochReturnType,
+} from "./getEpoch.ts";
+export { getEpoch } from "./getEpoch.ts";
+export type {
+  GetExecutionValidatorSetErrorType,
+  GetExecutionValidatorSetParameters,
+  GetExecutionValidatorSetReturnType,
+} from "./getExecutionValidatorSet.ts";
+export { getExecutionValidatorSet } from "./getExecutionValidatorSet.ts";
+export type {
+  GetProposerValIdErrorType,
+  GetProposerValIdParameters,
+  GetProposerValIdReturnType,
+} from "./getProposerValId.ts";
+export { getProposerValId } from "./getProposerValId.ts";
+export type {
+  GetSnapshotValidatorSetErrorType,
+  GetSnapshotValidatorSetParameters,
+  GetSnapshotValidatorSetReturnType,
+} from "./getSnapshotValidatorSet.ts";
+export { getSnapshotValidatorSet } from "./getSnapshotValidatorSet.ts";
+export type {
+  GetValidatorErrorType,
+  GetValidatorParameters,
+  GetValidatorReturnType,
+} from "./getValidator.ts";
+export { getValidator } from "./getValidator.ts";
+export type {
+  GetWithdrawalRequestErrorType,
+  GetWithdrawalRequestParameters,
+  GetWithdrawalRequestReturnType,
+} from "./getWithdrawalRequest.ts";
+export { getWithdrawalRequest } from "./getWithdrawalRequest.ts";
