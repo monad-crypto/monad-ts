@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { createPublicClient, http } from "viem";
 import { monad } from "viem/chains";
-import { RPC_URL } from "../test/setup";
+import { FORK_BLOCK_NUMBER, RPC_URL } from "../test/setup";
 import { getProposerValId } from "./getProposerValId";
 
 test("getProposerValId", async () => {
@@ -10,7 +10,9 @@ test("getProposerValId", async () => {
     chain: monad,
   });
 
-  const proposerValId = await getProposerValId(client);
+  const proposerValId = await getProposerValId(client, {
+    blockNumber: FORK_BLOCK_NUMBER,
+  });
 
-  expect(proposerValId).toMatchInlineSnapshot();
+  expect(proposerValId).toMatchInlineSnapshot(`172n`);
 });

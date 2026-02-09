@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { createPublicClient, http } from "viem";
 import { monad } from "viem/chains";
-import { RPC_URL } from "../test/setup";
+import { FORK_BLOCK_NUMBER, RPC_URL } from "../test/setup";
 import { getDelegations } from "./getDelegations";
 
 test("getDelegations", async () => {
@@ -11,8 +11,17 @@ test("getDelegations", async () => {
   });
 
   const delegations = await getDelegations(client, {
-    args: ["0x0000000000000000000000000000000000000000", 0n],
+    args: ["0x57A7c50E6C27B6252ff484785A6d75E294c8A0a5", 0n],
+    blockNumber: FORK_BLOCK_NUMBER,
   });
 
-  expect(delegations).toMatchInlineSnapshot();
+  expect(delegations).toMatchInlineSnapshot(`
+    [
+      true,
+      0n,
+      [
+        21n,
+      ],
+    ]
+  `);
 });

@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { createPublicClient, http } from "viem";
 import { monad } from "viem/chains";
-import { RPC_URL } from "../test/setup";
+import { FORK_BLOCK_NUMBER, RPC_URL } from "../test/setup";
 import { getEpoch } from "./getEpoch";
 
 test("getEpoch", async () => {
@@ -10,7 +10,14 @@ test("getEpoch", async () => {
     chain: monad,
   });
 
-  const epoch = await getEpoch(client);
+  const epoch = await getEpoch(client, {
+    blockNumber: FORK_BLOCK_NUMBER,
+  });
 
-  expect(epoch).toMatchInlineSnapshot();
+  expect(epoch).toMatchInlineSnapshot(`
+    [
+      1040n,
+      true,
+    ]
+  `);
 });
