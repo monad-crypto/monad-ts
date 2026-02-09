@@ -23,6 +23,36 @@ export type GetDelegatorsReturnType = ReadContractReturnType<
 >;
 export type GetDelegatorsErrorType = ReadContractErrorType;
 
+/**
+ * Returns the delegator addresses for a given validator, paginated.
+ *
+ * - Each call retrieves up to `PAGINATED_RESULTS_SIZE` delegator addresses starting from `startDelegator`.
+ * - Returns `(isDone, nextDelegator, delegators)`. When `isDone` is false, call again with `nextDelegator` as `startDelegator`.
+ * - To capture the full set, make the first call with `startDelegator = 0`.
+ * - The number of delegators can be very large; consider maintaining an updated list via events rather than periodically calling this.
+ *
+ * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#getdelegators
+ *
+ * @param client - {@link Client}
+ * @param parameters - {@link GetDelegatorsParameters}
+ * @returns Paginated delegator addresses. {@link GetDelegatorsReturnType}
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { monadTestnet } from 'viem/chains'
+ * import { getDelegators } from 'monad-ts-docs'
+ *
+ * const client = createClient({
+ *   chain: monadTestnet,
+ *   transport: http(),
+ * })
+ *
+ * const result = await getDelegators(client, {
+ *   args: [1n, '0x0000000000000000000000000000000000000000'],
+ * })
+ * ```
+ */
 export async function getDelegators<
   chain extends Chain | undefined,
   const args extends ContractFunctionArgs<

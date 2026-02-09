@@ -27,6 +27,31 @@ export type GetProposerValIdReturnType = ReadContractReturnType<
 >;
 export type GetProposerValIdErrorType = ReadContractErrorType;
 
+/**
+ * Returns the validator ID of the current block proposer.
+ *
+ * - The validator ID corresponds to the SECP value of the block author.
+ *
+ * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#getproposervalid
+ *
+ * @param client - {@link Client}
+ * @param parameters - {@link GetProposerValIdParameters}
+ * @returns Proposer validator ID. {@link GetProposerValIdReturnType}
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { monadTestnet } from 'viem/chains'
+ * import { getProposerValId } from 'monad-ts-docs'
+ *
+ * const client = createClient({
+ *   chain: monadTestnet,
+ *   transport: http(),
+ * })
+ *
+ * const proposerValId = await getProposerValId(client)
+ * ```
+ */
 export async function getProposerValId<
   chain extends Chain | undefined,
   const args extends ContractFunctionArgs<
