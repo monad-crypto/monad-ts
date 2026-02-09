@@ -58,11 +58,11 @@ import {
  * @example
  * ```ts
  * import { createClient, http } from 'viem'
- * import { monadTestnet } from 'viem/chains'
+ * import { monad } from 'viem/chains'
  * import { monadActions } from 'monad-ts-docs'
  *
  * const client = createClient({
- *   chain: monadTestnet,
+ *   chain: monad,
  *   transport: http(),
  * }).extend(monadActions())
  *
@@ -81,11 +81,11 @@ export type MonadActions = {
    * @example
    * ```ts
    * import { createClient, http } from 'viem'
-   * import { monadTestnet } from 'viem/chains'
+   * import { monad } from 'viem/chains'
    * import { getValidator } from 'monad-ts-docs'
    *
    * const client = createClient({
-   *   chain: monadTestnet,
+   *   chain: monad,
    *   transport: http(),
    * })
    *
@@ -108,11 +108,11 @@ export type MonadActions = {
    * @example
    * ```ts
    * import { createClient, http } from 'viem'
-   * import { monadTestnet } from 'viem/chains'
+   * import { monad } from 'viem/chains'
    * import { getDelegator } from 'monad-ts-docs'
    *
    * const client = createClient({
-   *   chain: monadTestnet,
+   *   chain: monad,
    *   transport: http(),
    * })
    *
@@ -135,11 +135,11 @@ export type MonadActions = {
    * @example
    * ```ts
    * import { createClient, http } from 'viem'
-   * import { monadTestnet } from 'viem/chains'
+   * import { monad } from 'viem/chains'
    * import { getWithdrawalRequest } from 'monad-ts-docs'
    *
    * const client = createClient({
-   *   chain: monadTestnet,
+   *   chain: monad,
    *   transport: http(),
    * })
    *
@@ -162,11 +162,11 @@ export type MonadActions = {
    * @example
    * ```ts
    * import { createClient, http } from 'viem'
-   * import { monadTestnet } from 'viem/chains'
+   * import { monad } from 'viem/chains'
    * import { getConsensusValidatorSet } from 'monad-ts-docs'
    *
    * const client = createClient({
-   *   chain: monadTestnet,
+   *   chain: monad,
    *   transport: http(),
    * })
    *
@@ -189,11 +189,11 @@ export type MonadActions = {
    * @example
    * ```ts
    * import { createClient, http } from 'viem'
-   * import { monadTestnet } from 'viem/chains'
+   * import { monad } from 'viem/chains'
    * import { getSnapshotValidatorSet } from 'monad-ts-docs'
    *
    * const client = createClient({
-   *   chain: monadTestnet,
+   *   chain: monad,
    *   transport: http(),
    * })
    *
@@ -216,11 +216,11 @@ export type MonadActions = {
    * @example
    * ```ts
    * import { createClient, http } from 'viem'
-   * import { monadTestnet } from 'viem/chains'
+   * import { monad } from 'viem/chains'
    * import { getExecutionValidatorSet } from 'monad-ts-docs'
    *
    * const client = createClient({
-   *   chain: monadTestnet,
+   *   chain: monad,
    *   transport: http(),
    * })
    *
@@ -243,11 +243,11 @@ export type MonadActions = {
    * @example
    * ```ts
    * import { createClient, http } from 'viem'
-   * import { monadTestnet } from 'viem/chains'
+   * import { monad } from 'viem/chains'
    * import { getDelegations } from 'monad-ts-docs'
    *
    * const client = createClient({
-   *   chain: monadTestnet,
+   *   chain: monad,
    *   transport: http(),
    * })
    *
@@ -270,11 +270,11 @@ export type MonadActions = {
    * @example
    * ```ts
    * import { createClient, http } from 'viem'
-   * import { monadTestnet } from 'viem/chains'
+   * import { monad } from 'viem/chains'
    * import { getDelegators } from 'monad-ts-docs'
    *
    * const client = createClient({
-   *   chain: monadTestnet,
+   *   chain: monad,
    *   transport: http(),
    * })
    *
@@ -296,11 +296,11 @@ export type MonadActions = {
    * @example
    * ```ts
    * import { createClient, http } from 'viem'
-   * import { monadTestnet } from 'viem/chains'
+   * import { monad } from 'viem/chains'
    * import { getEpoch } from 'monad-ts-docs'
    *
    * const client = createClient({
-   *   chain: monadTestnet,
+   *   chain: monad,
    *   transport: http(),
    * })
    *
@@ -318,11 +318,11 @@ export type MonadActions = {
    * @example
    * ```ts
    * import { createClient, http } from 'viem'
-   * import { monadTestnet } from 'viem/chains'
+   * import { monad } from 'viem/chains'
    * import { getProposerValId } from 'monad-ts-docs'
    *
    * const client = createClient({
-   *   chain: monadTestnet,
+   *   chain: monad,
    *   transport: http(),
    * })
    *

@@ -39,11 +39,11 @@ export type GetSnapshotValidatorSetErrorType = ReadContractErrorType;
  * @example
  * ```ts
  * import { createClient, http } from 'viem'
- * import { monadTestnet } from 'viem/chains'
+ * import { monad } from 'viem/chains'
  * import { getSnapshotValidatorSet } from 'monad-ts-docs'
  *
  * const client = createClient({
- *   chain: monadTestnet,
+ *   chain: monad,
  *   transport: http(),
  * })
  *
