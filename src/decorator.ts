@@ -3,52 +3,52 @@ import {
   type GetConsensusValidatorSetParameters,
   type GetConsensusValidatorSetReturnType,
   getConsensusValidatorSet,
-} from "./getConsensusValidatorSet.ts";
+} from "./getConsensusValidatorSet.js";
 import {
   type GetDelegationsParameters,
   type GetDelegationsReturnType,
   getDelegations,
-} from "./getDelegations.ts";
+} from "./getDelegations.js";
 import {
   type GetDelegatorParameters,
   type GetDelegatorReturnType,
   getDelegator,
-} from "./getDelegator.ts";
+} from "./getDelegator.js";
 import {
   type GetDelegatorsParameters,
   type GetDelegatorsReturnType,
   getDelegators,
-} from "./getDelegators.ts";
+} from "./getDelegators.js";
 import {
   type GetEpochParameters,
   type GetEpochReturnType,
   getEpoch,
-} from "./getEpoch.ts";
+} from "./getEpoch.js";
 import {
   type GetExecutionValidatorSetParameters,
   type GetExecutionValidatorSetReturnType,
   getExecutionValidatorSet,
-} from "./getExecutionValidatorSet.ts";
+} from "./getExecutionValidatorSet.js";
 import {
   type GetProposerValIdParameters,
   type GetProposerValIdReturnType,
   getProposerValId,
-} from "./getProposerValId.ts";
+} from "./getProposerValId.js";
 import {
   type GetSnapshotValidatorSetParameters,
   type GetSnapshotValidatorSetReturnType,
   getSnapshotValidatorSet,
-} from "./getSnapshotValidatorSet.ts";
+} from "./getSnapshotValidatorSet.js";
 import {
   type GetValidatorParameters,
   type GetValidatorReturnType,
   getValidator,
-} from "./getValidator.ts";
+} from "./getValidator.js";
 import {
   type GetWithdrawalRequestParameters,
   type GetWithdrawalRequestReturnType,
   getWithdrawalRequest,
-} from "./getWithdrawalRequest.ts";
+} from "./getWithdrawalRequest.js";
 
 /**
  * Actions for interacting with the Monad staking precompile.

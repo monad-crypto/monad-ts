@@ -5,7 +5,7 @@ import type {
   ReadContractReturnType,
 } from "viem/actions";
 import { readContract } from "viem/actions";
-import { STAKING_ADDRESS, stakingAbi } from "./index.ts";
+import { STAKING_ADDRESS, stakingAbi } from "./index.js";
 
 export type GetDelegatorsParameters<
   args extends ContractFunctionArgs<
