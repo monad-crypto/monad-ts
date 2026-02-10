@@ -1,8 +1,8 @@
 import { expect, test } from "bun:test";
 import { createPublicClient, http } from "viem";
 import { monad } from "viem/chains";
-import { FORK_BLOCK_NUMBER, RPC_URL } from "../test/setup";
-import { getEpoch } from "./getEpoch";
+import { FORK_BLOCK_NUMBER, RPC_URL } from "../test/setup.js";
+import { getEpoch } from "./getEpoch.js";
 
 test("getEpoch", async () => {
   const client = createPublicClient({

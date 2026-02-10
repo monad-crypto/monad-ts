@@ -1,8 +1,8 @@
 import { expect, test } from "bun:test";
 import { createPublicClient, http } from "viem";
 import { monad } from "viem/chains";
-import { FORK_BLOCK_NUMBER, RPC_URL } from "../test/setup";
-import { getWithdrawalRequest } from "./getWithdrawalRequest";
+import { FORK_BLOCK_NUMBER, RPC_URL } from "../test/setup.js";
+import { getWithdrawalRequest } from "./getWithdrawalRequest.js";
 
 test("getWithdrawalRequest", async () => {
   const client = createPublicClient({

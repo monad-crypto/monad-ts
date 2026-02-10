@@ -1,8 +1,8 @@
 import { expect, test } from "bun:test";
 import { createPublicClient, http } from "viem";
 import { monad } from "viem/chains";
-import { FORK_BLOCK_NUMBER, RPC_URL } from "../test/setup";
-import { getSnapshotValidatorSet } from "./getSnapshotValidatorSet";
+import { FORK_BLOCK_NUMBER, RPC_URL } from "../test/setup.js";
+import { getSnapshotValidatorSet } from "./getSnapshotValidatorSet.js";
 
 test("getSnapshotValidatorSet", async () => {
   const client = createPublicClient({

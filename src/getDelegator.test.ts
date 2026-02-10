@@ -1,8 +1,8 @@
 import { expect, test } from "bun:test";
 import { createPublicClient, http } from "viem";
 import { monad } from "viem/chains";
-import { FORK_BLOCK_NUMBER, RPC_URL } from "../test/setup";
-import { getDelegator } from "./getDelegator";
+import { FORK_BLOCK_NUMBER, RPC_URL } from "../test/setup.js";
+import { getDelegator } from "./getDelegator.js";
 
 test("getDelegator", async () => {
   const client = createPublicClient({
