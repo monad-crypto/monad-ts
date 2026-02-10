@@ -5,7 +5,7 @@ import type {
   ReadContractReturnType,
 } from "viem/actions";
 import { readContract } from "viem/actions";
-import { STAKING_ADDRESS, stakingAbi } from ".";
+import { STAKING_ADDRESS, stakingAbi } from "./index.ts";
 
 export type GetSnapshotValidatorSetParameters<
   args extends ContractFunctionArgs<
