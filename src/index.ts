@@ -2,8 +2,10 @@
  * Appliction binary interface for the Monad staking precompile.
  *
  * @see {@link https://docs.monad.xyz/developer-essentials/staking/staking-precompile}
- * @dev External view methods have "view" state mutability for integration with
- * client libraries, diverging from the onchain behavior.
+ *
+ * @dev External view methods have "view" state mutability. This is not the same state
+ * mutability that is used onchain. Onchain precompile functions all have "payable" or
+ * "nonpayable" state mutability.
  */
 export const stakingAbi = [
   {
