@@ -50,25 +50,6 @@ import {
   getWithdrawalRequest,
 } from "./getWithdrawalRequest.js";
 
-/**
- * Actions for interacting with the Monad staking precompile.
- *
- * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile
- *
- * @example
- * ```ts
- * import { createClient, http } from 'viem'
- * import { monad } from 'viem/chains'
- * import { monadActions } from 'monad-ts-docs'
- *
- * const client = createClient({
- *   chain: monad,
- *   transport: http(),
- * }).extend(monadActions())
- *
- * const validator = await client.getValidator({ args: [1n] })
- * ```
- */
 export type MonadActions = {
   /**
    * Returns a validator's complete state across execution, consensus, and snapshot contexts.
@@ -336,6 +317,25 @@ export type MonadActions = {
   ) => Promise<GetProposerValIdReturnType>;
 };
 
+/**
+ * Actions for interacting with the Monad staking precompile.
+ *
+ * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile
+ *
+ * @example
+ * ```ts
+ * import { createClient, http } from 'viem'
+ * import { monad } from 'viem/chains'
+ * import { monadActions } from 'monad-ts-docs'
+ *
+ * const client = createClient({
+ *   chain: monad,
+ *   transport: http(),
+ * }).extend(monadActions())
+ *
+ * const validator = await client.getValidator({ args: [1n] })
+ * ```
+ */
 export function monadActions() {
   return <chain extends Chain | undefined>(
     client: Client<Transport, chain>,
