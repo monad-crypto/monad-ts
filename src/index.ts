@@ -1,9 +1,9 @@
 /**
- * Appliction binary interface for the Monad staking precompile. 
- * 
+ * Appliction binary interface for the Monad staking precompile.
+ *
  * @see {@link https://docs.monad.xyz/developer-essentials/staking/staking-precompile}
- * @dev External view methods have "view" state mutability for integration with 
- * client libraries, diverging from the onchain behavior. 
+ * @dev External view methods have "view" state mutability for integration with
+ * client libraries, diverging from the onchain behavior.
  */
 export const stakingAbi = [
   {
@@ -467,65 +467,65 @@ export const stakingAbi = [
 
 export const STAKING_ADDRESS = "0x0000000000000000000000000000000000001000";
 
-export type { MonadActions } from "./decorator.ts";
-export { monadActions } from "./decorator.ts";
+export type { MonadActions } from "./decorator.js";
+export { monadActions } from "./decorator.js";
 export type {
   GetConsensusValidatorSetErrorType,
   GetConsensusValidatorSetParameters,
   GetConsensusValidatorSetReturnType,
-} from "./getConsensusValidatorSet.ts";
-export { getConsensusValidatorSet } from "./getConsensusValidatorSet.ts";
+} from "./getConsensusValidatorSet.js";
+export { getConsensusValidatorSet } from "./getConsensusValidatorSet.js";
 export type {
   GetDelegationsErrorType,
   GetDelegationsParameters,
   GetDelegationsReturnType,
-} from "./getDelegations.ts";
-export { getDelegations } from "./getDelegations.ts";
+} from "./getDelegations.js";
+export { getDelegations } from "./getDelegations.js";
 export type {
   GetDelegatorErrorType,
   GetDelegatorParameters,
   GetDelegatorReturnType,
-} from "./getDelegator.ts";
-export { getDelegator } from "./getDelegator.ts";
+} from "./getDelegator.js";
+export { getDelegator } from "./getDelegator.js";
 export type {
   GetDelegatorsErrorType,
   GetDelegatorsParameters,
   GetDelegatorsReturnType,
-} from "./getDelegators.ts";
-export { getDelegators } from "./getDelegators.ts";
+} from "./getDelegators.js";
+export { getDelegators } from "./getDelegators.js";
 export type {
   GetEpochErrorType,
   GetEpochParameters,
   GetEpochReturnType,
-} from "./getEpoch.ts";
-export { getEpoch } from "./getEpoch.ts";
+} from "./getEpoch.js";
+export { getEpoch } from "./getEpoch.js";
 export type {
   GetExecutionValidatorSetErrorType,
   GetExecutionValidatorSetParameters,
   GetExecutionValidatorSetReturnType,
-} from "./getExecutionValidatorSet.ts";
-export { getExecutionValidatorSet } from "./getExecutionValidatorSet.ts";
+} from "./getExecutionValidatorSet.js";
+export { getExecutionValidatorSet } from "./getExecutionValidatorSet.js";
 export type {
   GetProposerValIdErrorType,
   GetProposerValIdParameters,
   GetProposerValIdReturnType,
-} from "./getProposerValId.ts";
-export { getProposerValId } from "./getProposerValId.ts";
+} from "./getProposerValId.js";
+export { getProposerValId } from "./getProposerValId.js";
 export type {
   GetSnapshotValidatorSetErrorType,
   GetSnapshotValidatorSetParameters,
   GetSnapshotValidatorSetReturnType,
-} from "./getSnapshotValidatorSet.ts";
-export { getSnapshotValidatorSet } from "./getSnapshotValidatorSet.ts";
+} from "./getSnapshotValidatorSet.js";
+export { getSnapshotValidatorSet } from "./getSnapshotValidatorSet.js";
 export type {
   GetValidatorErrorType,
   GetValidatorParameters,
   GetValidatorReturnType,
-} from "./getValidator.ts";
-export { getValidator } from "./getValidator.ts";
+} from "./getValidator.js";
+export { getValidator } from "./getValidator.js";
 export type {
   GetWithdrawalRequestErrorType,
   GetWithdrawalRequestParameters,
   GetWithdrawalRequestReturnType,
-} from "./getWithdrawalRequest.ts";
-export { getWithdrawalRequest } from "./getWithdrawalRequest.ts";
+} from "./getWithdrawalRequest.js";
+export { getWithdrawalRequest } from "./getWithdrawalRequest.js";
