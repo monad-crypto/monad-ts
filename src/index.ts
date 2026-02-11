@@ -635,6 +635,15 @@ export const STAKING_ADDRESS = "0x0000000000000000000000000000000000001000";
  */
 export const WMON_ADDRESS = "0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A";
 
+/** Number of decimals used by WMON. */
+export const WMON_DECIMALS = 18 as const;
+
+/** Name of the WMON token. */
+export const WMON_NAME = "Wrapped MON" as const;
+
+/** Ticker symbol of the WMON token. */
+export const WMON_SYMBOL = "WMON" as const;
+
 export type { MonadActions } from "./decorator.js";
 export { monadActions } from "./decorator.js";
 export type {
@@ -709,21 +718,3 @@ export type {
   GetWmonBalanceOfReturnType,
 } from "./getWmonBalanceOf.js";
 export { getWmonBalanceOf } from "./getWmonBalanceOf.js";
-export type {
-  GetWmonDecimalsErrorType,
-  GetWmonDecimalsParameters,
-  GetWmonDecimalsReturnType,
-} from "./getWmonDecimals.js";
-export { getWmonDecimals } from "./getWmonDecimals.js";
-export type {
-  GetWmonNameErrorType,
-  GetWmonNameParameters,
-  GetWmonNameReturnType,
-} from "./getWmonName.js";
-export { getWmonName } from "./getWmonName.js";
-export type {
-  GetWmonSymbolErrorType,
-  GetWmonSymbolParameters,
-  GetWmonSymbolReturnType,
-} from "./getWmonSymbol.js";
-export { getWmonSymbol } from "./getWmonSymbol.js";
