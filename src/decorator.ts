@@ -290,7 +290,9 @@ export type MonadActions = {
    * const [epoch, inEpochDelayPeriod] = await getStakingEpoch(client)
    * ```
    */
-  getStakingEpoch: (parameters?: GetStakingEpochParameters) => Promise<GetStakingEpochReturnType>;
+  getStakingEpoch: (
+    parameters?: GetStakingEpochParameters,
+  ) => Promise<GetStakingEpochReturnType>;
   /**
    * Returns the validator ID of the current block proposer, corresponding to the SECP value of the block author.
    *
@@ -341,8 +343,10 @@ export function monadActions() {
     client: Client<Transport, chain>,
   ): MonadActions => {
     return {
-      getStakingValidator: (parameters) => getStakingValidator(client, parameters),
-      getStakingDelegator: (parameters) => getStakingDelegator(client, parameters),
+      getStakingValidator: (parameters) =>
+        getStakingValidator(client, parameters),
+      getStakingDelegator: (parameters) =>
+        getStakingDelegator(client, parameters),
       getStakingWithdrawalRequest: (parameters) =>
         getStakingWithdrawalRequest(client, parameters),
       getStakingConsensusValidatorSet: (parameters) =>
@@ -351,10 +355,13 @@ export function monadActions() {
         getStakingSnapshotValidatorSet(client, parameters),
       getStakingExecutionValidatorSet: (parameters) =>
         getStakingExecutionValidatorSet(client, parameters),
-      getStakingDelegations: (parameters) => getStakingDelegations(client, parameters),
-      getStakingDelegators: (parameters) => getStakingDelegators(client, parameters),
+      getStakingDelegations: (parameters) =>
+        getStakingDelegations(client, parameters),
+      getStakingDelegators: (parameters) =>
+        getStakingDelegators(client, parameters),
       getStakingEpoch: (parameters) => getStakingEpoch(client, parameters),
-      getStakingProposerValId: (parameters) => getStakingProposerValId(client, parameters),
+      getStakingProposerValId: (parameters) =>
+        getStakingProposerValId(client, parameters),
     };
   };
 }
