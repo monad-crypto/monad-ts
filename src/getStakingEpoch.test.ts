@@ -2,26 +2,22 @@ import { expect, test } from "bun:test";
 import { createPublicClient, http } from "viem";
 import { monad } from "viem/chains";
 import { FORK_BLOCK_NUMBER, RPC_URL } from "../test/setup.js";
-import { getDelegations } from "./getDelegations.js";
+import { getStakingEpoch } from "./getStakingEpoch.js";
 
-test("getDelegations", async () => {
+test("getStakingEpoch", async () => {
   const client = createPublicClient({
     transport: http(RPC_URL),
     chain: monad,
   });
 
-  const delegations = await getDelegations(client, {
-    args: ["0x57A7c50E6C27B6252ff484785A6d75E294c8A0a5", 0n],
+  const epoch = await getStakingEpoch(client, {
     blockNumber: FORK_BLOCK_NUMBER,
   });
 
-  expect(delegations).toMatchInlineSnapshot(`
+  expect(epoch).toMatchInlineSnapshot(`
     [
+      1040n,
       true,
-      0n,
-      [
-        21n,
-      ],
     ]
   `);
 });

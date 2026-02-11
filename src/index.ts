@@ -472,62 +472,62 @@ export const STAKING_ADDRESS = "0x0000000000000000000000000000000000001000";
 export type { MonadActions } from "./decorator.js";
 export { monadActions } from "./decorator.js";
 export type {
-  GetConsensusValidatorSetErrorType,
-  GetConsensusValidatorSetParameters,
-  GetConsensusValidatorSetReturnType,
-} from "./getConsensusValidatorSet.js";
-export { getConsensusValidatorSet } from "./getConsensusValidatorSet.js";
+  GetStakingConsensusValidatorSetErrorType,
+  GetStakingConsensusValidatorSetParameters,
+  GetStakingConsensusValidatorSetReturnType,
+} from "./getStakingConsensusValidatorSet.js";
+export { getStakingConsensusValidatorSet } from "./getStakingConsensusValidatorSet.js";
 export type {
-  GetDelegationsErrorType,
-  GetDelegationsParameters,
-  GetDelegationsReturnType,
-} from "./getDelegations.js";
-export { getDelegations } from "./getDelegations.js";
+  GetStakingDelegationsErrorType,
+  GetStakingDelegationsParameters,
+  GetStakingDelegationsReturnType,
+} from "./getStakingDelegations.js";
+export { getStakingDelegations } from "./getStakingDelegations.js";
 export type {
-  GetDelegatorErrorType,
-  GetDelegatorParameters,
-  GetDelegatorReturnType,
-} from "./getDelegator.js";
-export { getDelegator } from "./getDelegator.js";
+  GetStakingDelegatorErrorType,
+  GetStakingDelegatorParameters,
+  GetStakingDelegatorReturnType,
+} from "./getStakingDelegator.js";
+export { getStakingDelegator } from "./getStakingDelegator.js";
 export type {
-  GetDelegatorsErrorType,
-  GetDelegatorsParameters,
-  GetDelegatorsReturnType,
-} from "./getDelegators.js";
-export { getDelegators } from "./getDelegators.js";
+  GetStakingDelegatorsErrorType,
+  GetStakingDelegatorsParameters,
+  GetStakingDelegatorsReturnType,
+} from "./getStakingDelegators.js";
+export { getStakingDelegators } from "./getStakingDelegators.js";
 export type {
-  GetEpochErrorType,
-  GetEpochParameters,
-  GetEpochReturnType,
-} from "./getEpoch.js";
-export { getEpoch } from "./getEpoch.js";
+  GetStakingEpochErrorType,
+  GetStakingEpochParameters,
+  GetStakingEpochReturnType,
+} from "./getStakingEpoch.js";
+export { getStakingEpoch } from "./getStakingEpoch.js";
 export type {
-  GetExecutionValidatorSetErrorType,
-  GetExecutionValidatorSetParameters,
-  GetExecutionValidatorSetReturnType,
-} from "./getExecutionValidatorSet.js";
-export { getExecutionValidatorSet } from "./getExecutionValidatorSet.js";
+  GetStakingExecutionValidatorSetErrorType,
+  GetStakingExecutionValidatorSetParameters,
+  GetStakingExecutionValidatorSetReturnType,
+} from "./getStakingExecutionValidatorSet.js";
+export { getStakingExecutionValidatorSet } from "./getStakingExecutionValidatorSet.js";
 export type {
-  GetProposerValIdErrorType,
-  GetProposerValIdParameters,
-  GetProposerValIdReturnType,
-} from "./getProposerValId.js";
-export { getProposerValId } from "./getProposerValId.js";
+  GetStakingProposerValIdErrorType,
+  GetStakingProposerValIdParameters,
+  GetStakingProposerValIdReturnType,
+} from "./getStakingProposerValId.js";
+export { getStakingProposerValId } from "./getStakingProposerValId.js";
 export type {
-  GetSnapshotValidatorSetErrorType,
-  GetSnapshotValidatorSetParameters,
-  GetSnapshotValidatorSetReturnType,
-} from "./getSnapshotValidatorSet.js";
-export { getSnapshotValidatorSet } from "./getSnapshotValidatorSet.js";
+  GetStakingSnapshotValidatorSetErrorType,
+  GetStakingSnapshotValidatorSetParameters,
+  GetStakingSnapshotValidatorSetReturnType,
+} from "./getStakingSnapshotValidatorSet.js";
+export { getStakingSnapshotValidatorSet } from "./getStakingSnapshotValidatorSet.js";
 export type {
-  GetValidatorErrorType,
-  GetValidatorParameters,
-  GetValidatorReturnType,
-} from "./getValidator.js";
-export { getValidator } from "./getValidator.js";
+  GetStakingValidatorErrorType,
+  GetStakingValidatorParameters,
+  GetStakingValidatorReturnType,
+} from "./getStakingValidator.js";
+export { getStakingValidator } from "./getStakingValidator.js";
 export type {
-  GetWithdrawalRequestErrorType,
-  GetWithdrawalRequestParameters,
-  GetWithdrawalRequestReturnType,
-} from "./getWithdrawalRequest.js";
-export { getWithdrawalRequest } from "./getWithdrawalRequest.js";
+  GetStakingWithdrawalRequestErrorType,
+  GetStakingWithdrawalRequestParameters,
+  GetStakingWithdrawalRequestReturnType,
+} from "./getStakingWithdrawalRequest.js";
+export { getStakingWithdrawalRequest } from "./getStakingWithdrawalRequest.js";

@@ -7,7 +7,7 @@ import type {
 import { readContract } from "viem/actions";
 import { STAKING_ADDRESS, stakingAbi } from "./index.js";
 
-export type GetSnapshotValidatorSetParameters<
+export type GetStakingSnapshotValidatorSetParameters<
   args extends ContractFunctionArgs<
     typeof stakingAbi,
     "pure" | "view",
@@ -21,11 +21,11 @@ export type GetSnapshotValidatorSetParameters<
   ReadContractParameters<typeof stakingAbi, "getSnapshotValidatorSet", args>,
   "abi" | "address" | "functionName"
 >;
-export type GetSnapshotValidatorSetReturnType = ReadContractReturnType<
+export type GetStakingSnapshotValidatorSetReturnType = ReadContractReturnType<
   typeof stakingAbi,
   "getSnapshotValidatorSet"
 >;
-export type GetSnapshotValidatorSetErrorType = ReadContractErrorType;
+export type GetStakingSnapshotValidatorSetErrorType = ReadContractErrorType;
 
 /**
  * Returns the snapshot validator set IDs. Results are paginated; when `isDone` is false, call again with `nextIndex` as `startIndex`.
@@ -33,26 +33,26 @@ export type GetSnapshotValidatorSetErrorType = ReadContractErrorType;
  * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#get-validatorset
  *
  * @param client - Viem {@link Client}
- * @param parameters - {@link GetSnapshotValidatorSetParameters}
- * @returns `(isDone, nextIndex, valIds)` tuple of snapshot validator IDs. {@link GetSnapshotValidatorSetReturnType}
+ * @param parameters - {@link GetStakingSnapshotValidatorSetParameters}
+ * @returns `(isDone, nextIndex, valIds)` tuple of snapshot validator IDs. {@link GetStakingSnapshotValidatorSetReturnType}
  *
  * @example
  * ```ts
  * import { createClient, http } from 'viem'
  * import { monad } from 'viem/chains'
- * import { getSnapshotValidatorSet } from 'monad-ts-docs'
+ * import { getStakingSnapshotValidatorSet } from 'monad-ts-docs'
  *
  * const client = createClient({
  *   chain: monad,
  *   transport: http(),
  * })
  *
- * const result = await getSnapshotValidatorSet(client, {
+ * const result = await getStakingSnapshotValidatorSet(client, {
  *   args: [0],
  * })
  * ```
  */
-export async function getSnapshotValidatorSet<
+export async function getStakingSnapshotValidatorSet<
   chain extends Chain | undefined,
   const args extends ContractFunctionArgs<
     typeof stakingAbi,
@@ -61,8 +61,8 @@ export async function getSnapshotValidatorSet<
   >,
 >(
   client: Client<Transport, chain>,
-  parameters: GetSnapshotValidatorSetParameters<args>,
-): Promise<GetSnapshotValidatorSetReturnType> {
+  parameters: GetStakingSnapshotValidatorSetParameters<args>,
+): Promise<GetStakingSnapshotValidatorSetReturnType> {
   return readContract(client, {
     ...parameters,
     abi: stakingAbi,

@@ -7,7 +7,7 @@ import type {
 import { readContract } from "viem/actions";
 import { STAKING_ADDRESS, stakingAbi } from "./index.js";
 
-export type GetDelegatorParameters<
+export type GetStakingDelegatorParameters<
   args extends ContractFunctionArgs<
     typeof stakingAbi,
     "pure" | "view",
@@ -17,11 +17,11 @@ export type GetDelegatorParameters<
   ReadContractParameters<typeof stakingAbi, "getDelegator", args>,
   "abi" | "address" | "functionName"
 >;
-export type GetDelegatorReturnType = ReadContractReturnType<
+export type GetStakingDelegatorReturnType = ReadContractReturnType<
   typeof stakingAbi,
   "getDelegator"
 >;
-export type GetDelegatorErrorType = ReadContractErrorType;
+export type GetStakingDelegatorErrorType = ReadContractErrorType;
 
 /**
  * Returns a delegator's stake, accumulated rewards, and pending stake changes for a specified validator.
@@ -29,26 +29,26 @@ export type GetDelegatorErrorType = ReadContractErrorType;
  * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#getdelegator
  *
  * @param client - Viem {@link Client}
- * @param parameters - {@link GetDelegatorParameters}
- * @returns Delegator's active stake, accumulator, unclaimed rewards, and pending delta stakes and epochs. {@link GetDelegatorReturnType}
+ * @param parameters - {@link GetStakingDelegatorParameters}
+ * @returns Delegator's active stake, accumulator, unclaimed rewards, and pending delta stakes and epochs. {@link GetStakingDelegatorReturnType}
  *
  * @example
  * ```ts
  * import { createClient, http } from 'viem'
  * import { monad } from 'viem/chains'
- * import { getDelegator } from 'monad-ts-docs'
+ * import { getStakingDelegator } from 'monad-ts-docs'
  *
  * const client = createClient({
  *   chain: monad,
  *   transport: http(),
  * })
  *
- * const delegator = await getDelegator(client, {
+ * const delegator = await getStakingDelegator(client, {
  *   args: [1n, '0x...'],
  * })
  * ```
  */
-export async function getDelegator<
+export async function getStakingDelegator<
   chain extends Chain | undefined,
   const args extends ContractFunctionArgs<
     typeof stakingAbi,
@@ -57,8 +57,8 @@ export async function getDelegator<
   >,
 >(
   client: Client<Transport, chain>,
-  parameters: GetDelegatorParameters<args>,
-): Promise<GetDelegatorReturnType> {
+  parameters: GetStakingDelegatorParameters<args>,
+): Promise<GetStakingDelegatorReturnType> {
   return readContract(client, {
     ...parameters,
     abi: stakingAbi,

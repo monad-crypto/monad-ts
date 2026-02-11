@@ -7,7 +7,7 @@ import type {
 import { readContract } from "viem/actions";
 import { STAKING_ADDRESS, stakingAbi } from "./index.js";
 
-export type GetValidatorParameters<
+export type GetStakingValidatorParameters<
   args extends ContractFunctionArgs<
     typeof stakingAbi,
     "pure" | "view",
@@ -17,11 +17,11 @@ export type GetValidatorParameters<
   ReadContractParameters<typeof stakingAbi, "getValidator", args>,
   "abi" | "address" | "functionName"
 >;
-export type GetValidatorReturnType = ReadContractReturnType<
+export type GetStakingValidatorReturnType = ReadContractReturnType<
   typeof stakingAbi,
   "getValidator"
 >;
-export type GetValidatorErrorType = ReadContractErrorType;
+export type GetStakingValidatorErrorType = ReadContractErrorType;
 
 /**
  * Returns a validator's complete state across execution, consensus, and snapshot contexts.
@@ -29,26 +29,26 @@ export type GetValidatorErrorType = ReadContractErrorType;
  * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#getvalidator
  *
  * @param client - Viem {@link Client}
- * @param parameters - {@link GetValidatorParameters}
- * @returns Validator state including auth address, flags, stake, accumulator, commission, unclaimed rewards, consensus/snapshot stake and commission, and public keys. {@link GetValidatorReturnType}
+ * @param parameters - {@link GetStakingValidatorParameters}
+ * @returns Validator state including auth address, flags, stake, accumulator, commission, unclaimed rewards, consensus/snapshot stake and commission, and public keys. {@link GetStakingValidatorReturnType}
  *
  * @example
  * ```ts
  * import { createClient, http } from 'viem'
  * import { monad } from 'viem/chains'
- * import { getValidator } from 'monad-ts-docs'
+ * import { getStakingValidator } from 'monad-ts-docs'
  *
  * const client = createClient({
  *   chain: monad,
  *   transport: http(),
  * })
  *
- * const validator = await getValidator(client, {
+ * const validator = await getStakingValidator(client, {
  *   args: [1n],
  * })
  * ```
  */
-export async function getValidator<
+export async function getStakingValidator<
   chain extends Chain | undefined,
   const args extends ContractFunctionArgs<
     typeof stakingAbi,
@@ -57,8 +57,8 @@ export async function getValidator<
   >,
 >(
   client: Client<Transport, chain>,
-  parameters: GetValidatorParameters<args>,
-): Promise<GetValidatorReturnType> {
+  parameters: GetStakingValidatorParameters<args>,
+): Promise<GetStakingValidatorReturnType> {
   return readContract(client, {
     ...parameters,
     abi: stakingAbi,

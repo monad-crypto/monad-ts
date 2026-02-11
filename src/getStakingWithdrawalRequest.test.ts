@@ -2,22 +2,24 @@ import { expect, test } from "bun:test";
 import { createPublicClient, http } from "viem";
 import { monad } from "viem/chains";
 import { FORK_BLOCK_NUMBER, RPC_URL } from "../test/setup.js";
-import { getEpoch } from "./getEpoch.js";
+import { getStakingWithdrawalRequest } from "./getStakingWithdrawalRequest.js";
 
-test("getEpoch", async () => {
+test("getStakingWithdrawalRequest", async () => {
   const client = createPublicClient({
     transport: http(RPC_URL),
     chain: monad,
   });
 
-  const epoch = await getEpoch(client, {
+  const withdrawal = await getStakingWithdrawalRequest(client, {
+    args: [46n, "0x0000000000000000000000000000000000000000", 0],
     blockNumber: FORK_BLOCK_NUMBER,
   });
 
-  expect(epoch).toMatchInlineSnapshot(`
+  expect(withdrawal).toMatchInlineSnapshot(`
     [
-      1040n,
-      true,
+      0n,
+      0n,
+      0n,
     ]
   `);
 });
