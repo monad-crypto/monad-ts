@@ -12,11 +12,13 @@ test("getWmonAllowance", async () => {
 
   const allowance = await getWmonAllowance(client, {
     args: [
-      "0x0000000000000000000000000000000000000001",
-      "0x0000000000000000000000000000000000000002",
+      "0x058EC190471E8A89d40A522C803D456715A93316",
+      "0x000000000022D473030F116dDEE9F6B43aC78BA3",
     ],
     blockNumber: FORK_BLOCK_NUMBER,
   });
 
-  expect(allowance).toMatchInlineSnapshot(`0n`);
+  expect(allowance).toMatchInlineSnapshot(
+    `115792089237316195423570985008687907853269984665640564039457584007913129639935n`,
+  );
 });
