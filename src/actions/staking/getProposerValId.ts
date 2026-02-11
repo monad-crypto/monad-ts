@@ -5,9 +5,9 @@ import type {
   ReadContractReturnType,
 } from "viem/actions";
 import { readContract } from "viem/actions";
-import { STAKING_ADDRESS, stakingAbi } from "./index.js";
+import { STAKING_ADDRESS, stakingAbi } from "../../constants.js";
 
-export type GetStakingProposerValIdParameters<
+export type GetProposerValIdParameters<
   args extends ContractFunctionArgs<
     typeof stakingAbi,
     "pure" | "view",
@@ -21,11 +21,11 @@ export type GetStakingProposerValIdParameters<
   ReadContractParameters<typeof stakingAbi, "getProposerValId", args>,
   "abi" | "address" | "functionName"
 >;
-export type GetStakingProposerValIdReturnType = ReadContractReturnType<
+export type GetProposerValIdReturnType = ReadContractReturnType<
   typeof stakingAbi,
   "getProposerValId"
 >;
-export type GetStakingProposerValIdErrorType = ReadContractErrorType;
+export type GetProposerValIdErrorType = ReadContractErrorType;
 
 /**
  * Returns the validator ID of the current block proposer, corresponding to the SECP value of the block author.
@@ -33,23 +33,23 @@ export type GetStakingProposerValIdErrorType = ReadContractErrorType;
  * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#getproposervalid
  *
  * @param client - Viem {@link Client}
- * @returns Validator ID of the current block proposer. {@link GetStakingProposerValIdReturnType}
+ * @returns Validator ID of the current block proposer. {@link GetProposerValIdReturnType}
  *
  * @example
  * ```ts
  * import { createClient, http } from 'viem'
  * import { monad } from 'viem/chains'
- * import { getStakingProposerValId } from 'monad-ts-docs'
+ * import { Staking } from 'monad-ts'
  *
  * const client = createClient({
  *   chain: monad,
  *   transport: http(),
  * })
  *
- * const proposerValId = await getStakingProposerValId(client)
+ * const proposerValId = await Staking.getProposerValId(client)
  * ```
  */
-export async function getStakingProposerValId<
+export async function getProposerValId<
   chain extends Chain | undefined,
   const args extends ContractFunctionArgs<
     typeof stakingAbi,
@@ -58,8 +58,8 @@ export async function getStakingProposerValId<
   >,
 >(
   client: Client<Transport, chain>,
-  parameters?: GetStakingProposerValIdParameters<args>,
-): Promise<GetStakingProposerValIdReturnType> {
+  parameters?: GetProposerValIdParameters<args>,
+): Promise<GetProposerValIdReturnType> {
   return readContract(client, {
     ...parameters,
     abi: stakingAbi,

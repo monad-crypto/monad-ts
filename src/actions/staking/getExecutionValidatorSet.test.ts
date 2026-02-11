@@ -1,16 +1,16 @@
 import { expect, test } from "bun:test";
 import { createPublicClient, http } from "viem";
 import { monad } from "viem/chains";
-import { FORK_BLOCK_NUMBER, RPC_URL } from "../test/setup.js";
-import { getStakingExecutionValidatorSet } from "./getStakingExecutionValidatorSet.js";
+import { FORK_BLOCK_NUMBER, RPC_URL } from "../../../test/setup.js";
+import { getExecutionValidatorSet } from "./getExecutionValidatorSet.js";
 
-test("getStakingExecutionValidatorSet", async () => {
+test("getExecutionValidatorSet", async () => {
   const client = createPublicClient({
     transport: http(RPC_URL),
     chain: monad,
   });
 
-  const validatorSet = await getStakingExecutionValidatorSet(client, {
+  const validatorSet = await getExecutionValidatorSet(client, {
     args: [0],
     blockNumber: FORK_BLOCK_NUMBER,
   });

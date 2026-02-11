@@ -1,16 +1,16 @@
 import { expect, test } from "bun:test";
 import { createPublicClient, http } from "viem";
 import { monad } from "viem/chains";
-import { FORK_BLOCK_NUMBER, RPC_URL } from "../test/setup.js";
-import { getStakingSnapshotValidatorSet } from "./getStakingSnapshotValidatorSet.js";
+import { FORK_BLOCK_NUMBER, RPC_URL } from "../../../test/setup.js";
+import { getConsensusValidatorSet } from "./getConsensusValidatorSet.js";
 
-test("getStakingSnapshotValidatorSet", async () => {
+test("getConsensusValidatorSet", async () => {
   const client = createPublicClient({
     transport: http(RPC_URL),
     chain: monad,
   });
 
-  const validatorSet = await getStakingSnapshotValidatorSet(client, {
+  const validatorSet = await getConsensusValidatorSet(client, {
     args: [0],
     blockNumber: FORK_BLOCK_NUMBER,
   });
@@ -57,11 +57,11 @@ test("getStakingSnapshotValidatorSet", async () => {
         133n,
         168n,
         125n,
-        169n,
         25n,
         152n,
         26n,
         179n,
+        169n,
         157n,
         20n,
         94n,
@@ -115,8 +115,8 @@ test("getStakingSnapshotValidatorSet", async () => {
         69n,
         111n,
         83n,
-        63n,
         21n,
+        63n,
         68n,
         50n,
         87n,

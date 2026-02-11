@@ -5,62 +5,62 @@ import type {
   ReadContractReturnType,
 } from "viem/actions";
 import { readContract } from "viem/actions";
-import { WMON_ADDRESS, wmonAbi } from "./index.js";
+import { WMON_ADDRESS, wmonAbi } from "../../constants.js";
 
-export type GetWmonAllowanceParameters<
+export type GetBalanceOfParameters<
   args extends ContractFunctionArgs<
     typeof wmonAbi,
     "pure" | "view",
-    "allowance"
-  > = ContractFunctionArgs<typeof wmonAbi, "pure" | "view", "allowance">,
+    "balanceOf"
+  > = ContractFunctionArgs<typeof wmonAbi, "pure" | "view", "balanceOf">,
 > = Omit<
-  ReadContractParameters<typeof wmonAbi, "allowance", args>,
+  ReadContractParameters<typeof wmonAbi, "balanceOf", args>,
   "abi" | "address" | "functionName"
 >;
-export type GetWmonAllowanceReturnType = ReadContractReturnType<
+export type GetBalanceOfReturnType = ReadContractReturnType<
   typeof wmonAbi,
-  "allowance"
+  "balanceOf"
 >;
-export type GetWmonAllowanceErrorType = ReadContractErrorType;
+export type GetBalanceOfErrorType = ReadContractErrorType;
 
 /**
- * Returns the amount of WMON the spender is allowed to spend on behalf of the owner.
+ * Returns the WMON balance of the given address.
  *
  * @param client - Viem {@link Client}
- * @param parameters - {@link GetWmonAllowanceParameters}
- * @returns The allowance amount. {@link GetWmonAllowanceReturnType}
+ * @param parameters - {@link GetBalanceOfParameters}
+ * @returns The WMON balance. {@link GetBalanceOfReturnType}
  *
  * @example
  * ```ts
  * import { createClient, http } from 'viem'
  * import { monad } from 'viem/chains'
- * import { getWmonAllowance } from 'monad-ts'
+ * import { Wmon } from 'monad-ts'
  *
  * const client = createClient({
  *   chain: monad,
  *   transport: http(),
  * })
  *
- * const allowance = await getWmonAllowance(client, {
- *   args: ['0x...', '0x...'],
+ * const balance = await Wmon.getBalanceOf(client, {
+ *   args: ['0x...'],
  * })
  * ```
  */
-export async function getWmonAllowance<
+export async function getBalanceOf<
   chain extends Chain | undefined,
   const args extends ContractFunctionArgs<
     typeof wmonAbi,
     "pure" | "view",
-    "allowance"
+    "balanceOf"
   >,
 >(
   client: Client<Transport, chain>,
-  parameters: GetWmonAllowanceParameters<args>,
-): Promise<GetWmonAllowanceReturnType> {
+  parameters: GetBalanceOfParameters<args>,
+): Promise<GetBalanceOfReturnType> {
   return readContract(client, {
     ...parameters,
     abi: wmonAbi,
     address: WMON_ADDRESS,
-    functionName: "allowance",
+    functionName: "balanceOf",
   });
 }
