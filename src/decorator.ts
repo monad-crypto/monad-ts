@@ -49,6 +49,31 @@ import {
   type GetWithdrawalRequestReturnType,
   getWithdrawalRequest,
 } from "./getWithdrawalRequest.js";
+import {
+  type GetWmonAllowanceParameters,
+  type GetWmonAllowanceReturnType,
+  getWmonAllowance,
+} from "./getWmonAllowance.js";
+import {
+  type GetWmonBalanceOfParameters,
+  type GetWmonBalanceOfReturnType,
+  getWmonBalanceOf,
+} from "./getWmonBalanceOf.js";
+import {
+  type GetWmonDecimalsParameters,
+  type GetWmonDecimalsReturnType,
+  getWmonDecimals,
+} from "./getWmonDecimals.js";
+import {
+  type GetWmonNameParameters,
+  type GetWmonNameReturnType,
+  getWmonName,
+} from "./getWmonName.js";
+import {
+  type GetWmonSymbolParameters,
+  type GetWmonSymbolReturnType,
+  getWmonSymbol,
+} from "./getWmonSymbol.js";
 
 export type MonadActions = {
   /**
@@ -315,6 +340,122 @@ export type MonadActions = {
   getProposerValId: (
     parameters?: GetProposerValIdParameters,
   ) => Promise<GetProposerValIdReturnType>;
+  /**
+   * Returns the WMON balance of the given address.
+   *
+   * @param parameters - {@link GetWmonBalanceOfParameters}
+   * @returns The WMON balance. {@link GetWmonBalanceOfReturnType}
+   *
+   * @example
+   * ```ts
+   * import { createClient, http } from 'viem'
+   * import { monad } from 'viem/chains'
+   * import { getWmonBalanceOf } from 'monad-ts'
+   *
+   * const client = createClient({
+   *   chain: monad,
+   *   transport: http(),
+   * })
+   *
+   * const balance = await getWmonBalanceOf(client, {
+   *   args: ['0x...'],
+   * })
+   * ```
+   */
+  getWmonBalanceOf: (
+    parameters: GetWmonBalanceOfParameters,
+  ) => Promise<GetWmonBalanceOfReturnType>;
+  /**
+   * Returns the amount of WMON the spender is allowed to spend on behalf of the owner.
+   *
+   * @param parameters - {@link GetWmonAllowanceParameters}
+   * @returns The allowance amount. {@link GetWmonAllowanceReturnType}
+   *
+   * @example
+   * ```ts
+   * import { createClient, http } from 'viem'
+   * import { monad } from 'viem/chains'
+   * import { getWmonAllowance } from 'monad-ts'
+   *
+   * const client = createClient({
+   *   chain: monad,
+   *   transport: http(),
+   * })
+   *
+   * const allowance = await getWmonAllowance(client, {
+   *   args: ['0x...', '0x...'],
+   * })
+   * ```
+   */
+  getWmonAllowance: (
+    parameters: GetWmonAllowanceParameters,
+  ) => Promise<GetWmonAllowanceReturnType>;
+  /**
+   * Returns the number of decimals used by WMON.
+   *
+   * @returns The number of decimals. {@link GetWmonDecimalsReturnType}
+   *
+   * @example
+   * ```ts
+   * import { createClient, http } from 'viem'
+   * import { monad } from 'viem/chains'
+   * import { getWmonDecimals } from 'monad-ts'
+   *
+   * const client = createClient({
+   *   chain: monad,
+   *   transport: http(),
+   * })
+   *
+   * const decimals = await getWmonDecimals(client)
+   * ```
+   */
+  getWmonDecimals: (
+    parameters?: GetWmonDecimalsParameters,
+  ) => Promise<GetWmonDecimalsReturnType>;
+  /**
+   * Returns the name of the WMON token.
+   *
+   * @returns The token name. {@link GetWmonNameReturnType}
+   *
+   * @example
+   * ```ts
+   * import { createClient, http } from 'viem'
+   * import { monad } from 'viem/chains'
+   * import { getWmonName } from 'monad-ts'
+   *
+   * const client = createClient({
+   *   chain: monad,
+   *   transport: http(),
+   * })
+   *
+   * const name = await getWmonName(client)
+   * ```
+   */
+  getWmonName: (
+    parameters?: GetWmonNameParameters,
+  ) => Promise<GetWmonNameReturnType>;
+  /**
+   * Returns the ticker symbol of the WMON token.
+   *
+   * @returns The token symbol. {@link GetWmonSymbolReturnType}
+   *
+   * @example
+   * ```ts
+   * import { createClient, http } from 'viem'
+   * import { monad } from 'viem/chains'
+   * import { getWmonSymbol } from 'monad-ts'
+   *
+   * const client = createClient({
+   *   chain: monad,
+   *   transport: http(),
+   * })
+   *
+   * const symbol = await getWmonSymbol(client)
+   * ```
+   */
+  getWmonSymbol: (
+    parameters?: GetWmonSymbolParameters,
+  ) => Promise<GetWmonSymbolReturnType>;
 };
 
 /**
@@ -355,6 +496,11 @@ export function monadActions() {
       getDelegators: (parameters) => getDelegators(client, parameters),
       getEpoch: (parameters) => getEpoch(client, parameters),
       getProposerValId: (parameters) => getProposerValId(client, parameters),
+      getWmonBalanceOf: (parameters) => getWmonBalanceOf(client, parameters),
+      getWmonAllowance: (parameters) => getWmonAllowance(client, parameters),
+      getWmonDecimals: (parameters) => getWmonDecimals(client, parameters),
+      getWmonName: (parameters) => getWmonName(client, parameters),
+      getWmonSymbol: (parameters) => getWmonSymbol(client, parameters),
     };
   };
 }

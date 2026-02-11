@@ -467,7 +467,173 @@ export const stakingAbi = [
   },
 ] as const;
 
+export const wmonAbi = [
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: "address", name: "src", type: "address" },
+      { indexed: true, internalType: "address", name: "guy", type: "address" },
+      { indexed: false, internalType: "uint256", name: "wad", type: "uint256" },
+    ],
+    name: "Approval",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: "address", name: "dst", type: "address" },
+      { indexed: false, internalType: "uint256", name: "wad", type: "uint256" },
+    ],
+    name: "Deposit",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: "address", name: "src", type: "address" },
+      { indexed: true, internalType: "address", name: "dst", type: "address" },
+      { indexed: false, internalType: "uint256", name: "wad", type: "uint256" },
+    ],
+    name: "Transfer",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: "address", name: "src", type: "address" },
+      { indexed: false, internalType: "uint256", name: "wad", type: "uint256" },
+    ],
+    name: "Withdrawal",
+    type: "event",
+  },
+  { payable: true, stateMutability: "payable", type: "fallback" },
+  {
+    constant: true,
+    inputs: [
+      { internalType: "address", name: "", type: "address" },
+      { internalType: "address", name: "", type: "address" },
+    ],
+    name: "allowance",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    payable: false,
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    constant: false,
+    inputs: [
+      { internalType: "address", name: "guy", type: "address" },
+      { internalType: "uint256", name: "wad", type: "uint256" },
+    ],
+    name: "approve",
+    outputs: [{ internalType: "bool", name: "", type: "bool" }],
+    payable: false,
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    constant: true,
+    inputs: [{ internalType: "address", name: "", type: "address" }],
+    name: "balanceOf",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    payable: false,
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    constant: true,
+    inputs: [],
+    name: "decimals",
+    outputs: [{ internalType: "uint8", name: "", type: "uint8" }],
+    payable: false,
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    constant: false,
+    inputs: [],
+    name: "deposit",
+    outputs: [],
+    payable: true,
+    stateMutability: "payable",
+    type: "function",
+  },
+  {
+    constant: true,
+    inputs: [],
+    name: "name",
+    outputs: [{ internalType: "string", name: "", type: "string" }],
+    payable: false,
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    constant: true,
+    inputs: [],
+    name: "symbol",
+    outputs: [{ internalType: "string", name: "", type: "string" }],
+    payable: false,
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    constant: true,
+    inputs: [],
+    name: "totalSupply",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    payable: false,
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    constant: false,
+    inputs: [
+      { internalType: "address", name: "dst", type: "address" },
+      { internalType: "uint256", name: "wad", type: "uint256" },
+    ],
+    name: "transfer",
+    outputs: [{ internalType: "bool", name: "", type: "bool" }],
+    payable: false,
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    constant: false,
+    inputs: [
+      { internalType: "address", name: "src", type: "address" },
+      { internalType: "address", name: "dst", type: "address" },
+      { internalType: "uint256", name: "wad", type: "uint256" },
+    ],
+    name: "transferFrom",
+    outputs: [{ internalType: "bool", name: "", type: "bool" }],
+    payable: false,
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    constant: false,
+    inputs: [{ internalType: "uint256", name: "wad", type: "uint256" }],
+    name: "withdraw",
+    outputs: [],
+    payable: false,
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+] as const;
+
+/**
+ * Address of monad staking precompile.
+ *
+ * @see {@link https://monadscan.com/address/0x0000000000000000000000000000000000001000}}
+ */
 export const STAKING_ADDRESS = "0x0000000000000000000000000000000000001000";
+
+/**
+ * Address of wrapped Monad token.
+ *
+ * @see {@link https://monadscan.com/address/0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A}
+ */
+export const WMON_ADDRESS = "0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A";
 
 export type { MonadActions } from "./decorator.js";
 export { monadActions } from "./decorator.js";
@@ -531,3 +697,33 @@ export type {
   GetWithdrawalRequestReturnType,
 } from "./getWithdrawalRequest.js";
 export { getWithdrawalRequest } from "./getWithdrawalRequest.js";
+export type {
+  GetWmonAllowanceErrorType,
+  GetWmonAllowanceParameters,
+  GetWmonAllowanceReturnType,
+} from "./getWmonAllowance.js";
+export { getWmonAllowance } from "./getWmonAllowance.js";
+export type {
+  GetWmonBalanceOfErrorType,
+  GetWmonBalanceOfParameters,
+  GetWmonBalanceOfReturnType,
+} from "./getWmonBalanceOf.js";
+export { getWmonBalanceOf } from "./getWmonBalanceOf.js";
+export type {
+  GetWmonDecimalsErrorType,
+  GetWmonDecimalsParameters,
+  GetWmonDecimalsReturnType,
+} from "./getWmonDecimals.js";
+export { getWmonDecimals } from "./getWmonDecimals.js";
+export type {
+  GetWmonNameErrorType,
+  GetWmonNameParameters,
+  GetWmonNameReturnType,
+} from "./getWmonName.js";
+export { getWmonName } from "./getWmonName.js";
+export type {
+  GetWmonSymbolErrorType,
+  GetWmonSymbolParameters,
+  GetWmonSymbolReturnType,
+} from "./getWmonSymbol.js";
+export { getWmonSymbol } from "./getWmonSymbol.js";
