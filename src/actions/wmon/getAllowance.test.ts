@@ -1,16 +1,16 @@
 import { expect, test } from "bun:test";
 import { createPublicClient, http } from "viem";
 import { monad } from "viem/chains";
-import { FORK_BLOCK_NUMBER, RPC_URL } from "../test/setup.js";
-import { getWmonAllowance } from "./getWmonAllowance.js";
+import { FORK_BLOCK_NUMBER, RPC_URL } from "../../../test/setup.js";
+import { getAllowance } from "./getAllowance.js";
 
-test("getWmonAllowance", async () => {
+test("getAllowance", async () => {
   const client = createPublicClient({
     transport: http(RPC_URL),
     chain: monad,
   });
 
-  const allowance = await getWmonAllowance(client, {
+  const allowance = await getAllowance(client, {
     args: [
       "0x058EC190471E8A89d40A522C803D456715A93316",
       "0x000000000022D473030F116dDEE9F6B43aC78BA3",
