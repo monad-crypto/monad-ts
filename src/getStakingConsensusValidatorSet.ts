@@ -7,7 +7,7 @@ import type {
 import { readContract } from "viem/actions";
 import { STAKING_ADDRESS, stakingAbi } from "./index.js";
 
-export type GetConsensusValidatorSetParameters<
+export type GetStakingConsensusValidatorSetParameters<
   args extends ContractFunctionArgs<
     typeof stakingAbi,
     "pure" | "view",
@@ -21,11 +21,11 @@ export type GetConsensusValidatorSetParameters<
   ReadContractParameters<typeof stakingAbi, "getConsensusValidatorSet", args>,
   "abi" | "address" | "functionName"
 >;
-export type GetConsensusValidatorSetReturnType = ReadContractReturnType<
+export type GetStakingConsensusValidatorSetReturnType = ReadContractReturnType<
   typeof stakingAbi,
   "getConsensusValidatorSet"
 >;
-export type GetConsensusValidatorSetErrorType = ReadContractErrorType;
+export type GetStakingConsensusValidatorSetErrorType = ReadContractErrorType;
 
 /**
  * Returns the consensus validator set IDs. Results are paginated; when `isDone` is false, call again with `nextIndex` as `startIndex`.
@@ -33,26 +33,26 @@ export type GetConsensusValidatorSetErrorType = ReadContractErrorType;
  * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#get-validatorset
  *
  * @param client - Viem {@link Client}
- * @param parameters - {@link GetConsensusValidatorSetParameters}
- * @returns `(isDone, nextIndex, valIds)` tuple of consensus validator IDs. {@link GetConsensusValidatorSetReturnType}
+ * @param parameters - {@link GetStakingConsensusValidatorSetParameters}
+ * @returns `(isDone, nextIndex, valIds)` tuple of consensus validator IDs. {@link GetStakingConsensusValidatorSetReturnType}
  *
  * @example
  * ```ts
  * import { createClient, http } from 'viem'
  * import { monad } from 'viem/chains'
- * import { getConsensusValidatorSet } from 'monad-ts-docs'
+ * import { getStakingConsensusValidatorSet } from 'monad-ts-docs'
  *
  * const client = createClient({
  *   chain: monad,
  *   transport: http(),
  * })
  *
- * const result = await getConsensusValidatorSet(client, {
+ * const result = await getStakingConsensusValidatorSet(client, {
  *   args: [0],
  * })
  * ```
  */
-export async function getConsensusValidatorSet<
+export async function getStakingConsensusValidatorSet<
   chain extends Chain | undefined,
   const args extends ContractFunctionArgs<
     typeof stakingAbi,
@@ -61,8 +61,8 @@ export async function getConsensusValidatorSet<
   >,
 >(
   client: Client<Transport, chain>,
-  parameters: GetConsensusValidatorSetParameters<args>,
-): Promise<GetConsensusValidatorSetReturnType> {
+  parameters: GetStakingConsensusValidatorSetParameters<args>,
+): Promise<GetStakingConsensusValidatorSetReturnType> {
   return readContract(client, {
     ...parameters,
     abi: stakingAbi,

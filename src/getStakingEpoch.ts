@@ -7,7 +7,7 @@ import type {
 import { readContract } from "viem/actions";
 import { STAKING_ADDRESS, stakingAbi } from "./index.js";
 
-export type GetEpochParameters<
+export type GetStakingEpochParameters<
   args extends ContractFunctionArgs<
     typeof stakingAbi,
     "pure" | "view",
@@ -17,11 +17,11 @@ export type GetEpochParameters<
   ReadContractParameters<typeof stakingAbi, "getEpoch", args>,
   "abi" | "address" | "functionName"
 >;
-export type GetEpochReturnType = ReadContractReturnType<
+export type GetStakingEpochReturnType = ReadContractReturnType<
   typeof stakingAbi,
   "getEpoch"
 >;
-export type GetEpochErrorType = ReadContractErrorType;
+export type GetStakingEpochErrorType = ReadContractErrorType;
 
 /**
  * Returns the current epoch and whether the network is in the epoch delay period. If `inEpochDelayPeriod` is false, write operations are effective for `epoch + 1`; if true, for `epoch + 2`.
@@ -29,23 +29,23 @@ export type GetEpochErrorType = ReadContractErrorType;
  * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#getepoch
  *
  * @param client - Viem {@link Client}
- * @returns `(epoch, inEpochDelayPeriod)` tuple. {@link GetEpochReturnType}
+ * @returns `(epoch, inEpochDelayPeriod)` tuple. {@link GetStakingEpochReturnType}
  *
  * @example
  * ```ts
  * import { createClient, http } from 'viem'
  * import { monad } from 'viem/chains'
- * import { getEpoch } from 'monad-ts-docs'
+ * import { getStakingEpoch } from 'monad-ts-docs'
  *
  * const client = createClient({
  *   chain: monad,
  *   transport: http(),
  * })
  *
- * const [epoch, inEpochDelayPeriod] = await getEpoch(client)
+ * const [epoch, inEpochDelayPeriod] = await getStakingEpoch(client)
  * ```
  */
-export async function getEpoch<
+export async function getStakingEpoch<
   chain extends Chain | undefined,
   const args extends ContractFunctionArgs<
     typeof stakingAbi,
@@ -54,8 +54,8 @@ export async function getEpoch<
   >,
 >(
   client: Client<Transport, chain>,
-  parameters?: GetEpochParameters<args>,
-): Promise<GetEpochReturnType> {
+  parameters?: GetStakingEpochParameters<args>,
+): Promise<GetStakingEpochReturnType> {
   return readContract(client, {
     ...parameters,
     abi: stakingAbi,

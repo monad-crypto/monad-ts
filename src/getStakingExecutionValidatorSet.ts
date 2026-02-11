@@ -7,7 +7,7 @@ import type {
 import { readContract } from "viem/actions";
 import { STAKING_ADDRESS, stakingAbi } from "./index.js";
 
-export type GetExecutionValidatorSetParameters<
+export type GetStakingExecutionValidatorSetParameters<
   args extends ContractFunctionArgs<
     typeof stakingAbi,
     "pure" | "view",
@@ -21,11 +21,11 @@ export type GetExecutionValidatorSetParameters<
   ReadContractParameters<typeof stakingAbi, "getExecutionValidatorSet", args>,
   "abi" | "address" | "functionName"
 >;
-export type GetExecutionValidatorSetReturnType = ReadContractReturnType<
+export type GetStakingExecutionValidatorSetReturnType = ReadContractReturnType<
   typeof stakingAbi,
   "getExecutionValidatorSet"
 >;
-export type GetExecutionValidatorSetErrorType = ReadContractErrorType;
+export type GetStakingExecutionValidatorSetErrorType = ReadContractErrorType;
 
 /**
  * Returns the execution validator set IDs. Results are paginated; when `isDone` is false, call again with `nextIndex` as `startIndex`.
@@ -33,26 +33,26 @@ export type GetExecutionValidatorSetErrorType = ReadContractErrorType;
  * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#get-validatorset
  *
  * @param client - Viem {@link Client}
- * @param parameters - {@link GetExecutionValidatorSetParameters}
- * @returns `(isDone, nextIndex, valIds)` tuple of execution validator IDs. {@link GetExecutionValidatorSetReturnType}
+ * @param parameters - {@link GetStakingExecutionValidatorSetParameters}
+ * @returns `(isDone, nextIndex, valIds)` tuple of execution validator IDs. {@link GetStakingExecutionValidatorSetReturnType}
  *
  * @example
  * ```ts
  * import { createClient, http } from 'viem'
  * import { monad } from 'viem/chains'
- * import { getExecutionValidatorSet } from 'monad-ts-docs'
+ * import { getStakingExecutionValidatorSet } from 'monad-ts-docs'
  *
  * const client = createClient({
  *   chain: monad,
  *   transport: http(),
  * })
  *
- * const result = await getExecutionValidatorSet(client, {
+ * const result = await getStakingExecutionValidatorSet(client, {
  *   args: [0],
  * })
  * ```
  */
-export async function getExecutionValidatorSet<
+export async function getStakingExecutionValidatorSet<
   chain extends Chain | undefined,
   const args extends ContractFunctionArgs<
     typeof stakingAbi,
@@ -61,8 +61,8 @@ export async function getExecutionValidatorSet<
   >,
 >(
   client: Client<Transport, chain>,
-  parameters: GetExecutionValidatorSetParameters<args>,
-): Promise<GetExecutionValidatorSetReturnType> {
+  parameters: GetStakingExecutionValidatorSetParameters<args>,
+): Promise<GetStakingExecutionValidatorSetReturnType> {
   return readContract(client, {
     ...parameters,
     abi: stakingAbi,
