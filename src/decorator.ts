@@ -73,7 +73,7 @@ export type MonadActions = {
    * ```ts
    * import { createClient, http } from 'viem'
    * import { monad } from 'viem/chains'
-   * import { getStakingValidator } from 'monad-ts-docs'
+   * import { getStakingValidator } from '@monad-crypto/viem'
    *
    * const client = createClient({
    *   chain: monad,
@@ -100,7 +100,7 @@ export type MonadActions = {
    * ```ts
    * import { createClient, http } from 'viem'
    * import { monad } from 'viem/chains'
-   * import { getStakingDelegator } from 'monad-ts-docs'
+   * import { getStakingDelegator } from '@monad-crypto/viem'
    *
    * const client = createClient({
    *   chain: monad,
@@ -127,7 +127,7 @@ export type MonadActions = {
    * ```ts
    * import { createClient, http } from 'viem'
    * import { monad } from 'viem/chains'
-   * import { getStakingWithdrawalRequest } from 'monad-ts-docs'
+   * import { getStakingWithdrawalRequest } from '@monad-crypto/viem'
    *
    * const client = createClient({
    *   chain: monad,
@@ -154,7 +154,7 @@ export type MonadActions = {
    * ```ts
    * import { createClient, http } from 'viem'
    * import { monad } from 'viem/chains'
-   * import { getStakingConsensusValidatorSet } from 'monad-ts-docs'
+   * import { getStakingConsensusValidatorSet } from '@monad-crypto/viem'
    *
    * const client = createClient({
    *   chain: monad,
@@ -181,7 +181,7 @@ export type MonadActions = {
    * ```ts
    * import { createClient, http } from 'viem'
    * import { monad } from 'viem/chains'
-   * import { getStakingSnapshotValidatorSet } from 'monad-ts-docs'
+   * import { getStakingSnapshotValidatorSet } from '@monad-crypto/viem'
    *
    * const client = createClient({
    *   chain: monad,
@@ -208,7 +208,7 @@ export type MonadActions = {
    * ```ts
    * import { createClient, http } from 'viem'
    * import { monad } from 'viem/chains'
-   * import { getStakingExecutionValidatorSet } from 'monad-ts-docs'
+   * import { getStakingExecutionValidatorSet } from '@monad-crypto/viem'
    *
    * const client = createClient({
    *   chain: monad,
@@ -235,7 +235,7 @@ export type MonadActions = {
    * ```ts
    * import { createClient, http } from 'viem'
    * import { monad } from 'viem/chains'
-   * import { getStakingDelegations } from 'monad-ts-docs'
+   * import { getStakingDelegations } from '@monad-crypto/viem'
    *
    * const client = createClient({
    *   chain: monad,
@@ -264,7 +264,7 @@ export type MonadActions = {
    * ```ts
    * import { createClient, http } from 'viem'
    * import { monad } from 'viem/chains'
-   * import { getStakingDelegators } from 'monad-ts-docs'
+   * import { getStakingDelegators } from '@monad-crypto/viem'
    *
    * const client = createClient({
    *   chain: monad,
@@ -290,7 +290,7 @@ export type MonadActions = {
    * ```ts
    * import { createClient, http } from 'viem'
    * import { monad } from 'viem/chains'
-   * import { getStakingEpoch } from 'monad-ts-docs'
+   * import { getStakingEpoch } from '@monad-crypto/viem'
    *
    * const client = createClient({
    *   chain: monad,
@@ -314,7 +314,7 @@ export type MonadActions = {
    * ```ts
    * import { createClient, http } from 'viem'
    * import { monad } from 'viem/chains'
-   * import { getStakingProposerValId } from 'monad-ts-docs'
+   * import { getStakingProposerValId } from '@monad-crypto/viem'
    *
    * const client = createClient({
    *   chain: monad,
@@ -337,7 +337,7 @@ export type MonadActions = {
    * ```ts
    * import { createClient, http } from 'viem'
    * import { monad } from 'viem/chains'
-   * import { getWmonBalanceOf } from 'monad-ts'
+   * import { getWmonBalanceOf } from '@monad-crypto/viem'
    *
    * const client = createClient({
    *   chain: monad,
@@ -362,7 +362,7 @@ export type MonadActions = {
    * ```ts
    * import { createClient, http } from 'viem'
    * import { monad } from 'viem/chains'
-   * import { getWmonAllowance } from 'monad-ts'
+   * import { getWmonAllowance } from '@monad-crypto/viem'
    *
    * const client = createClient({
    *   chain: monad,
@@ -388,7 +388,7 @@ export type MonadActions = {
  * ```ts
  * import { createClient, http } from 'viem'
  * import { monad } from 'viem/chains'
- * import { monadActions } from 'monad-ts-docs'
+ * import { monadActions } from '@monad-crypto/viem'
  *
  * const client = createClient({
  *   chain: monad,

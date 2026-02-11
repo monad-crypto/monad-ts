@@ -40,7 +40,7 @@ export type GetStakingWithdrawalRequestErrorType = ReadContractErrorType;
  * ```ts
  * import { createClient, http } from 'viem'
  * import { monad } from 'viem/chains'
- * import { getStakingWithdrawalRequest } from 'monad-ts-docs'
+ * import { getStakingWithdrawalRequest } from '@monad-crypto/viem'
  *
  * const client = createClient({
  *   chain: monad,

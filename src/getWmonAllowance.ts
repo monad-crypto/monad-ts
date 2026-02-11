@@ -34,7 +34,7 @@ export type GetWmonAllowanceErrorType = ReadContractErrorType;
  * ```ts
  * import { createClient, http } from 'viem'
  * import { monad } from 'viem/chains'
- * import { getWmonAllowance } from 'monad-ts'
+ * import { getWmonAllowance } from '@monad-crypto/viem'
  *
  * const client = createClient({
  *   chain: monad,

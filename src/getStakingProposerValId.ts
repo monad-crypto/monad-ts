@@ -39,7 +39,7 @@ export type GetStakingProposerValIdErrorType = ReadContractErrorType;
  * ```ts
  * import { createClient, http } from 'viem'
  * import { monad } from 'viem/chains'
- * import { getStakingProposerValId } from 'monad-ts-docs'
+ * import { getStakingProposerValId } from '@monad-crypto/viem'
  *
  * const client = createClient({
  *   chain: monad,

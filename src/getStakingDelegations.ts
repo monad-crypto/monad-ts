@@ -40,7 +40,7 @@ export type GetStakingDelegationsErrorType = ReadContractErrorType;
  * ```ts
  * import { createClient, http } from 'viem'
  * import { monad } from 'viem/chains'
- * import { getStakingDelegations } from 'monad-ts-docs'
+ * import { getStakingDelegations } from '@monad-crypto/viem'
  *
  * const client = createClient({
  *   chain: monad,

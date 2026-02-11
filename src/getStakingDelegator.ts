@@ -36,7 +36,7 @@ export type GetStakingDelegatorErrorType = ReadContractErrorType;
  * ```ts
  * import { createClient, http } from 'viem'
  * import { monad } from 'viem/chains'
- * import { getStakingDelegator } from 'monad-ts-docs'
+ * import { getStakingDelegator } from '@monad-crypto/viem'
  *
  * const client = createClient({
  *   chain: monad,

@@ -40,7 +40,7 @@ export type GetStakingConsensusValidatorSetErrorType = ReadContractErrorType;
  * ```ts
  * import { createClient, http } from 'viem'
  * import { monad } from 'viem/chains'
- * import { getStakingConsensusValidatorSet } from 'monad-ts-docs'
+ * import { getStakingConsensusValidatorSet } from '@monad-crypto/viem'
  *
  * const client = createClient({
  *   chain: monad,
