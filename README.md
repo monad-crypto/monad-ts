@@ -5,11 +5,11 @@ TypeScript library for Monad-specific protocol features. Provides [Viem](https:/
 ## Installation
 
 ```bash
-bun add monad-ts
+bun add @monad-crypto/viem
 ```
 
 ```bash
-npm install monad-ts
+npm install @monad-crypto/viem
 ```
 
 ## Quick Start
@@ -17,7 +17,7 @@ npm install monad-ts
 ```ts
 import { createPublicClient, http } from "viem";
 import { monad } from "viem/chains";
-import { monadActions } from "monad-ts";
+import { monadActions } from "@monad-crypto/viem";
 
 const client = createPublicClient({
   transport: http("https://rpc.monad.xyz"),

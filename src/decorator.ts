@@ -74,7 +74,7 @@ export type MonadActions = {
      * ```ts
      * import { createClient, http } from 'viem'
      * import { monad } from 'viem/chains'
-     * import { monadActions } from 'monad-ts'
+     * import { monadActions } from '@monad-crypto/viem'
      *
      * const client = createClient({
      *   chain: monad,
@@ -101,7 +101,7 @@ export type MonadActions = {
      * ```ts
      * import { createClient, http } from 'viem'
      * import { monad } from 'viem/chains'
-     * import { monadActions } from 'monad-ts'
+     * import { monadActions } from '@monad-crypto/viem'
      *
      * const client = createClient({
      *   chain: monad,
@@ -128,7 +128,7 @@ export type MonadActions = {
      * ```ts
      * import { createClient, http } from 'viem'
      * import { monad } from 'viem/chains'
-     * import { monadActions } from 'monad-ts'
+     * import { monadActions } from '@monad-crypto/viem'
      *
      * const client = createClient({
      *   chain: monad,
@@ -155,7 +155,7 @@ export type MonadActions = {
      * ```ts
      * import { createClient, http } from 'viem'
      * import { monad } from 'viem/chains'
-     * import { monadActions } from 'monad-ts'
+     * import { monadActions } from '@monad-crypto/viem'
      *
      * const client = createClient({
      *   chain: monad,
@@ -182,7 +182,7 @@ export type MonadActions = {
      * ```ts
      * import { createClient, http } from 'viem'
      * import { monad } from 'viem/chains'
-     * import { monadActions } from 'monad-ts'
+     * import { monadActions } from '@monad-crypto/viem'
      *
      * const client = createClient({
      *   chain: monad,
@@ -209,7 +209,7 @@ export type MonadActions = {
      * ```ts
      * import { createClient, http } from 'viem'
      * import { monad } from 'viem/chains'
-     * import { monadActions } from 'monad-ts'
+     * import { monadActions } from '@monad-crypto/viem'
      *
      * const client = createClient({
      *   chain: monad,
@@ -236,7 +236,7 @@ export type MonadActions = {
      * ```ts
      * import { createClient, http } from 'viem'
      * import { monad } from 'viem/chains'
-     * import { monadActions } from 'monad-ts'
+     * import { monadActions } from '@monad-crypto/viem'
      *
      * const client = createClient({
      *   chain: monad,
@@ -265,7 +265,7 @@ export type MonadActions = {
      * ```ts
      * import { createClient, http } from 'viem'
      * import { monad } from 'viem/chains'
-     * import { monadActions } from 'monad-ts'
+     * import { monadActions } from '@monad-crypto/viem'
      *
      * const client = createClient({
      *   chain: monad,
@@ -291,7 +291,7 @@ export type MonadActions = {
      * ```ts
      * import { createClient, http } from 'viem'
      * import { monad } from 'viem/chains'
-     * import { monadActions } from 'monad-ts'
+     * import { monadActions } from '@monad-crypto/viem'
      *
      * const client = createClient({
      *   chain: monad,
@@ -313,7 +313,7 @@ export type MonadActions = {
      * ```ts
      * import { createClient, http } from 'viem'
      * import { monad } from 'viem/chains'
-     * import { monadActions } from 'monad-ts'
+     * import { monadActions } from '@monad-crypto/viem'
      *
      * const client = createClient({
      *   chain: monad,
@@ -338,7 +338,7 @@ export type MonadActions = {
      * ```ts
      * import { createClient, http } from 'viem'
      * import { monad } from 'viem/chains'
-     * import { monadActions } from 'monad-ts'
+     * import { monadActions } from '@monad-crypto/viem'
      *
      * const client = createClient({
      *   chain: monad,
@@ -363,7 +363,7 @@ export type MonadActions = {
      * ```ts
      * import { createClient, http } from 'viem'
      * import { monad } from 'viem/chains'
-     * import { monadActions } from 'monad-ts'
+     * import { monadActions } from '@monad-crypto/viem'
      *
      * const client = createClient({
      *   chain: monad,
@@ -390,7 +390,7 @@ export type MonadActions = {
  * ```ts
  * import { createClient, http } from 'viem'
  * import { monad } from 'viem/chains'
- * import { monadActions } from 'monad-ts'
+ * import { monadActions } from '@monad-crypto/viem'
  *
  * const client = createClient({
  *   chain: monad,

@@ -1,5 +1,5 @@
 {
-  "name": "@monad-xyz/monad",
+  "name": "@monad-crypto/viem",
   "version": "0.0.1",
   "description": "TypeScript Interface for Monad",
   "repository": {
