@@ -1,3 +1,7 @@
+export {
+  STAKING_ADDRESS as ADDRESS,
+  stakingAbi as abi,
+} from "../../constants.js";
 export type {
   GetConsensusValidatorSetErrorType,
   GetConsensusValidatorSetParameters,

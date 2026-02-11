@@ -74,14 +74,14 @@ export type MonadActions = {
      * ```ts
      * import { createClient, http } from 'viem'
      * import { monad } from 'viem/chains'
-     * import { Staking } from 'monad-ts'
+     * import { monadActions } from 'monad-ts'
      *
      * const client = createClient({
      *   chain: monad,
      *   transport: http(),
-     * })
+     * }).extend(monadActions())
      *
-     * const validator = await Staking.getValidator(client, {
+     * const validator = await client.staking.getValidator({
      *   args: [1n],
      * })
      * ```
@@ -101,14 +101,14 @@ export type MonadActions = {
      * ```ts
      * import { createClient, http } from 'viem'
      * import { monad } from 'viem/chains'
-     * import { Staking } from 'monad-ts'
+     * import { monadActions } from 'monad-ts'
      *
      * const client = createClient({
      *   chain: monad,
      *   transport: http(),
-     * })
+     * }).extend(monadActions())
      *
-     * const delegator = await Staking.getDelegator(client, {
+     * const delegator = await client.staking.getDelegator({
      *   args: [1n, '0x...'],
      * })
      * ```
@@ -128,14 +128,14 @@ export type MonadActions = {
      * ```ts
      * import { createClient, http } from 'viem'
      * import { monad } from 'viem/chains'
-     * import { Staking } from 'monad-ts'
+     * import { monadActions } from 'monad-ts'
      *
      * const client = createClient({
      *   chain: monad,
      *   transport: http(),
-     * })
+     * }).extend(monadActions())
      *
-     * const withdrawal = await Staking.getWithdrawalRequest(client, {
+     * const withdrawal = await client.staking.getWithdrawalRequest({
      *   args: [1n, '0x...', 0],
      * })
      * ```
@@ -155,14 +155,14 @@ export type MonadActions = {
      * ```ts
      * import { createClient, http } from 'viem'
      * import { monad } from 'viem/chains'
-     * import { Staking } from 'monad-ts'
+     * import { monadActions } from 'monad-ts'
      *
      * const client = createClient({
      *   chain: monad,
      *   transport: http(),
-     * })
+     * }).extend(monadActions())
      *
-     * const result = await Staking.getConsensusValidatorSet(client, {
+     * const result = await client.staking.getConsensusValidatorSet({
      *   args: [0],
      * })
      * ```
@@ -182,14 +182,14 @@ export type MonadActions = {
      * ```ts
      * import { createClient, http } from 'viem'
      * import { monad } from 'viem/chains'
-     * import { Staking } from 'monad-ts'
+     * import { monadActions } from 'monad-ts'
      *
      * const client = createClient({
      *   chain: monad,
      *   transport: http(),
-     * })
+     * }).extend(monadActions())
      *
-     * const result = await Staking.getSnapshotValidatorSet(client, {
+     * const result = await client.staking.getSnapshotValidatorSet({
      *   args: [0],
      * })
      * ```
@@ -209,14 +209,14 @@ export type MonadActions = {
      * ```ts
      * import { createClient, http } from 'viem'
      * import { monad } from 'viem/chains'
-     * import { Staking } from 'monad-ts'
+     * import { monadActions } from 'monad-ts'
      *
      * const client = createClient({
      *   chain: monad,
      *   transport: http(),
-     * })
+     * }).extend(monadActions())
      *
-     * const result = await Staking.getExecutionValidatorSet(client, {
+     * const result = await client.staking.getExecutionValidatorSet({
      *   args: [0],
      * })
      * ```
@@ -236,14 +236,14 @@ export type MonadActions = {
      * ```ts
      * import { createClient, http } from 'viem'
      * import { monad } from 'viem/chains'
-     * import { Staking } from 'monad-ts'
+     * import { monadActions } from 'monad-ts'
      *
      * const client = createClient({
      *   chain: monad,
      *   transport: http(),
-     * })
+     * }).extend(monadActions())
      *
-     * const result = await Staking.getDelegations(client, {
+     * const result = await client.staking.getDelegations({
      *   args: ['0x...', 0n],
      * })
      * ```
@@ -265,14 +265,14 @@ export type MonadActions = {
      * ```ts
      * import { createClient, http } from 'viem'
      * import { monad } from 'viem/chains'
-     * import { Staking } from 'monad-ts'
+     * import { monadActions } from 'monad-ts'
      *
      * const client = createClient({
      *   chain: monad,
      *   transport: http(),
-     * })
+     * }).extend(monadActions())
      *
-     * const result = await Staking.getDelegators(client, {
+     * const result = await client.staking.getDelegators({
      *   args: [1n, '0x0000000000000000000000000000000000000000'],
      * })
      * ```
@@ -291,14 +291,14 @@ export type MonadActions = {
      * ```ts
      * import { createClient, http } from 'viem'
      * import { monad } from 'viem/chains'
-     * import { Staking } from 'monad-ts'
+     * import { monadActions } from 'monad-ts'
      *
      * const client = createClient({
      *   chain: monad,
      *   transport: http(),
-     * })
+     * }).extend(monadActions())
      *
-     * const [epoch, inEpochDelayPeriod] = await Staking.getEpoch(client)
+     * const [epoch, inEpochDelayPeriod] = await client.staking.getEpoch()
      * ```
      */
     getEpoch: (parameters?: GetEpochParameters) => Promise<GetEpochReturnType>;
@@ -313,14 +313,14 @@ export type MonadActions = {
      * ```ts
      * import { createClient, http } from 'viem'
      * import { monad } from 'viem/chains'
-     * import { Staking } from 'monad-ts'
+     * import { monadActions } from 'monad-ts'
      *
      * const client = createClient({
      *   chain: monad,
      *   transport: http(),
-     * })
+     * }).extend(monadActions())
      *
-     * const proposerValId = await Staking.getProposerValId(client)
+     * const proposerValId = await client.staking.getProposerValId()
      * ```
      */
     getProposerValId: (
@@ -338,14 +338,14 @@ export type MonadActions = {
      * ```ts
      * import { createClient, http } from 'viem'
      * import { monad } from 'viem/chains'
-     * import { Wmon } from 'monad-ts'
+     * import { monadActions } from 'monad-ts'
      *
      * const client = createClient({
      *   chain: monad,
      *   transport: http(),
-     * })
+     * }).extend(monadActions())
      *
-     * const balance = await Wmon.getBalanceOf(client, {
+     * const balance = await client.wmon.getBalanceOf({
      *   args: ['0x...'],
      * })
      * ```
@@ -363,14 +363,14 @@ export type MonadActions = {
      * ```ts
      * import { createClient, http } from 'viem'
      * import { monad } from 'viem/chains'
-     * import { Wmon } from 'monad-ts'
+     * import { monadActions } from 'monad-ts'
      *
      * const client = createClient({
      *   chain: monad,
      *   transport: http(),
-     * })
+     * }).extend(monadActions())
      *
-     * const allowance = await Wmon.getAllowance(client, {
+     * const allowance = await client.wmon.getAllowance({
      *   args: ['0x...', '0x...'],
      * })
      * ```
