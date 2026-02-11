@@ -624,7 +624,7 @@ export const wmonAbi = [
 /**
  * Address of monad staking precompile.
  *
- * @see {@link https://monadscan.com/address/0x0000000000000000000000000000000000001000}}
+ * @see {@link https://monadscan.com/address/0x0000000000000000000000000000000000001000}
  */
 export const STAKING_ADDRESS = "0x0000000000000000000000000000000000001000";
 
