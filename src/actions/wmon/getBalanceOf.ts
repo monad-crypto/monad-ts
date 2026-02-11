@@ -34,7 +34,7 @@ export type GetBalanceOfErrorType = ReadContractErrorType;
  * ```ts
  * import { createClient, http } from 'viem'
  * import { monad } from 'viem/chains'
- * import { Wmon } from 'monad-ts'
+ * import { Wmon } from '@monad-crypto/viem'
  *
  * const client = createClient({
  *   chain: monad,
