@@ -49,6 +49,16 @@ import {
   type GetStakingWithdrawalRequestReturnType,
   getStakingWithdrawalRequest,
 } from "./getStakingWithdrawalRequest.js";
+import {
+  type GetWmonAllowanceParameters,
+  type GetWmonAllowanceReturnType,
+  getWmonAllowance,
+} from "./getWmonAllowance.js";
+import {
+  type GetWmonBalanceOfParameters,
+  type GetWmonBalanceOfReturnType,
+  getWmonBalanceOf,
+} from "./getWmonBalanceOf.js";
 
 export type MonadActions = {
   /**
@@ -317,6 +327,56 @@ export type MonadActions = {
   getStakingProposerValId: (
     parameters?: GetStakingProposerValIdParameters,
   ) => Promise<GetStakingProposerValIdReturnType>;
+  /**
+   * Returns the WMON balance of the given address.
+   *
+   * @param parameters - {@link GetWmonBalanceOfParameters}
+   * @returns The WMON balance. {@link GetWmonBalanceOfReturnType}
+   *
+   * @example
+   * ```ts
+   * import { createClient, http } from 'viem'
+   * import { monad } from 'viem/chains'
+   * import { getWmonBalanceOf } from 'monad-ts'
+   *
+   * const client = createClient({
+   *   chain: monad,
+   *   transport: http(),
+   * })
+   *
+   * const balance = await getWmonBalanceOf(client, {
+   *   args: ['0x...'],
+   * })
+   * ```
+   */
+  getWmonBalanceOf: (
+    parameters: GetWmonBalanceOfParameters,
+  ) => Promise<GetWmonBalanceOfReturnType>;
+  /**
+   * Returns the amount of WMON the spender is allowed to spend on behalf of the owner.
+   *
+   * @param parameters - {@link GetWmonAllowanceParameters}
+   * @returns The allowance amount. {@link GetWmonAllowanceReturnType}
+   *
+   * @example
+   * ```ts
+   * import { createClient, http } from 'viem'
+   * import { monad } from 'viem/chains'
+   * import { getWmonAllowance } from 'monad-ts'
+   *
+   * const client = createClient({
+   *   chain: monad,
+   *   transport: http(),
+   * })
+   *
+   * const allowance = await getWmonAllowance(client, {
+   *   args: ['0x...', '0x...'],
+   * })
+   * ```
+   */
+  getWmonAllowance: (
+    parameters: GetWmonAllowanceParameters,
+  ) => Promise<GetWmonAllowanceReturnType>;
 };
 
 /**
@@ -362,6 +422,8 @@ export function monadActions() {
       getStakingEpoch: (parameters) => getStakingEpoch(client, parameters),
       getStakingProposerValId: (parameters) =>
         getStakingProposerValId(client, parameters),
+      getWmonBalanceOf: (parameters) => getWmonBalanceOf(client, parameters),
+      getWmonAllowance: (parameters) => getWmonAllowance(client, parameters),
     };
   };
 }
