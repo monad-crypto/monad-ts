@@ -2,15 +2,15 @@ import { expect, test } from "bun:test";
 import { createPublicClient, http } from "viem";
 import { monad } from "viem/chains";
 import { FORK_BLOCK_NUMBER, RPC_URL } from "../test/setup.js";
-import { getDelegators } from "./getDelegators.js";
+import { getStakingDelegators } from "./getStakingDelegators.js";
 
-test("getDelegators", async () => {
+test("getStakingDelegators", async () => {
   const client = createPublicClient({
     transport: http(RPC_URL),
     chain: monad,
   });
 
-  const delegators = await getDelegators(client, {
+  const delegators = await getStakingDelegators(client, {
     args: [46n, "0x0000000000000000000000000000000000000000"],
     blockNumber: FORK_BLOCK_NUMBER,
   });

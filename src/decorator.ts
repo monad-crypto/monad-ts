@@ -1,54 +1,54 @@
 import type { Chain, Client, Transport } from "viem";
 import {
-  type GetConsensusValidatorSetParameters,
-  type GetConsensusValidatorSetReturnType,
-  getConsensusValidatorSet,
-} from "./getConsensusValidatorSet.js";
+  type GetStakingConsensusValidatorSetParameters,
+  type GetStakingConsensusValidatorSetReturnType,
+  getStakingConsensusValidatorSet,
+} from "./getStakingConsensusValidatorSet.js";
 import {
-  type GetDelegationsParameters,
-  type GetDelegationsReturnType,
-  getDelegations,
-} from "./getDelegations.js";
+  type GetStakingDelegationsParameters,
+  type GetStakingDelegationsReturnType,
+  getStakingDelegations,
+} from "./getStakingDelegations.js";
 import {
-  type GetDelegatorParameters,
-  type GetDelegatorReturnType,
-  getDelegator,
-} from "./getDelegator.js";
+  type GetStakingDelegatorParameters,
+  type GetStakingDelegatorReturnType,
+  getStakingDelegator,
+} from "./getStakingDelegator.js";
 import {
-  type GetDelegatorsParameters,
-  type GetDelegatorsReturnType,
-  getDelegators,
-} from "./getDelegators.js";
+  type GetStakingDelegatorsParameters,
+  type GetStakingDelegatorsReturnType,
+  getStakingDelegators,
+} from "./getStakingDelegators.js";
 import {
-  type GetEpochParameters,
-  type GetEpochReturnType,
-  getEpoch,
-} from "./getEpoch.js";
+  type GetStakingEpochParameters,
+  type GetStakingEpochReturnType,
+  getStakingEpoch,
+} from "./getStakingEpoch.js";
 import {
-  type GetExecutionValidatorSetParameters,
-  type GetExecutionValidatorSetReturnType,
-  getExecutionValidatorSet,
-} from "./getExecutionValidatorSet.js";
+  type GetStakingExecutionValidatorSetParameters,
+  type GetStakingExecutionValidatorSetReturnType,
+  getStakingExecutionValidatorSet,
+} from "./getStakingExecutionValidatorSet.js";
 import {
-  type GetProposerValIdParameters,
-  type GetProposerValIdReturnType,
-  getProposerValId,
-} from "./getProposerValId.js";
+  type GetStakingProposerValIdParameters,
+  type GetStakingProposerValIdReturnType,
+  getStakingProposerValId,
+} from "./getStakingProposerValId.js";
 import {
-  type GetSnapshotValidatorSetParameters,
-  type GetSnapshotValidatorSetReturnType,
-  getSnapshotValidatorSet,
-} from "./getSnapshotValidatorSet.js";
+  type GetStakingSnapshotValidatorSetParameters,
+  type GetStakingSnapshotValidatorSetReturnType,
+  getStakingSnapshotValidatorSet,
+} from "./getStakingSnapshotValidatorSet.js";
 import {
-  type GetValidatorParameters,
-  type GetValidatorReturnType,
-  getValidator,
-} from "./getValidator.js";
+  type GetStakingValidatorParameters,
+  type GetStakingValidatorReturnType,
+  getStakingValidator,
+} from "./getStakingValidator.js";
 import {
-  type GetWithdrawalRequestParameters,
-  type GetWithdrawalRequestReturnType,
-  getWithdrawalRequest,
-} from "./getWithdrawalRequest.js";
+  type GetStakingWithdrawalRequestParameters,
+  type GetStakingWithdrawalRequestReturnType,
+  getStakingWithdrawalRequest,
+} from "./getStakingWithdrawalRequest.js";
 import {
   type GetWmonAllowanceParameters,
   type GetWmonAllowanceReturnType,
@@ -66,190 +66,190 @@ export type MonadActions = {
    *
    * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#getvalidator
    *
-   * @param parameters - {@link GetValidatorParameters}
-   * @returns Validator state including auth address, flags, stake, accumulator, commission, unclaimed rewards, consensus/snapshot stake and commission, and public keys. {@link GetValidatorReturnType}
+   * @param parameters - {@link GetStakingValidatorParameters}
+   * @returns Validator state including auth address, flags, stake, accumulator, commission, unclaimed rewards, consensus/snapshot stake and commission, and public keys. {@link GetStakingValidatorReturnType}
    *
    * @example
    * ```ts
    * import { createClient, http } from 'viem'
    * import { monad } from 'viem/chains'
-   * import { getValidator } from 'monad-ts-docs'
+   * import { getStakingValidator } from 'monad-ts-docs'
    *
    * const client = createClient({
    *   chain: monad,
    *   transport: http(),
    * })
    *
-   * const validator = await getValidator(client, {
+   * const validator = await getStakingValidator(client, {
    *   args: [1n],
    * })
    * ```
    */
-  getValidator: (
-    parameters: GetValidatorParameters,
-  ) => Promise<GetValidatorReturnType>;
+  getStakingValidator: (
+    parameters: GetStakingValidatorParameters,
+  ) => Promise<GetStakingValidatorReturnType>;
   /**
    * Returns a delegator's stake, accumulated rewards, and pending stake changes for a specified validator.
    *
    * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#getdelegator
    *
-   * @param parameters - {@link GetDelegatorParameters}
-   * @returns Delegator's active stake, accumulator, unclaimed rewards, and pending delta stakes and epochs. {@link GetDelegatorReturnType}
+   * @param parameters - {@link GetStakingDelegatorParameters}
+   * @returns Delegator's active stake, accumulator, unclaimed rewards, and pending delta stakes and epochs. {@link GetStakingDelegatorReturnType}
    *
    * @example
    * ```ts
    * import { createClient, http } from 'viem'
    * import { monad } from 'viem/chains'
-   * import { getDelegator } from 'monad-ts-docs'
+   * import { getStakingDelegator } from 'monad-ts-docs'
    *
    * const client = createClient({
    *   chain: monad,
    *   transport: http(),
    * })
    *
-   * const delegator = await getDelegator(client, {
+   * const delegator = await getStakingDelegator(client, {
    *   args: [1n, '0x...'],
    * })
    * ```
    */
-  getDelegator: (
-    parameters: GetDelegatorParameters,
-  ) => Promise<GetDelegatorReturnType>;
+  getStakingDelegator: (
+    parameters: GetStakingDelegatorParameters,
+  ) => Promise<GetStakingDelegatorReturnType>;
   /**
    * Returns the pending withdrawal request for a (validatorId, delegator, withdrawId) tuple.
    *
    * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#getwithdrawalrequest
    *
-   * @param parameters - {@link GetWithdrawalRequestParameters}
-   * @returns Withdrawal amount, accumulator value at time of undelegation, and the epoch when the withdrawal becomes claimable. {@link GetWithdrawalRequestReturnType}
+   * @param parameters - {@link GetStakingWithdrawalRequestParameters}
+   * @returns Withdrawal amount, accumulator value at time of undelegation, and the epoch when the withdrawal becomes claimable. {@link GetStakingWithdrawalRequestReturnType}
    *
    * @example
    * ```ts
    * import { createClient, http } from 'viem'
    * import { monad } from 'viem/chains'
-   * import { getWithdrawalRequest } from 'monad-ts-docs'
+   * import { getStakingWithdrawalRequest } from 'monad-ts-docs'
    *
    * const client = createClient({
    *   chain: monad,
    *   transport: http(),
    * })
    *
-   * const withdrawal = await getWithdrawalRequest(client, {
+   * const withdrawal = await getStakingWithdrawalRequest(client, {
    *   args: [1n, '0x...', 0],
    * })
    * ```
    */
-  getWithdrawalRequest: (
-    parameters: GetWithdrawalRequestParameters,
-  ) => Promise<GetWithdrawalRequestReturnType>;
+  getStakingWithdrawalRequest: (
+    parameters: GetStakingWithdrawalRequestParameters,
+  ) => Promise<GetStakingWithdrawalRequestReturnType>;
   /**
    * Returns the consensus validator set IDs. Results are paginated; when `isDone` is false, call again with `nextIndex` as `startIndex`.
    *
    * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#get-validatorset
    *
-   * @param parameters - {@link GetConsensusValidatorSetParameters}
-   * @returns `(isDone, nextIndex, valIds)` tuple of consensus validator IDs. {@link GetConsensusValidatorSetReturnType}
+   * @param parameters - {@link GetStakingConsensusValidatorSetParameters}
+   * @returns `(isDone, nextIndex, valIds)` tuple of consensus validator IDs. {@link GetStakingConsensusValidatorSetReturnType}
    *
    * @example
    * ```ts
    * import { createClient, http } from 'viem'
    * import { monad } from 'viem/chains'
-   * import { getConsensusValidatorSet } from 'monad-ts-docs'
+   * import { getStakingConsensusValidatorSet } from 'monad-ts-docs'
    *
    * const client = createClient({
    *   chain: monad,
    *   transport: http(),
    * })
    *
-   * const result = await getConsensusValidatorSet(client, {
+   * const result = await getStakingConsensusValidatorSet(client, {
    *   args: [0],
    * })
    * ```
    */
-  getConsensusValidatorSet: (
-    parameters: GetConsensusValidatorSetParameters,
-  ) => Promise<GetConsensusValidatorSetReturnType>;
+  getStakingConsensusValidatorSet: (
+    parameters: GetStakingConsensusValidatorSetParameters,
+  ) => Promise<GetStakingConsensusValidatorSetReturnType>;
   /**
    * Returns the snapshot validator set IDs. Results are paginated; when `isDone` is false, call again with `nextIndex` as `startIndex`.
    *
    * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#get-validatorset
    *
-   * @param parameters - {@link GetSnapshotValidatorSetParameters}
-   * @returns `(isDone, nextIndex, valIds)` tuple of snapshot validator IDs. {@link GetSnapshotValidatorSetReturnType}
+   * @param parameters - {@link GetStakingSnapshotValidatorSetParameters}
+   * @returns `(isDone, nextIndex, valIds)` tuple of snapshot validator IDs. {@link GetStakingSnapshotValidatorSetReturnType}
    *
    * @example
    * ```ts
    * import { createClient, http } from 'viem'
    * import { monad } from 'viem/chains'
-   * import { getSnapshotValidatorSet } from 'monad-ts-docs'
+   * import { getStakingSnapshotValidatorSet } from 'monad-ts-docs'
    *
    * const client = createClient({
    *   chain: monad,
    *   transport: http(),
    * })
    *
-   * const result = await getSnapshotValidatorSet(client, {
+   * const result = await getStakingSnapshotValidatorSet(client, {
    *   args: [0],
    * })
    * ```
    */
-  getSnapshotValidatorSet: (
-    parameters: GetSnapshotValidatorSetParameters,
-  ) => Promise<GetSnapshotValidatorSetReturnType>;
+  getStakingSnapshotValidatorSet: (
+    parameters: GetStakingSnapshotValidatorSetParameters,
+  ) => Promise<GetStakingSnapshotValidatorSetReturnType>;
   /**
    * Returns the execution validator set IDs. Results are paginated; when `isDone` is false, call again with `nextIndex` as `startIndex`.
    *
    * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#get-validatorset
    *
-   * @param parameters - {@link GetExecutionValidatorSetParameters}
-   * @returns `(isDone, nextIndex, valIds)` tuple of execution validator IDs. {@link GetExecutionValidatorSetReturnType}
+   * @param parameters - {@link GetStakingExecutionValidatorSetParameters}
+   * @returns `(isDone, nextIndex, valIds)` tuple of execution validator IDs. {@link GetStakingExecutionValidatorSetReturnType}
    *
    * @example
    * ```ts
    * import { createClient, http } from 'viem'
    * import { monad } from 'viem/chains'
-   * import { getExecutionValidatorSet } from 'monad-ts-docs'
+   * import { getStakingExecutionValidatorSet } from 'monad-ts-docs'
    *
    * const client = createClient({
    *   chain: monad,
    *   transport: http(),
    * })
    *
-   * const result = await getExecutionValidatorSet(client, {
+   * const result = await getStakingExecutionValidatorSet(client, {
    *   args: [0],
    * })
    * ```
    */
-  getExecutionValidatorSet: (
-    parameters: GetExecutionValidatorSetParameters,
-  ) => Promise<GetExecutionValidatorSetReturnType>;
+  getStakingExecutionValidatorSet: (
+    parameters: GetStakingExecutionValidatorSetParameters,
+  ) => Promise<GetStakingExecutionValidatorSetReturnType>;
   /**
    * Returns the validator IDs to which an address has delegated. Results are paginated; when `isDone` is false, call again with `nextValId` as `startValId`.
    *
    * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#getdelegations
    *
-   * @param parameters - {@link GetDelegationsParameters}
-   * @returns `(isDone, nextValId, valIds)` tuple of validator IDs the address has delegated to. {@link GetDelegationsReturnType}
+   * @param parameters - {@link GetStakingDelegationsParameters}
+   * @returns `(isDone, nextValId, valIds)` tuple of validator IDs the address has delegated to. {@link GetStakingDelegationsReturnType}
    *
    * @example
    * ```ts
    * import { createClient, http } from 'viem'
    * import { monad } from 'viem/chains'
-   * import { getDelegations } from 'monad-ts-docs'
+   * import { getStakingDelegations } from 'monad-ts-docs'
    *
    * const client = createClient({
    *   chain: monad,
    *   transport: http(),
    * })
    *
-   * const result = await getDelegations(client, {
+   * const result = await getStakingDelegations(client, {
    *   args: ['0x...', 0n],
    * })
    * ```
    */
-  getDelegations: (
-    parameters: GetDelegationsParameters,
-  ) => Promise<GetDelegationsReturnType>;
+  getStakingDelegations: (
+    parameters: GetStakingDelegationsParameters,
+  ) => Promise<GetStakingDelegationsReturnType>;
   /**
    * Returns the delegator addresses for a given validator. Results are paginated; when `isDone` is false, call again with `nextDelegator` as `startDelegator`.
    *
@@ -257,74 +257,76 @@ export type MonadActions = {
    *
    * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#getdelegators
    *
-   * @param parameters - {@link GetDelegatorsParameters}
-   * @returns `(isDone, nextDelegator, delegators)` tuple of delegator addresses. {@link GetDelegatorsReturnType}
+   * @param parameters - {@link GetStakingDelegatorsParameters}
+   * @returns `(isDone, nextDelegator, delegators)` tuple of delegator addresses. {@link GetStakingDelegatorsReturnType}
    *
    * @example
    * ```ts
    * import { createClient, http } from 'viem'
    * import { monad } from 'viem/chains'
-   * import { getDelegators } from 'monad-ts-docs'
+   * import { getStakingDelegators } from 'monad-ts-docs'
    *
    * const client = createClient({
    *   chain: monad,
    *   transport: http(),
    * })
    *
-   * const result = await getDelegators(client, {
+   * const result = await getStakingDelegators(client, {
    *   args: [1n, '0x0000000000000000000000000000000000000000'],
    * })
    * ```
    */
-  getDelegators: (
-    parameters: GetDelegatorsParameters,
-  ) => Promise<GetDelegatorsReturnType>;
+  getStakingDelegators: (
+    parameters: GetStakingDelegatorsParameters,
+  ) => Promise<GetStakingDelegatorsReturnType>;
   /**
    * Returns the current epoch and whether the network is in the epoch delay period. If `inEpochDelayPeriod` is false, write operations are effective for `epoch + 1`; if true, for `epoch + 2`.
    *
    * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#getepoch
    *
-   * @returns `(epoch, inEpochDelayPeriod)` tuple. {@link GetEpochReturnType}
+   * @returns `(epoch, inEpochDelayPeriod)` tuple. {@link GetStakingEpochReturnType}
    *
    * @example
    * ```ts
    * import { createClient, http } from 'viem'
    * import { monad } from 'viem/chains'
-   * import { getEpoch } from 'monad-ts-docs'
+   * import { getStakingEpoch } from 'monad-ts-docs'
    *
    * const client = createClient({
    *   chain: monad,
    *   transport: http(),
    * })
    *
-   * const [epoch, inEpochDelayPeriod] = await getEpoch(client)
+   * const [epoch, inEpochDelayPeriod] = await getStakingEpoch(client)
    * ```
    */
-  getEpoch: (parameters?: GetEpochParameters) => Promise<GetEpochReturnType>;
+  getStakingEpoch: (
+    parameters?: GetStakingEpochParameters,
+  ) => Promise<GetStakingEpochReturnType>;
   /**
    * Returns the validator ID of the current block proposer, corresponding to the SECP value of the block author.
    *
    * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#getproposervalid
    *
-   * @returns Validator ID of the current block proposer. {@link GetProposerValIdReturnType}
+   * @returns Validator ID of the current block proposer. {@link GetStakingProposerValIdReturnType}
    *
    * @example
    * ```ts
    * import { createClient, http } from 'viem'
    * import { monad } from 'viem/chains'
-   * import { getProposerValId } from 'monad-ts-docs'
+   * import { getStakingProposerValId } from 'monad-ts-docs'
    *
    * const client = createClient({
    *   chain: monad,
    *   transport: http(),
    * })
    *
-   * const proposerValId = await getProposerValId(client)
+   * const proposerValId = await getStakingProposerValId(client)
    * ```
    */
-  getProposerValId: (
-    parameters?: GetProposerValIdParameters,
-  ) => Promise<GetProposerValIdReturnType>;
+  getStakingProposerValId: (
+    parameters?: GetStakingProposerValIdParameters,
+  ) => Promise<GetStakingProposerValIdReturnType>;
   /**
    * Returns the WMON balance of the given address.
    *
@@ -393,7 +395,7 @@ export type MonadActions = {
  *   transport: http(),
  * }).extend(monadActions())
  *
- * const validator = await client.getValidator({ args: [1n] })
+ * const validator = await client.getStakingValidator({ args: [1n] })
  * ```
  */
 export function monadActions() {
@@ -401,20 +403,25 @@ export function monadActions() {
     client: Client<Transport, chain>,
   ): MonadActions => {
     return {
-      getValidator: (parameters) => getValidator(client, parameters),
-      getDelegator: (parameters) => getDelegator(client, parameters),
-      getWithdrawalRequest: (parameters) =>
-        getWithdrawalRequest(client, parameters),
-      getConsensusValidatorSet: (parameters) =>
-        getConsensusValidatorSet(client, parameters),
-      getSnapshotValidatorSet: (parameters) =>
-        getSnapshotValidatorSet(client, parameters),
-      getExecutionValidatorSet: (parameters) =>
-        getExecutionValidatorSet(client, parameters),
-      getDelegations: (parameters) => getDelegations(client, parameters),
-      getDelegators: (parameters) => getDelegators(client, parameters),
-      getEpoch: (parameters) => getEpoch(client, parameters),
-      getProposerValId: (parameters) => getProposerValId(client, parameters),
+      getStakingValidator: (parameters) =>
+        getStakingValidator(client, parameters),
+      getStakingDelegator: (parameters) =>
+        getStakingDelegator(client, parameters),
+      getStakingWithdrawalRequest: (parameters) =>
+        getStakingWithdrawalRequest(client, parameters),
+      getStakingConsensusValidatorSet: (parameters) =>
+        getStakingConsensusValidatorSet(client, parameters),
+      getStakingSnapshotValidatorSet: (parameters) =>
+        getStakingSnapshotValidatorSet(client, parameters),
+      getStakingExecutionValidatorSet: (parameters) =>
+        getStakingExecutionValidatorSet(client, parameters),
+      getStakingDelegations: (parameters) =>
+        getStakingDelegations(client, parameters),
+      getStakingDelegators: (parameters) =>
+        getStakingDelegators(client, parameters),
+      getStakingEpoch: (parameters) => getStakingEpoch(client, parameters),
+      getStakingProposerValId: (parameters) =>
+        getStakingProposerValId(client, parameters),
       getWmonBalanceOf: (parameters) => getWmonBalanceOf(client, parameters),
       getWmonAllowance: (parameters) => getWmonAllowance(client, parameters),
     };

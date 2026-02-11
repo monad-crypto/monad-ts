@@ -7,7 +7,7 @@ import type {
 import { readContract } from "viem/actions";
 import { STAKING_ADDRESS, stakingAbi } from "./index.js";
 
-export type GetWithdrawalRequestParameters<
+export type GetStakingWithdrawalRequestParameters<
   args extends ContractFunctionArgs<
     typeof stakingAbi,
     "pure" | "view",
@@ -21,11 +21,11 @@ export type GetWithdrawalRequestParameters<
   ReadContractParameters<typeof stakingAbi, "getWithdrawalRequest", args>,
   "abi" | "address" | "functionName"
 >;
-export type GetWithdrawalRequestReturnType = ReadContractReturnType<
+export type GetStakingWithdrawalRequestReturnType = ReadContractReturnType<
   typeof stakingAbi,
   "getWithdrawalRequest"
 >;
-export type GetWithdrawalRequestErrorType = ReadContractErrorType;
+export type GetStakingWithdrawalRequestErrorType = ReadContractErrorType;
 
 /**
  * Returns the pending withdrawal request for a (validatorId, delegator, withdrawId) tuple.
@@ -33,26 +33,26 @@ export type GetWithdrawalRequestErrorType = ReadContractErrorType;
  * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#getwithdrawalrequest
  *
  * @param client - Viem {@link Client}
- * @param parameters - {@link GetWithdrawalRequestParameters}
- * @returns Withdrawal amount, accumulator value at time of undelegation, and the epoch when the withdrawal becomes claimable. {@link GetWithdrawalRequestReturnType}
+ * @param parameters - {@link GetStakingWithdrawalRequestParameters}
+ * @returns Withdrawal amount, accumulator value at time of undelegation, and the epoch when the withdrawal becomes claimable. {@link GetStakingWithdrawalRequestReturnType}
  *
  * @example
  * ```ts
  * import { createClient, http } from 'viem'
  * import { monad } from 'viem/chains'
- * import { getWithdrawalRequest } from 'monad-ts-docs'
+ * import { getStakingWithdrawalRequest } from 'monad-ts-docs'
  *
  * const client = createClient({
  *   chain: monad,
  *   transport: http(),
  * })
  *
- * const withdrawal = await getWithdrawalRequest(client, {
+ * const withdrawal = await getStakingWithdrawalRequest(client, {
  *   args: [1n, '0x...', 0],
  * })
  * ```
  */
-export async function getWithdrawalRequest<
+export async function getStakingWithdrawalRequest<
   chain extends Chain | undefined,
   const args extends ContractFunctionArgs<
     typeof stakingAbi,
@@ -61,8 +61,8 @@ export async function getWithdrawalRequest<
   >,
 >(
   client: Client<Transport, chain>,
-  parameters: GetWithdrawalRequestParameters<args>,
-): Promise<GetWithdrawalRequestReturnType> {
+  parameters: GetStakingWithdrawalRequestParameters<args>,
+): Promise<GetStakingWithdrawalRequestReturnType> {
   return readContract(client, {
     ...parameters,
     abi: stakingAbi,

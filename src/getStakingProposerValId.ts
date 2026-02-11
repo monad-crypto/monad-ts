@@ -7,7 +7,7 @@ import type {
 import { readContract } from "viem/actions";
 import { STAKING_ADDRESS, stakingAbi } from "./index.js";
 
-export type GetProposerValIdParameters<
+export type GetStakingProposerValIdParameters<
   args extends ContractFunctionArgs<
     typeof stakingAbi,
     "pure" | "view",
@@ -21,11 +21,11 @@ export type GetProposerValIdParameters<
   ReadContractParameters<typeof stakingAbi, "getProposerValId", args>,
   "abi" | "address" | "functionName"
 >;
-export type GetProposerValIdReturnType = ReadContractReturnType<
+export type GetStakingProposerValIdReturnType = ReadContractReturnType<
   typeof stakingAbi,
   "getProposerValId"
 >;
-export type GetProposerValIdErrorType = ReadContractErrorType;
+export type GetStakingProposerValIdErrorType = ReadContractErrorType;
 
 /**
  * Returns the validator ID of the current block proposer, corresponding to the SECP value of the block author.
@@ -33,23 +33,23 @@ export type GetProposerValIdErrorType = ReadContractErrorType;
  * @see https://docs.monad.xyz/developer-essentials/staking/staking-precompile#getproposervalid
  *
  * @param client - Viem {@link Client}
- * @returns Validator ID of the current block proposer. {@link GetProposerValIdReturnType}
+ * @returns Validator ID of the current block proposer. {@link GetStakingProposerValIdReturnType}
  *
  * @example
  * ```ts
  * import { createClient, http } from 'viem'
  * import { monad } from 'viem/chains'
- * import { getProposerValId } from 'monad-ts-docs'
+ * import { getStakingProposerValId } from 'monad-ts-docs'
  *
  * const client = createClient({
  *   chain: monad,
  *   transport: http(),
  * })
  *
- * const proposerValId = await getProposerValId(client)
+ * const proposerValId = await getStakingProposerValId(client)
  * ```
  */
-export async function getProposerValId<
+export async function getStakingProposerValId<
   chain extends Chain | undefined,
   const args extends ContractFunctionArgs<
     typeof stakingAbi,
@@ -58,8 +58,8 @@ export async function getProposerValId<
   >,
 >(
   client: Client<Transport, chain>,
-  parameters?: GetProposerValIdParameters<args>,
-): Promise<GetProposerValIdReturnType> {
+  parameters?: GetStakingProposerValIdParameters<args>,
+): Promise<GetStakingProposerValIdReturnType> {
   return readContract(client, {
     ...parameters,
     abi: stakingAbi,
