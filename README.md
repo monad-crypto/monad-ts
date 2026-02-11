@@ -1,6 +1,6 @@
 # monad-ts
 
-TypeScript library for Monad-specific protocol features. Provides [Viem](https://viem.sh) actions for interacting with the staking precompile on Monad.
+TypeScript library for Monad-specific protocol features. Provides [Viem](https://viem.sh) actions for interacting with the staking precompile and WMON token on Monad.
 
 ## Installation
 
@@ -24,18 +24,20 @@ const client = createPublicClient({
   chain: monad,
 }).extend(monadActions());
 
-const validator = await client.getValidator({ args: [10] });
+const validator = await client.staking.getValidator({ args: [10] });
 console.log(validator);
 
-const epoch = await client.getEpoch();
+const epoch = await client.staking.getEpoch();
 console.log(epoch);
-```
 
+const balance = await client.wmon.getBalanceOf({ args: ["0x..."] });
+console.log(balance);
+```
 ## API Reference
 
-### Staking Precompile Actions
+### Staking
 
-All actions query the staking precompile at `0x0000000000000000000000000000000000001000`.
+All actions query the staking precompile at `Staking.ADDRESS` (`0x0000000000000000000000000000000000001000`).
 
 | Action | Description |
 | --- | --- |
@@ -50,21 +52,19 @@ All actions query the staking precompile at `0x000000000000000000000000000000000
 | `getProposerValId` | Get the current block proposer's validator ID |
 | `getWithdrawalRequest` | Get withdrawal request details |
 
-## Staking Precompile ABI
+Constants: `Staking.ADDRESS`, `Staking.abi`
 
-The staking precompile ABI is exported directly:
+### WMON
 
-```ts
-import { stakingAbi } from "monad-ts";
-```
+All actions query the wrapped Monad token at `Wmon.ADDRESS` (`0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A`).
 
-## Staking Precompile Address
 
-The staking precompile address is exported directly:
+| Action | Description |
+| --- | --- |
+| `getBalanceOf` | Get the WMON balance of an address |
+| `getAllowance` | Get the WMON allowance for a spender |
 
-```ts
-import { STAKING_ADDRESS } from "monad-ts";
-```
+Constants: `Wmon.ADDRESS`, `Wmon.DECIMALS`, `Wmon.NAME`, `Wmon.SYMBOL`, `Wmon.abi`
 
 ## Links
 
