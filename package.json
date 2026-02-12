@@ -1,6 +1,6 @@
 {
   "name": "@monad-crypto/viem",
-  "version": "0.0.1",
+  "version": "0.0.0",
   "description": "TypeScript Interface for Monad",
   "repository": {
     "type": "git",
