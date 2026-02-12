@@ -150,5 +150,5 @@ These are included intentionally for consumer convenience — they enable:
 
 ## 10. Known Limitations
 
-- **No input validation**: Invalid arguments (e.g. non-existent validator IDs, zero addresses) are not rejected by the library. They are passed through to the contract, which may revert or return default values.
+- **No input validation**: Invalid arguments (e.g. non-existent validator IDs, zero addresses) are not rejected by the library. They are passed through to the contract, which may revert.
 - **RPC trust assumption**: The library trusts whatever RPC endpoint the caller configures. A malicious or faulty RPC can return incorrect data. This is inherent to the architecture — the library is a thin wrapper, not a verifier.
