@@ -18,6 +18,7 @@ bun run typecheck                     # Type-check without emitting (tsc --noEmi
 - JSDoc on each action in the `MonadActions` decorator type (`src/decorator.ts`) must exactly match the JSDoc on the corresponding action's implementation function.
 - Formatting: 2-space indent, double quotes (enforced by Biome).
 - All imports use `.js` extensions (ESM with `verbatimModuleSyntax`).
+- When adding, removing, or changing actions, contracts, constants, or trust boundaries, update `ARCHITECTURE.md` to reflect the change (e.g. the action inventory table, hardcoded constants table, or security scope).
 
 ## Architecture
 
