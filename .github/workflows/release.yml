@@ -37,8 +37,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
-      - run: bun run build
       - run: bun install --frozen-lockfile
+      - run: bun run build
 
       - name: Create release pull request or publish to npm
         continue-on-error: true
