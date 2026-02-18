@@ -1,4 +1,27 @@
 /**
+ * Address of monad staking precompile.
+ *
+ * @see {@link https://monadscan.com/address/0x0000000000000000000000000000000000001000}
+ */
+export const STAKING_ADDRESS = "0x0000000000000000000000000000000000001000";
+
+/**
+ * Address of wrapped Monad token.
+ *
+ * @see {@link https://monadscan.com/address/0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A}
+ */
+export const WMON_ADDRESS = "0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A";
+
+/** Number of decimals used by WMON. */
+export const WMON_DECIMALS = 18 as const;
+
+/** Name of the WMON token. */
+export const WMON_NAME = "Wrapped MON" as const;
+
+/** Ticker symbol of the WMON token. */
+export const WMON_SYMBOL = "WMON" as const;
+
+/**
  * Appliction binary interface for the Monad staking precompile.
  *
  * @see {@link https://docs.monad.xyz/developer-essentials/staking/staking-precompile}
@@ -620,26 +643,3 @@ export const wmonAbi = [
     type: "function",
   },
 ] as const;
-
-/**
- * Address of monad staking precompile.
- *
- * @see {@link https://monadscan.com/address/0x0000000000000000000000000000000000001000}
- */
-export const STAKING_ADDRESS = "0x0000000000000000000000000000000000001000";
-
-/**
- * Address of wrapped Monad token.
- *
- * @see {@link https://monadscan.com/address/0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A}
- */
-export const WMON_ADDRESS = "0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A";
-
-/** Number of decimals used by WMON. */
-export const WMON_DECIMALS = 18 as const;
-
-/** Name of the WMON token. */
-export const WMON_NAME = "Wrapped MON" as const;
-
-/** Ticker symbol of the WMON token. */
-export const WMON_SYMBOL = "WMON" as const;

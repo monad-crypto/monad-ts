@@ -2,4 +2,4 @@
 "@monad-crypto/viem": patch
 ---
 
-Initial release
+Initial release.
