@@ -2,7 +2,9 @@
   "name": "monad-ts",
   "license": "MIT",
   "private": true,
-  "workspaces": ["packages/*"],
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "build": "bun run --filter '*' build",
     "lint": "biome check .",
