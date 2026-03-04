@@ -28,7 +28,7 @@ jobs:
 
       - name: Create release pull request or publish to npm
         id: changesets
-        uses: changesets/action@v1.4.5
+        uses: changesets/action@v1.5.2
         with:
           commitMode: github-api 
           title: "chore: version packages"
