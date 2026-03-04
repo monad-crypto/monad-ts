@@ -1,11 +1,15 @@
 {
   "name": "@monad-crypto/viem",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "TypeScript Interface for Monad",
   "repository": {
     "type": "git",
-    "url": "https://github.com/monad-developers/monad-ts.git",
+    "url": "https://github.com/monad-crypto/monad-ts.git",
     "directory": "packages/viem"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   },
   "type": "module",
   "exports": {

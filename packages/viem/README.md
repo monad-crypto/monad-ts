@@ -69,3 +69,5 @@ Constants: `Wmon.ADDRESS`, `Wmon.DECIMALS`, `Wmon.NAME`, `Wmon.SYMBOL`, `Wmon.ab
 ## Links
 
 - [Monad Staking Precompile Docs](https://docs.monad.xyz/developer-essentials/staking/staking-precompile)
+
+Please submit security reports through the Monad.xyz UI Bug Bounty Program: https://cantina.xyz/bounties/a3806410-4f70-4023-8b29-103ddbd5b8a3

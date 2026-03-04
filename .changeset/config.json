@@ -4,9 +4,6 @@
   "commit": false,
   "fixed": [],
   "linked": [],
-  "snapshot": {
-    "useCalculatedVersion": true
-  },
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
