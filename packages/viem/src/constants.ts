@@ -1,3 +1,35 @@
+/**
+ * Address of monad staking precompile.
+ *
+ * @see {@link https://monadscan.com/address/0x0000000000000000000000000000000000001000}
+ */
+export const STAKING_ADDRESS = "0x0000000000000000000000000000000000001000";
+
+/**
+ * Address of wrapped Monad token.
+ *
+ * @see {@link https://monadscan.com/address/0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A}
+ */
+export const WMON_ADDRESS = "0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A";
+
+/** Number of decimals used by WMON. */
+export const WMON_DECIMALS = 18 as const;
+
+/** Name of the WMON token. */
+export const WMON_NAME = "Wrapped MON" as const;
+
+/** Ticker symbol of the WMON token. */
+export const WMON_SYMBOL = "WMON" as const;
+
+/**
+ * Appliction binary interface for the Monad staking precompile.
+ *
+ * @see {@link https://docs.monad.xyz/developer-essentials/staking/staking-precompile}
+ *
+ * @dev External view methods have "view" state mutability. This is not the same state
+ * mutability that is used onchain. Onchain precompile functions all have "payable" or
+ * "nonpayable" state mutability.
+ */
 export const stakingAbi = [
   {
     type: "function",
@@ -57,7 +89,7 @@ export const stakingAbi = [
       { name: "nextIndex", type: "uint32", internalType: "uint32" },
       { name: "valIds", type: "uint64[]", internalType: "uint64[]" },
     ],
-    stateMutability: "nonpayable",
+    stateMutability: "view",
   },
   {
     type: "function",
@@ -71,7 +103,7 @@ export const stakingAbi = [
       { name: "nextValId", type: "uint64", internalType: "uint64" },
       { name: "valIds", type: "uint64[]", internalType: "uint64[]" },
     ],
-    stateMutability: "nonpayable",
+    stateMutability: "view",
   },
   {
     type: "function",
@@ -89,7 +121,7 @@ export const stakingAbi = [
       { name: "deltaEpoch", type: "uint64", internalType: "uint64" },
       { name: "nextDeltaEpoch", type: "uint64", internalType: "uint64" },
     ],
-    stateMutability: "nonpayable",
+    stateMutability: "view",
   },
   {
     type: "function",
@@ -103,7 +135,7 @@ export const stakingAbi = [
       { name: "nextDelegator", type: "address", internalType: "address" },
       { name: "delegators", type: "address[]", internalType: "address[]" },
     ],
-    stateMutability: "nonpayable",
+    stateMutability: "view",
   },
   {
     type: "function",
@@ -113,14 +145,14 @@ export const stakingAbi = [
       { name: "epoch", type: "uint64", internalType: "uint64" },
       { name: "inEpochDelayPeriod", type: "bool", internalType: "bool" },
     ],
-    stateMutability: "nonpayable",
+    stateMutability: "view",
   },
   {
     type: "function",
     name: "getProposerValId",
     inputs: [],
     outputs: [{ name: "val_id", type: "uint64", internalType: "uint64" }],
-    stateMutability: "nonpayable",
+    stateMutability: "view",
   },
   {
     type: "function",
@@ -131,7 +163,7 @@ export const stakingAbi = [
       { name: "nextIndex", type: "uint32", internalType: "uint32" },
       { name: "valIds", type: "uint64[]", internalType: "uint64[]" },
     ],
-    stateMutability: "nonpayable",
+    stateMutability: "view",
   },
   {
     type: "function",
@@ -142,7 +174,7 @@ export const stakingAbi = [
       { name: "nextIndex", type: "uint32", internalType: "uint32" },
       { name: "valIds", type: "uint64[]", internalType: "uint64[]" },
     ],
-    stateMutability: "nonpayable",
+    stateMutability: "view",
   },
   {
     type: "function",
@@ -177,7 +209,7 @@ export const stakingAbi = [
       { name: "accRewardPerToken", type: "uint256", internalType: "uint256" },
       { name: "withdrawEpoch", type: "uint64", internalType: "uint64" },
     ],
-    stateMutability: "nonpayable",
+    stateMutability: "view",
   },
   {
     type: "function",
@@ -456,6 +488,158 @@ export const stakingAbi = [
     ],
     anonymous: false,
   },
-];
+] as const;
 
-export const STAKING_ADDRESS = "0x0000000000000000000000000000000000001000";
+export const wmonAbi = [
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: "address", name: "src", type: "address" },
+      { indexed: true, internalType: "address", name: "guy", type: "address" },
+      { indexed: false, internalType: "uint256", name: "wad", type: "uint256" },
+    ],
+    name: "Approval",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: "address", name: "dst", type: "address" },
+      { indexed: false, internalType: "uint256", name: "wad", type: "uint256" },
+    ],
+    name: "Deposit",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: "address", name: "src", type: "address" },
+      { indexed: true, internalType: "address", name: "dst", type: "address" },
+      { indexed: false, internalType: "uint256", name: "wad", type: "uint256" },
+    ],
+    name: "Transfer",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: "address", name: "src", type: "address" },
+      { indexed: false, internalType: "uint256", name: "wad", type: "uint256" },
+    ],
+    name: "Withdrawal",
+    type: "event",
+  },
+  { payable: true, stateMutability: "payable", type: "fallback" },
+  {
+    constant: true,
+    inputs: [
+      { internalType: "address", name: "", type: "address" },
+      { internalType: "address", name: "", type: "address" },
+    ],
+    name: "allowance",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    payable: false,
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    constant: false,
+    inputs: [
+      { internalType: "address", name: "guy", type: "address" },
+      { internalType: "uint256", name: "wad", type: "uint256" },
+    ],
+    name: "approve",
+    outputs: [{ internalType: "bool", name: "", type: "bool" }],
+    payable: false,
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    constant: true,
+    inputs: [{ internalType: "address", name: "", type: "address" }],
+    name: "balanceOf",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    payable: false,
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    constant: true,
+    inputs: [],
+    name: "decimals",
+    outputs: [{ internalType: "uint8", name: "", type: "uint8" }],
+    payable: false,
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    constant: false,
+    inputs: [],
+    name: "deposit",
+    outputs: [],
+    payable: true,
+    stateMutability: "payable",
+    type: "function",
+  },
+  {
+    constant: true,
+    inputs: [],
+    name: "name",
+    outputs: [{ internalType: "string", name: "", type: "string" }],
+    payable: false,
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    constant: true,
+    inputs: [],
+    name: "symbol",
+    outputs: [{ internalType: "string", name: "", type: "string" }],
+    payable: false,
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    constant: true,
+    inputs: [],
+    name: "totalSupply",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    payable: false,
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    constant: false,
+    inputs: [
+      { internalType: "address", name: "dst", type: "address" },
+      { internalType: "uint256", name: "wad", type: "uint256" },
+    ],
+    name: "transfer",
+    outputs: [{ internalType: "bool", name: "", type: "bool" }],
+    payable: false,
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    constant: false,
+    inputs: [
+      { internalType: "address", name: "src", type: "address" },
+      { internalType: "address", name: "dst", type: "address" },
+      { internalType: "uint256", name: "wad", type: "uint256" },
+    ],
+    name: "transferFrom",
+    outputs: [{ internalType: "bool", name: "", type: "bool" }],
+    payable: false,
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    constant: false,
+    inputs: [{ internalType: "uint256", name: "wad", type: "uint256" }],
+    name: "withdraw",
+    outputs: [],
+    payable: false,
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+] as const;

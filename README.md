@@ -1,15 +1,19 @@
-# monad-ext
+# monad-ts
 
-To install dependencies:
+Monorepo for Monad TypeScript libraries.
+
+## Packages
+
+| Package | Description |
+| --- | --- |
+| [`@monad-crypto/viem`](packages/viem) | Viem actions for the Monad staking precompile and WMON token |
+
+## Development
 
 ```bash
-bun install
+bun install                # Install all dependencies
+bun run build              # Build all packages
+bun run lint               # Lint and format check (biome)
+bun run typecheck          # Type-check all packages
+bun run test               # Run tests in all packages
 ```
-
-To run:
-
-```bash
-bun run index.ts
-```
-
-This project was created using `bun init` in bun v1.3.8. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
