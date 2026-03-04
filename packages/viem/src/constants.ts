@@ -78,7 +78,7 @@ export const stakingAbi = [
     name: "externalReward",
     inputs: [{ name: "validatorId", type: "uint64", internalType: "uint64" }],
     outputs: [{ name: "success", type: "bool", internalType: "bool" }],
-    stateMutability: "nonpayable",
+    stateMutability: "payable",
   },
   {
     type: "function",
@@ -89,7 +89,7 @@ export const stakingAbi = [
       { name: "nextIndex", type: "uint32", internalType: "uint32" },
       { name: "valIds", type: "uint64[]", internalType: "uint64[]" },
     ],
-    stateMutability: "view",
+    stateMutability: "nonpayable",
   },
   {
     type: "function",
@@ -103,7 +103,7 @@ export const stakingAbi = [
       { name: "nextValId", type: "uint64", internalType: "uint64" },
       { name: "valIds", type: "uint64[]", internalType: "uint64[]" },
     ],
-    stateMutability: "view",
+    stateMutability: "nonpayable",
   },
   {
     type: "function",
@@ -121,7 +121,7 @@ export const stakingAbi = [
       { name: "deltaEpoch", type: "uint64", internalType: "uint64" },
       { name: "nextDeltaEpoch", type: "uint64", internalType: "uint64" },
     ],
-    stateMutability: "view",
+    stateMutability: "nonpayable",
   },
   {
     type: "function",
@@ -135,7 +135,7 @@ export const stakingAbi = [
       { name: "nextDelegator", type: "address", internalType: "address" },
       { name: "delegators", type: "address[]", internalType: "address[]" },
     ],
-    stateMutability: "view",
+    stateMutability: "nonpayable",
   },
   {
     type: "function",
@@ -145,14 +145,14 @@ export const stakingAbi = [
       { name: "epoch", type: "uint64", internalType: "uint64" },
       { name: "inEpochDelayPeriod", type: "bool", internalType: "bool" },
     ],
-    stateMutability: "view",
+    stateMutability: "nonpayable",
   },
   {
     type: "function",
     name: "getProposerValId",
     inputs: [],
     outputs: [{ name: "val_id", type: "uint64", internalType: "uint64" }],
-    stateMutability: "view",
+    stateMutability: "nonpayable",
   },
   {
     type: "function",
@@ -163,7 +163,7 @@ export const stakingAbi = [
       { name: "nextIndex", type: "uint32", internalType: "uint32" },
       { name: "valIds", type: "uint64[]", internalType: "uint64[]" },
     ],
-    stateMutability: "view",
+    stateMutability: "nonpayable",
   },
   {
     type: "function",
@@ -174,7 +174,7 @@ export const stakingAbi = [
       { name: "nextIndex", type: "uint32", internalType: "uint32" },
       { name: "valIds", type: "uint64[]", internalType: "uint64[]" },
     ],
-    stateMutability: "view",
+    stateMutability: "nonpayable",
   },
   {
     type: "function",
@@ -194,7 +194,7 @@ export const stakingAbi = [
       { name: "secpPubkey", type: "bytes", internalType: "bytes" },
       { name: "blsPubkey", type: "bytes", internalType: "bytes" },
     ],
-    stateMutability: "view",
+    stateMutability: "nonpayable",
   },
   {
     type: "function",
@@ -209,7 +209,7 @@ export const stakingAbi = [
       { name: "accRewardPerToken", type: "uint256", internalType: "uint256" },
       { name: "withdrawEpoch", type: "uint64", internalType: "uint64" },
     ],
-    stateMutability: "view",
+    stateMutability: "nonpayable",
   },
   {
     type: "function",
