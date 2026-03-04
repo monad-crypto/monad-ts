@@ -26,15 +26,11 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun run build
 
-      - name: Configure git for verified commits
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-
       - name: Create release pull request or publish to npm
         id: changesets
         uses: changesets/action@v1.4.5
         with:
+          commitMode: github-api 
           title: "chore: version packages"
           commit: "chore: version packages"
           version: bun run changeset version
