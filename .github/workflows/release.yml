@@ -33,10 +33,7 @@ jobs:
           commitMode: github-api 
           title: "chore: version packages"
           commit: "chore: version packages"
-          version: |
-            bun run changeset version
-          publish: |
-            bun run build 
-            bun run changeset publish
+          version: bun run changeset version
+          publish: bun run publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
