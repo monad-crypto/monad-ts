@@ -21,6 +21,11 @@ jobs:
           # This fetches the entire Git history so that Changesets can generate changelogs with the correct commits.
           fetch-depth: 0
 
+      - uses: actions/setup-node@v4 
+        with:
+          node-version: 24.8
+          registry-url: 'https://registry.npmjs.org'
+
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - run: bun run build
