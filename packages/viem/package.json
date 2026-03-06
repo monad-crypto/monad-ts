@@ -4,7 +4,7 @@
   "description": "TypeScript Interface for Monad",
   "repository": {
     "type": "git",
-    "url": "https://github.com/monad-crypto/monad-ts.git",
+    "url": "git+https://github.com/monad-crypto/monad-ts.git",
     "directory": "packages/viem"
   },
   "publishConfig": {
