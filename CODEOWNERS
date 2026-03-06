@@ -1,1 +1,5 @@
-* @monad-crypto/monad-ts-dev-approvers @monad-crypto/monad-ts-qa-approvers
+[monad-ts-dev-approvers]
+* @monad-crypto/monad-ts-dev-approvers
+
+[monad-ts-qa-approvers]
+* @monad-crypto/monad-ts-qa-approvers
