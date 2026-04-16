@@ -518,6 +518,63 @@ test("server charge verifies a pull (authorization) credential end-to-end", asyn
   expect(receipt.reference).toMatch(/^0x[0-9a-f]{64}$/);
 });
 
+test("server charge verifies TWO sequential pull (authorization) credentials from the same wallet", async () => {
+  const client = createTestClient();
+
+  await Promise.all([
+    fundUSDC(client, accounts.payer.address, 10_000_000n),
+    setBalance(client, accounts.recipient.address, 10n ** 18n),
+  ]);
+
+  const serverMethod = charge({
+    recipient: accounts.recipient.address,
+    account: accounts.recipient,
+    getClient: () => client,
+  });
+
+  const clientMethod = clientCharge({
+    account: accounts.payer,
+    mode: "pull",
+    getClient: () => client,
+  });
+
+  // First payment
+  const challenge1 = makeChallenge({
+    amount: "1",
+    recipient: accounts.recipient.address,
+  });
+  const credentialStr1 = await clientMethod.createCredential({
+    challenge: challenge1,
+  } as never);
+  const credential1 = Credential.deserialize(credentialStr1);
+
+  const receipt1 = await serverMethod.verify({
+    credential: credential1,
+    request: { ...challenge1.request, chainId: testChainId },
+  });
+
+  expect(receipt1.status).toBe("success");
+  expect(receipt1.reference).toMatch(/^0x[0-9a-f]{64}$/);
+
+  // Second payment from the same wallet — this should also succeed
+  const challenge2 = makeChallenge({
+    amount: "1",
+    recipient: accounts.recipient.address,
+  });
+  const credentialStr2 = await clientMethod.createCredential({
+    challenge: challenge2,
+  } as never);
+  const credential2 = Credential.deserialize(credentialStr2);
+
+  const receipt2 = await serverMethod.verify({
+    credential: credential2,
+    request: { ...challenge2.request, chainId: testChainId },
+  });
+
+  expect(receipt2.status).toBe("success");
+  expect(receipt2.reference).toMatch(/^0x[0-9a-f]{64}$/);
+});
+
 test("server charge succeeds when server account does not match recipient", async () => {
   const client = createTestClient();
 

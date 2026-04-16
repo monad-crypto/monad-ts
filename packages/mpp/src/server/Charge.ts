@@ -10,6 +10,7 @@ import {
 } from "viem";
 import { parseAccount } from "viem/accounts";
 import {
+  estimateGas,
   getTransactionReceipt,
   sendTransaction,
   sendTransactionSync,
@@ -212,26 +213,39 @@ export function charge(parameters: charge.Parameters = {}): Method.AnyServer {
           await assertHashUnused(store, hash);
           await markHashUsed(store, hash);
 
+          const txData = encodeFunctionData({
+            abi: defaults.erc3009Abi,
+            functionName: "transferWithAuthorization",
+            args: [
+              from as Address,
+              to as Address,
+              BigInt(value),
+              BigInt(validAfter),
+              BigInt(validBefore),
+              nonce as `0x${string}`,
+              v,
+              r as `0x${string}`,
+              s as `0x${string}`,
+            ],
+          });
+
+          // Estimate gas with a 30% buffer to account for storage-cost
+          // variance between estimation and execution (e.g. cold vs warm
+          // SSTORE slots across sequential transferWithAuthorization calls).
+          const gasEstimate = await estimateGas(client, {
+            account: serverAccount,
+            to: challengeCurrency,
+            data: txData,
+          } as never);
+          const gas = (gasEstimate * 130n) / 100n;
+
           if (waitForConfirmation) {
             const receipt = await sendTransactionSync(client, {
               account: serverAccount,
               chain: client.chain,
               to: challengeCurrency,
-              data: encodeFunctionData({
-                abi: defaults.erc3009Abi,
-                functionName: "transferWithAuthorization",
-                args: [
-                  from as Address,
-                  to as Address,
-                  BigInt(value),
-                  BigInt(validAfter),
-                  BigInt(validBefore),
-                  nonce as `0x${string}`,
-                  v,
-                  r as `0x${string}`,
-                  s as `0x${string}`,
-                ],
-              }),
+              data: txData,
+              gas,
             } as never);
 
             return toReceipt(receipt);
@@ -240,21 +254,8 @@ export function charge(parameters: charge.Parameters = {}): Method.AnyServer {
               account: serverAccount,
               chain: client.chain,
               to: challengeCurrency,
-              data: encodeFunctionData({
-                abi: defaults.erc3009Abi,
-                functionName: "transferWithAuthorization",
-                args: [
-                  from as Address,
-                  to as Address,
-                  BigInt(value),
-                  BigInt(validAfter),
-                  BigInt(validBefore),
-                  nonce as `0x${string}`,
-                  v,
-                  r as `0x${string}`,
-                  s as `0x${string}`,
-                ],
-              }),
+              data: txData,
+              gas,
             } as never);
 
             return {
