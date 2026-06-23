@@ -1,0 +1,393 @@
+import {
+  formatBlock,
+  formatLog,
+  formatTransaction,
+  type Hex,
+  hexToBigInt,
+  hexToNumber,
+} from "viem";
+
+import type {
+  BlockResponse,
+  CallTraceResponse,
+  LightBlock,
+  LogResponse,
+  MethodName,
+  QueryBlocksRequest,
+  QueryBlocksResponse,
+  QueryLogsRequest,
+  QueryLogsResponse,
+  QueryTracesRequest,
+  QueryTracesResponse,
+  QueryTransactionsRequest,
+  QueryTransactionsResponse,
+  QueryTransfersRequest,
+  QueryTransfersResponse,
+  TableName,
+  TransactionResponse,
+  TransferResponse,
+} from "./types.js";
+
+export {
+  queryActions,
+  queryBlocks,
+  queryBlocksWithPagination,
+  queryLogs,
+  queryLogsWithPagination,
+  queryTraces,
+  queryTracesWithPagination,
+  queryTransactions,
+  queryTransactionsWithPagination,
+  queryTransfers,
+  queryTransfersWithPagination,
+} from "./actions.js";
+export type {
+  BlockResponse,
+  CallTraceResponse,
+  LightBlock,
+  LogResponse,
+  LogsFilter,
+  MethodName,
+  Order,
+  QueryBlocksFields,
+  QueryBlocksRequest,
+  QueryBlocksResponse,
+  QueryLogsFields,
+  QueryLogsRequest,
+  QueryLogsResponse,
+  QueryRpcSchema,
+  QueryTracesFields,
+  QueryTracesRequest,
+  QueryTracesResponse,
+  QueryTransactionsFields,
+  QueryTransactionsRequest,
+  QueryTransactionsResponse,
+  QueryTransfersFields,
+  QueryTransfersRequest,
+  QueryTransfersResponse,
+  TableName,
+  TracesFilter,
+  TransactionResponse,
+  TransactionsFilter,
+  TransferResponse,
+  TransfersFilter,
+} from "./types.js";
+
+function formatLightBlock(block: LightBlock<Hex>): LightBlock {
+  return {
+    number: hexToBigInt(block.number),
+    hash: block.hash,
+    parentHash: block.parentHash,
+  };
+}
+
+function formatBlocks(blocks: BlockResponse<Hex>[]): BlockResponse[] {
+  return blocks.map((b) => formatBlock(b) as BlockResponse);
+}
+
+function formatTransactions(
+  transactions: TransactionResponse[],
+): TransactionResponse[] {
+  return transactions.map(
+    // @ts-expect-error
+    (t) => formatTransaction(t) as TransactionResponse,
+  );
+}
+
+export function formatQueryBlocksResponse(
+  raw: QueryBlocksResponse<QueryBlocksRequest, Hex>,
+): QueryBlocksResponse {
+  const result: QueryBlocksResponse = {
+    fromBlock: formatLightBlock(raw.fromBlock),
+    toBlock: formatLightBlock(raw.toBlock),
+    cursorBlock: formatLightBlock(raw.cursorBlock),
+    data: {
+      blocks: formatBlocks(raw.data.blocks),
+    },
+  };
+  return result;
+}
+
+export function formatQueryTransactionsResponse(
+  raw: QueryTransactionsResponse<QueryTransactionsRequest, Hex, Hex>,
+): QueryTransactionsResponse {
+  const result: QueryTransactionsResponse = {
+    fromBlock: formatLightBlock(raw.fromBlock),
+    toBlock: formatLightBlock(raw.toBlock),
+    cursorBlock: formatLightBlock(raw.cursorBlock),
+    data: {
+      // @ts-expect-error
+      transactions: formatTransactions(raw.data.transactions),
+    },
+  };
+  if (raw.data.blocks) result.data.blocks = formatBlocks(raw.data.blocks);
+  return result;
+}
+
+export function formatQueryLogsResponse(
+  raw: QueryLogsResponse<QueryLogsRequest, Hex, Hex>,
+): QueryLogsResponse {
+  const result: QueryLogsResponse = {
+    fromBlock: formatLightBlock(raw.fromBlock),
+    toBlock: formatLightBlock(raw.toBlock),
+    cursorBlock: formatLightBlock(raw.cursorBlock),
+    data: {
+      logs: raw.data.logs.map((l) => formatLog(l) as LogResponse),
+    },
+  };
+  if (raw.data.transactions) {
+    // @ts-expect-error
+    result.data.transactions = formatTransactions(raw.data.transactions);
+  }
+  if (raw.data.blocks) result.data.blocks = formatBlocks(raw.data.blocks);
+  return result;
+}
+
+export function formatQueryTracesResponse(
+  raw: QueryTracesResponse<QueryTracesRequest, Hex, Hex>,
+): QueryTracesResponse {
+  const result: QueryTracesResponse = {
+    fromBlock: formatLightBlock(raw.fromBlock),
+    toBlock: formatLightBlock(raw.toBlock),
+    cursorBlock: formatLightBlock(raw.cursorBlock),
+    data: {
+      traces: raw.data.traces.map((rawTrace) => {
+        const t = rawTrace as Partial<CallTraceResponse<Hex, Hex>>;
+        return {
+          ...t,
+          ...(t.blockNumber !== undefined && {
+            blockNumber: hexToBigInt(t.blockNumber),
+          }),
+          ...(t.transactionIndex !== undefined && {
+            transactionIndex: hexToNumber(t.transactionIndex),
+          }),
+          ...(t.subcalls !== undefined && {
+            subcalls: hexToNumber(t.subcalls),
+          }),
+          ...(t.gas !== undefined && { gas: hexToBigInt(t.gas) }),
+          ...(t.gasUsed !== undefined && { gasUsed: hexToBigInt(t.gasUsed) }),
+          ...(t.value !== undefined && { value: hexToBigInt(t.value) }),
+        } as unknown as CallTraceResponse;
+      }),
+    },
+  };
+  if (raw.data.transactions) {
+    // @ts-expect-error
+    result.data.transactions = formatTransactions(raw.data.transactions);
+  }
+  if (raw.data.blocks) result.data.blocks = formatBlocks(raw.data.blocks);
+  return result;
+}
+
+export function formatQueryTransfersResponse(
+  raw: QueryTransfersResponse<QueryTransfersRequest, Hex, Hex>,
+): QueryTransfersResponse {
+  const result: QueryTransfersResponse = {
+    fromBlock: formatLightBlock(raw.fromBlock),
+    toBlock: formatLightBlock(raw.toBlock),
+    cursorBlock: formatLightBlock(raw.cursorBlock),
+    data: {
+      transfers: raw.data.transfers.map((rawTransfer) => {
+        const t = rawTransfer as Partial<TransferResponse<Hex, Hex>>;
+        return {
+          ...t,
+          ...(t.blockNumber !== undefined && {
+            blockNumber: hexToBigInt(t.blockNumber),
+          }),
+          ...(t.transactionIndex !== undefined && {
+            transactionIndex: hexToNumber(t.transactionIndex),
+          }),
+          ...(t.value !== undefined && { value: hexToBigInt(t.value) }),
+        } as unknown as TransferResponse;
+      }),
+    },
+  };
+  if (raw.data.transactions) {
+    // @ts-expect-error
+    result.data.transactions = formatTransactions(raw.data.transactions);
+  }
+  if (raw.data.blocks) result.data.blocks = formatBlocks(raw.data.blocks);
+  return result;
+}
+
+/** BlockResponse fields */
+export const blockFields = [
+  "baseFeePerGas",
+  "blobGasUsed",
+  "difficulty",
+  "excessBlobGas",
+  "extraData",
+  "gasLimit",
+  "gasUsed",
+  "hash",
+  "logsBloom",
+  "miner",
+  "mixHash",
+  "nonce",
+  "number",
+  "parentBeaconBlockRoot",
+  "parentHash",
+  "receiptsRoot",
+  "sealFields",
+  "sha3Uncles",
+  "size",
+  "stateRoot",
+  "timestamp",
+  "totalDifficulty",
+  "transactionsRoot",
+  "withdrawals",
+  "withdrawalsRoot",
+] as const satisfies (keyof BlockResponse)[];
+
+/** TransactionResponse fields */
+export const transactionFields = [
+  "accessList",
+  "authorizationList",
+  "blobVersionedHashes",
+  "blobGasPrice",
+  "blobGasUsed",
+  "blockHash",
+  "blockNumber",
+  "chainId",
+  "contractAddress",
+  "cumulativeGasUsed",
+  "effectiveGasPrice",
+  "from",
+  "gas",
+  "gasPrice",
+  "gasUsed",
+  "hash",
+  "input",
+  "logsBloom",
+  "maxFeePerBlobGas",
+  "maxFeePerGas",
+  "maxPriorityFeePerGas",
+  "nonce",
+  "r",
+  "root",
+  "s",
+  "status",
+  "to",
+  "transactionHash",
+  "transactionIndex",
+  "type",
+  "v",
+  "value",
+  "yParity",
+] as const satisfies (keyof TransactionResponse)[];
+
+/** CallTraceResponse fields (used for the "traces" table) */
+export const callTraceFields = [
+  "blockHash",
+  "blockNumber",
+  "error",
+  "from",
+  "gas",
+  "gasUsed",
+  "input",
+  "output",
+  "revertReason",
+  "status",
+  "subcalls",
+  "to",
+  "traceAddress",
+  "transactionHash",
+  "transactionIndex",
+  "type",
+  "value",
+] as const satisfies (keyof CallTraceResponse)[];
+
+/** LogResponse fields */
+export const logFields = [
+  "address",
+  "blockHash",
+  "blockNumber",
+  "data",
+  "logIndex",
+  "topics",
+  "transactionHash",
+  "transactionIndex",
+] as const satisfies (keyof LogResponse)[];
+
+/** TransferResponse fields */
+export const transferFields = [
+  "blockHash",
+  "blockNumber",
+  "from",
+  "status",
+  "to",
+  "traceAddress",
+  "transactionHash",
+  "transactionIndex",
+  "value",
+] as const satisfies (keyof TransferResponse)[];
+
+const FIELDS = {
+  blocks: blockFields,
+  transactions: transactionFields,
+  logs: logFields,
+  traces: callTraceFields,
+  transfers: transferFields,
+} as const;
+
+const METHOD_TO_TABLE = {
+  eth_queryBlocks: "blocks",
+  eth_queryTransactions: "transactions",
+  eth_queryLogs: "logs",
+  eth_queryTraces: "traces",
+  eth_queryTransfers: "transfers",
+} as const satisfies { [method in MethodName]: TableName };
+
+/**
+ * Returns the field names that will appear in the response for each table,
+ * based on the method and any included relations.
+ *
+ * - If `fields` is omitted, all fields of the primary table are returned.
+ * - If `fields[table]` is `true`, all fields of that table are returned.
+ * - If `fields[table]` is an array, only those fields are returned.
+ * - Related tables present as keys in `fields` contribute their fields too.
+ */
+export function getFieldsForRequest(
+  method: MethodName,
+  fields?: Record<string, readonly string[] | true | undefined>,
+): {
+  blocks: (keyof BlockResponse)[];
+  transactions: (keyof TransactionResponse)[];
+  traces: (keyof CallTraceResponse)[];
+  logs: (keyof LogResponse)[];
+  transfers: (keyof TransferResponse)[];
+} {
+  const primaryTable = METHOD_TO_TABLE[method];
+
+  const resolve = (key: TableName): string[] => {
+    const val = fields?.[key];
+    if (val === true || (val === undefined && key === primaryTable)) {
+      return FIELDS[key] as unknown as string[];
+    }
+    if (Array.isArray(val)) {
+      return val;
+    }
+    return [];
+  };
+
+  return {
+    blocks: resolve("blocks") as (keyof BlockResponse)[],
+    transactions: resolve("transactions") as (keyof TransactionResponse)[],
+    traces: resolve("traces") as (keyof CallTraceResponse)[],
+    logs: resolve("logs") as (keyof LogResponse)[],
+    transfers: resolve("transfers") as (keyof TransferResponse)[],
+  };
+}
+
+/**
+ * Returns `true` if there are no more pages to fetch.
+ *
+ * Pagination is complete when `cursorBlock.number == toBlock.number`,
+ * meaning the server has scanned through the entire requested range.
+ */
+export function isLastPage(response: {
+  cursorBlock: { number: Hex };
+  toBlock: { number: Hex };
+}): boolean {
+  return response.cursorBlock.number === response.toBlock.number;
+}

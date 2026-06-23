@@ -1,0 +1,46 @@
+{
+  "name": "@monad-crypto/eth_query",
+  "version": "0.0.0",
+  "description": "TypeScript client for eth_query JSON-RPC methods",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/monad-crypto/monad-ts.git",
+    "directory": "packages/eth_query"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "src/**/*.ts",
+    "!**/*.test.ts"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "typescript": ">=5.4.0",
+    "viem": ">=2.46.3"
+  },
+  "peerDependenciesMeta": {
+    "typescript": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "viem": "2.47.0"
+  }
+}
