@@ -81,16 +81,72 @@ function formatLightBlock(block: LightBlock<Hex>): LightBlock {
   };
 }
 
+function normalizeStatus(status: string, kind: "receipt" | "trace") {
+  if (status === "success" || status === "reverted") return status;
+  if (kind === "trace") return status === "0x0" ? "success" : "reverted";
+  return status === "0x1" ? "success" : "reverted";
+}
+
+function filterProperties<T extends object, K extends keyof T>(
+  obj: T,
+  keys: K[],
+): Pick<T, K> {
+  return Object.fromEntries(keys.map((key) => [key, obj[key]])) as Pick<T, K>;
+}
+
 function formatBlocks(blocks: BlockResponse<Hex>[]): BlockResponse[] {
-  return blocks.map((b) => formatBlock(b) as BlockResponse);
+  return blocks.map(
+    (b) =>
+      filterProperties(
+        formatBlock(b),
+        Object.keys(b) as (keyof BlockResponse)[],
+      ) as BlockResponse,
+  );
 }
 
 function formatTransactions(
   transactions: TransactionResponse[],
 ): TransactionResponse[] {
-  return transactions.map(
-    // @ts-expect-error
-    (t) => formatTransaction(t) as TransactionResponse,
+  return transactions.map((t) => {
+    // TransactionResponse combines transaction and receipt fields. Viem's
+    // formatTransaction handles the transaction fields, so normalize receipt
+    // fields here before delegating to it.
+    const transaction = Object.fromEntries(
+      Object.entries(t).map(([key, value]) => {
+        if (value == null) return [key, value];
+        if (
+          [
+            "blobGasPrice",
+            "blobGasUsed",
+            "cumulativeGasUsed",
+            "effectiveGasPrice",
+            "gasUsed",
+          ].includes(key) &&
+          typeof value === "string"
+        ) {
+          return [key, hexToBigInt(value as Hex)];
+        }
+        if (key === "status" && typeof value === "string") {
+          return [key, normalizeStatus(value, "receipt")];
+        }
+        return [key, value];
+      }),
+    ) as TransactionResponse;
+
+    return filterProperties(
+      formatTransaction(transaction as never) as TransactionResponse,
+      Object.keys(t) as (keyof TransactionResponse)[],
+    ) as TransactionResponse;
+  });
+}
+
+function formatLogs(logs: LogResponse<Hex, Hex>[]): LogResponse[] {
+  return logs.map(
+    (l) =>
+      filterProperties(
+        formatLog(l),
+        Object.keys(l) as (keyof LogResponse)[],
+      ) as LogResponse,
   );
 }
 
@@ -132,7 +188,7 @@ export function formatQueryLogsResponse(
     toBlock: formatLightBlock(raw.toBlock),
     cursorBlock: formatLightBlock(raw.cursorBlock),
     data: {
-      logs: raw.data.logs.map((l) => formatLog(l) as LogResponse),
+      logs: formatLogs(raw.data.logs),
     },
   };
   if (raw.data.transactions) {
@@ -167,6 +223,9 @@ export function formatQueryTracesResponse(
           ...(t.gas !== undefined && { gas: hexToBigInt(t.gas) }),
           ...(t.gasUsed !== undefined && { gasUsed: hexToBigInt(t.gasUsed) }),
           ...(t.value !== undefined && { value: hexToBigInt(t.value) }),
+          ...(t.status !== undefined && {
+            status: normalizeStatus(t.status, "trace"),
+          }),
         } as unknown as CallTraceResponse;
       }),
     },
