@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { expect, test } from "bun:test";
 import type { Client, Transport } from "viem";
 import { createClient, http } from "viem";
 import {
@@ -16,7 +16,6 @@ import {
 } from "./index.js";
 
 const RPC_URL = process.env.RPC_URL;
-const productionTest = RPC_URL ? test : test.skip;
 const client = createClient({
   transport: http(RPC_URL ?? "http://127.0.0.1"),
 }) as Client<Transport, undefined, undefined, QueryRpcSchema>;
@@ -108,19 +107,18 @@ function summarizeRows(rows: readonly object[] | undefined, fields: string[]) {
   };
 }
 
-describe("production RPC", () => {
-  productionTest("queryBlocks", async () => {
-    const projected = await queryBlocks(client, {
-      fromBlock: 30_000_000n,
-      toBlock: 30_000_003n,
-      limit: 2,
-      fields: {
-        blocks: ["number", "hash", "timestamp"],
-      },
-    });
-    expect(
-      summarizeEnvelope(projected, "blocks", ["number", "hash", "timestamp"]),
-    ).toMatchInlineSnapshot(`
+test("queryBlocks", async () => {
+  const projected = await queryBlocks(client, {
+    fromBlock: 30_000_000n,
+    toBlock: 30_000_003n,
+    limit: 2,
+    fields: {
+      blocks: ["number", "hash", "timestamp"],
+    },
+  });
+  expect(
+    summarizeEnvelope(projected, "blocks", ["number", "hash", "timestamp"]),
+  ).toMatchInlineSnapshot(`
       {
         "cursorBlock": 30000001n,
         "fromBlock": 30000000n,
@@ -145,20 +143,20 @@ describe("production RPC", () => {
       }
     `);
 
-    const ascPages = await collectPages(
-      queryBlocksWithPagination(client, {
-        fromBlock: 30_000_000n,
-        toBlock: 30_000_003n,
-        limit: 2,
-        fields: {
-          blocks: ["number", "hash"],
-        },
-      }),
-      2,
-    );
-    expect(
-      summarizePages(ascPages, "blocks", ["number", "hash"]),
-    ).toMatchInlineSnapshot(`
+  const ascPages = await collectPages(
+    queryBlocksWithPagination(client, {
+      fromBlock: 30_000_000n,
+      toBlock: 30_000_003n,
+      limit: 2,
+      fields: {
+        blocks: ["number", "hash"],
+      },
+    }),
+    2,
+  );
+  expect(
+    summarizePages(ascPages, "blocks", ["number", "hash"]),
+  ).toMatchInlineSnapshot(`
         [
           {
             "cursorBlock": 30000001n,
@@ -187,21 +185,21 @@ describe("production RPC", () => {
         ]
       `);
 
-    const descPages = await collectPages(
-      queryBlocksWithPagination(client, {
-        fromBlock: 30_000_003n,
-        toBlock: 30_000_000n,
-        order: "desc",
-        limit: 2,
-        fields: {
-          blocks: ["number", "hash"],
-        },
-      }),
-      2,
-    );
-    expect(
-      summarizePages(descPages, "blocks", ["number", "hash"]),
-    ).toMatchInlineSnapshot(`
+  const descPages = await collectPages(
+    queryBlocksWithPagination(client, {
+      fromBlock: 30_000_003n,
+      toBlock: 30_000_000n,
+      order: "desc",
+      limit: 2,
+      fields: {
+        blocks: ["number", "hash"],
+      },
+    }),
+    2,
+  );
+  expect(
+    summarizePages(descPages, "blocks", ["number", "hash"]),
+  ).toMatchInlineSnapshot(`
         [
           {
             "cursorBlock": 30000002n,
@@ -230,17 +228,17 @@ describe("production RPC", () => {
         ]
       `);
 
-    const invalidLimit = await captureRpcError(() =>
-      queryBlocks(client, {
-        fromBlock: 30_000_000n,
-        toBlock: 30_000_003n,
-        limit: 0,
-        fields: {
-          blocks: ["number"],
-        },
-      }),
-    );
-    expect(invalidLimit).toMatchInlineSnapshot(`
+  const invalidLimit = await captureRpcError(() =>
+    queryBlocks(client, {
+      fromBlock: 30_000_000n,
+      toBlock: 30_000_003n,
+      limit: 0,
+      fields: {
+        blocks: ["number"],
+      },
+    }),
+  );
+  expect(invalidLimit).toMatchInlineSnapshot(`
       {
         "code": -32602,
         "details": "limit must be at least 1",
@@ -251,44 +249,44 @@ describe("production RPC", () => {
       ,
       }
     `);
-  });
+});
 
-  productionTest("queryTransactions", async () => {
-    const filtered = await queryTransactions(client, {
-      fromBlock: 30_000_000n,
-      toBlock: 30_000_003n,
-      limit: 2,
-      filter: {
-        from: "0xc777cfb3bccc2f1d3049845d62639c769dff243d",
-      },
-      fields: {
-        transactions: [
-          "hash",
-          "from",
-          "to",
-          "value",
-          "blockNumber",
-          "transactionIndex",
-        ],
-        blocks: ["number", "hash"],
-      },
-    });
-    expect({
-      envelope: {
-        fromBlock: filtered.fromBlock.number,
-        toBlock: filtered.toBlock.number,
-        cursorBlock: filtered.cursorBlock.number,
-      },
-      transactions: summarizeRows(filtered.data.transactions, [
+test("queryTransactions", async () => {
+  const filtered = await queryTransactions(client, {
+    fromBlock: 30_000_000n,
+    toBlock: 30_000_003n,
+    limit: 2,
+    filter: {
+      from: "0xc777cfb3bccc2f1d3049845d62639c769dff243d",
+    },
+    fields: {
+      transactions: [
         "hash",
         "from",
         "to",
         "value",
         "blockNumber",
         "transactionIndex",
-      ]),
-      blocks: summarizeRows(filtered.data.blocks, ["number", "hash"]),
-    }).toMatchInlineSnapshot(`
+      ],
+      blocks: ["number", "hash"],
+    },
+  });
+  expect({
+    envelope: {
+      fromBlock: filtered.fromBlock.number,
+      toBlock: filtered.toBlock.number,
+      cursorBlock: filtered.cursorBlock.number,
+    },
+    transactions: summarizeRows(filtered.data.transactions, [
+      "hash",
+      "from",
+      "to",
+      "value",
+      "blockNumber",
+      "transactionIndex",
+    ]),
+    blocks: summarizeRows(filtered.data.blocks, ["number", "hash"]),
+  }).toMatchInlineSnapshot(`
       {
         "blocks": {
           "firstRowKeys": [
@@ -332,21 +330,21 @@ describe("production RPC", () => {
       }
     `);
 
-    const ascPages = await collectPages(
-      queryTransactionsWithPagination(client, {
-        fromBlock: 30_000_000n,
-        toBlock: 30_000_999n,
-        limit: 1,
-        fields: {
-          transactions: ["hash", "blockNumber"],
-          blocks: ["number"],
-        },
-      }),
-      3,
-    );
-    expect(
-      summarizePages(ascPages, "transactions", ["hash", "blockNumber"]),
-    ).toMatchInlineSnapshot(`
+  const ascPages = await collectPages(
+    queryTransactionsWithPagination(client, {
+      fromBlock: 30_000_000n,
+      toBlock: 30_000_999n,
+      limit: 1,
+      fields: {
+        transactions: ["hash", "blockNumber"],
+        blocks: ["number"],
+      },
+    }),
+    3,
+  );
+  expect(
+    summarizePages(ascPages, "transactions", ["hash", "blockNumber"]),
+  ).toMatchInlineSnapshot(`
         [
           {
             "cursorBlock": 30000000n,
@@ -387,22 +385,22 @@ describe("production RPC", () => {
         ]
       `);
 
-    const descPages = await collectPages(
-      queryTransactionsWithPagination(client, {
-        fromBlock: 30_000_999n,
-        toBlock: 30_000_000n,
-        order: "desc",
-        limit: 1,
-        fields: {
-          transactions: ["hash", "blockNumber"],
-          blocks: ["number"],
-        },
-      }),
-      3,
-    );
-    expect(
-      summarizePages(descPages, "transactions", ["hash", "blockNumber"]),
-    ).toMatchInlineSnapshot(`
+  const descPages = await collectPages(
+    queryTransactionsWithPagination(client, {
+      fromBlock: 30_000_999n,
+      toBlock: 30_000_000n,
+      order: "desc",
+      limit: 1,
+      fields: {
+        transactions: ["hash", "blockNumber"],
+        blocks: ["number"],
+      },
+    }),
+    3,
+  );
+  expect(
+    summarizePages(descPages, "transactions", ["hash", "blockNumber"]),
+  ).toMatchInlineSnapshot(`
         [
           {
             "cursorBlock": 30000999n,
@@ -443,19 +441,19 @@ describe("production RPC", () => {
         ]
       `);
 
-    const empty = await queryTransactions(client, {
-      fromBlock: 30_000_000n,
-      toBlock: 30_000_003n,
-      filter: {
-        from: "0x0000000000000000000000000000000000000000",
-      },
-      fields: {
-        transactions: ["hash"],
-      },
-    });
-    expect(
-      summarizeRows(empty.data.transactions, ["hash"]),
-    ).toMatchInlineSnapshot(`
+  const empty = await queryTransactions(client, {
+    fromBlock: 30_000_000n,
+    toBlock: 30_000_003n,
+    filter: {
+      from: "0x0000000000000000000000000000000000000000",
+    },
+    fields: {
+      transactions: ["hash"],
+    },
+  });
+  expect(
+    summarizeRows(empty.data.transactions, ["hash"]),
+  ).toMatchInlineSnapshot(`
         {
           "firstRowKeys": [],
           "rowCount": 0,
@@ -463,16 +461,16 @@ describe("production RPC", () => {
         }
       `);
 
-    const invalidBlock = await captureRpcError(() =>
-      queryTransactions(client, {
-        fromBlock: "bad" as never,
-        toBlock: 30_000_003n,
-        fields: {
-          transactions: ["hash"],
-        },
-      }),
-    );
-    expect(invalidBlock).toMatchInlineSnapshot(`
+  const invalidBlock = await captureRpcError(() =>
+    queryTransactions(client, {
+      fromBlock: "bad" as never,
+      toBlock: 30_000_003n,
+      fields: {
+        transactions: ["hash"],
+      },
+    }),
+  );
+  expect(invalidBlock).toMatchInlineSnapshot(`
       {
         "code": -32602,
         "details": "Invalid params",
@@ -483,48 +481,40 @@ describe("production RPC", () => {
       ,
       }
     `);
-  });
+});
 
-  productionTest("queryLogs", async () => {
-    const filtered = await queryLogs(client, {
-      fromBlock: 30_000_000n,
-      toBlock: 30_000_003n,
-      filter: {
-        address: "0xb983b1b6f1fc04030f9d8935dbbfd2a1239d00d9",
-        topics: [
-          [
-            "0xc797025feeeaf2cd924c99e9205acb8ec04d5cad21c41ce637a38fb6dee6016a",
-          ],
-        ],
-      },
-      fields: {
-        logs: [
-          "address",
-          "topics",
-          "blockNumber",
-          "transactionHash",
-          "logIndex",
-        ],
-        transactions: ["hash", "from"],
-        blocks: ["number"],
-      },
-    });
-    expect({
-      envelope: {
-        fromBlock: filtered.fromBlock.number,
-        toBlock: filtered.toBlock.number,
-        cursorBlock: filtered.cursorBlock.number,
-      },
-      logs: summarizeRows(filtered.data.logs, [
-        "address",
-        "topics",
-        "blockNumber",
-        "transactionHash",
-        "logIndex",
-      ]),
-      transactions: summarizeRows(filtered.data.transactions, ["hash", "from"]),
-      blocks: summarizeRows(filtered.data.blocks, ["number"]),
-    }).toMatchInlineSnapshot(`
+test("queryLogs", async () => {
+  const filtered = await queryLogs(client, {
+    fromBlock: 30_000_000n,
+    toBlock: 30_000_003n,
+    filter: {
+      address: "0xb983b1b6f1fc04030f9d8935dbbfd2a1239d00d9",
+      topics: [
+        ["0xc797025feeeaf2cd924c99e9205acb8ec04d5cad21c41ce637a38fb6dee6016a"],
+      ],
+    },
+    fields: {
+      logs: ["address", "topics", "blockNumber", "transactionHash", "logIndex"],
+      transactions: ["hash", "from"],
+      blocks: ["number"],
+    },
+  });
+  expect({
+    envelope: {
+      fromBlock: filtered.fromBlock.number,
+      toBlock: filtered.toBlock.number,
+      cursorBlock: filtered.cursorBlock.number,
+    },
+    logs: summarizeRows(filtered.data.logs, [
+      "address",
+      "topics",
+      "blockNumber",
+      "transactionHash",
+      "logIndex",
+    ]),
+    transactions: summarizeRows(filtered.data.transactions, ["hash", "from"]),
+    blocks: summarizeRows(filtered.data.blocks, ["number"]),
+  }).toMatchInlineSnapshot(`
       {
         "blocks": {
           "firstRowKeys": [
@@ -579,22 +569,22 @@ describe("production RPC", () => {
       }
     `);
 
-    const ascPages = await collectPages(
-      queryLogsWithPagination(client, {
-        fromBlock: 30_000_000n,
-        toBlock: 30_000_999n,
-        limit: 1,
-        fields: {
-          logs: ["blockNumber", "logIndex"],
-          transactions: ["hash"],
-          blocks: ["number"],
-        },
-      }),
-      3,
-    );
-    expect(
-      summarizePages(ascPages, "logs", ["blockNumber", "logIndex"]),
-    ).toMatchInlineSnapshot(`
+  const ascPages = await collectPages(
+    queryLogsWithPagination(client, {
+      fromBlock: 30_000_000n,
+      toBlock: 30_000_999n,
+      limit: 1,
+      fields: {
+        logs: ["blockNumber", "logIndex"],
+        transactions: ["hash"],
+        blocks: ["number"],
+      },
+    }),
+    3,
+  );
+  expect(
+    summarizePages(ascPages, "logs", ["blockNumber", "logIndex"]),
+  ).toMatchInlineSnapshot(`
         [
           {
             "cursorBlock": 30000000n,
@@ -635,23 +625,23 @@ describe("production RPC", () => {
         ]
       `);
 
-    const descPages = await collectPages(
-      queryLogsWithPagination(client, {
-        fromBlock: 30_000_999n,
-        toBlock: 30_000_000n,
-        order: "desc",
-        limit: 1,
-        fields: {
-          logs: ["blockNumber", "logIndex"],
-          transactions: ["hash"],
-          blocks: ["number"],
-        },
-      }),
-      3,
-    );
-    expect(
-      summarizePages(descPages, "logs", ["blockNumber", "logIndex"]),
-    ).toMatchInlineSnapshot(`
+  const descPages = await collectPages(
+    queryLogsWithPagination(client, {
+      fromBlock: 30_000_999n,
+      toBlock: 30_000_000n,
+      order: "desc",
+      limit: 1,
+      fields: {
+        logs: ["blockNumber", "logIndex"],
+        transactions: ["hash"],
+        blocks: ["number"],
+      },
+    }),
+    3,
+  );
+  expect(
+    summarizePages(descPages, "logs", ["blockNumber", "logIndex"]),
+  ).toMatchInlineSnapshot(`
         [
           {
             "cursorBlock": 30000999n,
@@ -692,19 +682,19 @@ describe("production RPC", () => {
         ]
       `);
 
-    const empty = await queryLogs(client, {
-      fromBlock: 30_000_000n,
-      toBlock: 30_000_003n,
-      filter: {
-        address: "0x0000000000000000000000000000000000000000",
-      },
-      fields: {
-        logs: ["transactionHash"],
-      },
-    });
-    expect(
-      summarizeRows(empty.data.logs, ["transactionHash"]),
-    ).toMatchInlineSnapshot(`
+  const empty = await queryLogs(client, {
+    fromBlock: 30_000_000n,
+    toBlock: 30_000_003n,
+    filter: {
+      address: "0x0000000000000000000000000000000000000000",
+    },
+    fields: {
+      logs: ["transactionHash"],
+    },
+  });
+  expect(
+    summarizeRows(empty.data.logs, ["transactionHash"]),
+  ).toMatchInlineSnapshot(`
         {
           "firstRowKeys": [],
           "rowCount": 0,
@@ -712,16 +702,16 @@ describe("production RPC", () => {
         }
       `);
 
-    const invalidBlock = await captureRpcError(() =>
-      queryLogs(client, {
-        fromBlock: "bad" as never,
-        toBlock: 30_000_003n,
-        fields: {
-          logs: ["transactionHash"],
-        },
-      }),
-    );
-    expect(invalidBlock).toMatchInlineSnapshot(`
+  const invalidBlock = await captureRpcError(() =>
+    queryLogs(client, {
+      fromBlock: "bad" as never,
+      toBlock: 30_000_003n,
+      fields: {
+        logs: ["transactionHash"],
+      },
+    }),
+  );
+  expect(invalidBlock).toMatchInlineSnapshot(`
       {
         "code": -32602,
         "details": "Invalid params",
@@ -732,39 +722,19 @@ describe("production RPC", () => {
       ,
       }
     `);
-  });
+});
 
-  productionTest("queryTraces", async () => {
-    const filtered = await queryTraces(client, {
-      fromBlock: 30_000_000n,
-      toBlock: 30_000_003n,
-      filter: {
-        from: "0xc777cfb3bccc2f1d3049845d62639c769dff243d",
-        to: "0x5447e0f54979fa6888b37631b9ce285cc4bc1a99",
-        isTopLevel: true,
-      },
-      fields: {
-        traces: [
-          "from",
-          "to",
-          "value",
-          "blockNumber",
-          "transactionHash",
-          "traceAddress",
-          "status",
-          "type",
-        ],
-        transactions: ["hash"],
-        blocks: ["number"],
-      },
-    });
-    expect({
-      envelope: {
-        fromBlock: filtered.fromBlock.number,
-        toBlock: filtered.toBlock.number,
-        cursorBlock: filtered.cursorBlock.number,
-      },
-      traces: summarizeRows(filtered.data.traces, [
+test("queryTraces", async () => {
+  const filtered = await queryTraces(client, {
+    fromBlock: 30_000_000n,
+    toBlock: 30_000_003n,
+    filter: {
+      from: "0xc777cfb3bccc2f1d3049845d62639c769dff243d",
+      to: "0x5447e0f54979fa6888b37631b9ce285cc4bc1a99",
+      isTopLevel: true,
+    },
+    fields: {
+      traces: [
         "from",
         "to",
         "value",
@@ -773,10 +743,30 @@ describe("production RPC", () => {
         "traceAddress",
         "status",
         "type",
-      ]),
-      transactions: summarizeRows(filtered.data.transactions, ["hash"]),
-      blocks: summarizeRows(filtered.data.blocks, ["number"]),
-    }).toMatchInlineSnapshot(`
+      ],
+      transactions: ["hash"],
+      blocks: ["number"],
+    },
+  });
+  expect({
+    envelope: {
+      fromBlock: filtered.fromBlock.number,
+      toBlock: filtered.toBlock.number,
+      cursorBlock: filtered.cursorBlock.number,
+    },
+    traces: summarizeRows(filtered.data.traces, [
+      "from",
+      "to",
+      "value",
+      "blockNumber",
+      "transactionHash",
+      "traceAddress",
+      "status",
+      "type",
+    ]),
+    transactions: summarizeRows(filtered.data.transactions, ["hash"]),
+    blocks: summarizeRows(filtered.data.blocks, ["number"]),
+  }).toMatchInlineSnapshot(`
       {
         "blocks": {
           "firstRowKeys": [
@@ -832,22 +822,22 @@ describe("production RPC", () => {
       }
     `);
 
-    const ascPages = await collectPages(
-      queryTracesWithPagination(client, {
-        fromBlock: 30_000_000n,
-        toBlock: 30_000_999n,
-        limit: 1,
-        fields: {
-          traces: ["blockNumber", "traceAddress"],
-          transactions: ["hash"],
-          blocks: ["number"],
-        },
-      }),
-      3,
-    );
-    expect(
-      summarizePages(ascPages, "traces", ["blockNumber", "traceAddress"]),
-    ).toMatchInlineSnapshot(`
+  const ascPages = await collectPages(
+    queryTracesWithPagination(client, {
+      fromBlock: 30_000_000n,
+      toBlock: 30_000_999n,
+      limit: 1,
+      fields: {
+        traces: ["blockNumber", "traceAddress"],
+        transactions: ["hash"],
+        blocks: ["number"],
+      },
+    }),
+    3,
+  );
+  expect(
+    summarizePages(ascPages, "traces", ["blockNumber", "traceAddress"]),
+  ).toMatchInlineSnapshot(`
         [
           {
             "cursorBlock": 30000000n,
@@ -888,23 +878,23 @@ describe("production RPC", () => {
         ]
       `);
 
-    const descPages = await collectPages(
-      queryTracesWithPagination(client, {
-        fromBlock: 30_000_999n,
-        toBlock: 30_000_000n,
-        order: "desc",
-        limit: 1,
-        fields: {
-          traces: ["blockNumber", "traceAddress"],
-          transactions: ["hash"],
-          blocks: ["number"],
-        },
-      }),
-      3,
-    );
-    expect(
-      summarizePages(descPages, "traces", ["blockNumber", "traceAddress"]),
-    ).toMatchInlineSnapshot(`
+  const descPages = await collectPages(
+    queryTracesWithPagination(client, {
+      fromBlock: 30_000_999n,
+      toBlock: 30_000_000n,
+      order: "desc",
+      limit: 1,
+      fields: {
+        traces: ["blockNumber", "traceAddress"],
+        transactions: ["hash"],
+        blocks: ["number"],
+      },
+    }),
+    3,
+  );
+  expect(
+    summarizePages(descPages, "traces", ["blockNumber", "traceAddress"]),
+  ).toMatchInlineSnapshot(`
         [
           {
             "cursorBlock": 30000999n,
@@ -954,19 +944,19 @@ describe("production RPC", () => {
         ]
       `);
 
-    const empty = await queryTraces(client, {
-      fromBlock: 30_000_000n,
-      toBlock: 30_000_003n,
-      filter: {
-        from: "0x0000000000000000000000000000000000000000",
-      },
-      fields: {
-        traces: ["transactionHash"],
-      },
-    });
-    expect(
-      summarizeRows(empty.data.traces, ["transactionHash"]),
-    ).toMatchInlineSnapshot(`
+  const empty = await queryTraces(client, {
+    fromBlock: 30_000_000n,
+    toBlock: 30_000_003n,
+    filter: {
+      from: "0x0000000000000000000000000000000000000000",
+    },
+    fields: {
+      traces: ["transactionHash"],
+    },
+  });
+  expect(
+    summarizeRows(empty.data.traces, ["transactionHash"]),
+  ).toMatchInlineSnapshot(`
         {
           "firstRowKeys": [],
           "rowCount": 0,
@@ -974,16 +964,16 @@ describe("production RPC", () => {
         }
       `);
 
-    const invalidBlock = await captureRpcError(() =>
-      queryTraces(client, {
-        fromBlock: "bad" as never,
-        toBlock: 30_000_003n,
-        fields: {
-          traces: ["transactionHash"],
-        },
-      }),
-    );
-    expect(invalidBlock).toMatchInlineSnapshot(`
+  const invalidBlock = await captureRpcError(() =>
+    queryTraces(client, {
+      fromBlock: "bad" as never,
+      toBlock: 30_000_003n,
+      fields: {
+        traces: ["transactionHash"],
+      },
+    }),
+  );
+  expect(invalidBlock).toMatchInlineSnapshot(`
       {
         "code": -32602,
         "details": "Invalid params",
@@ -994,39 +984,20 @@ describe("production RPC", () => {
       ,
       }
     `);
-  });
+});
 
-  productionTest("queryTransfers", async () => {
-    const filtered = await queryTransfers(client, {
-      fromBlock: 30_000_000n,
-      toBlock: 30_000_999n,
-      limit: 1,
-      filter: {
-        from: "0xd9f51b1e2a2f2b900a15096b9f7e077a7c8a64d6",
-        to: "0xacc0a0cf13571d30b4b8637996f5d6d774d4fd62",
-        isTopLevel: true,
-      },
-      fields: {
-        transfers: [
-          "from",
-          "to",
-          "value",
-          "blockNumber",
-          "transactionHash",
-          "traceAddress",
-          "status",
-        ],
-        transactions: ["hash"],
-        blocks: ["number"],
-      },
-    });
-    expect({
-      envelope: {
-        fromBlock: filtered.fromBlock.number,
-        toBlock: filtered.toBlock.number,
-        cursorBlock: filtered.cursorBlock.number,
-      },
-      transfers: summarizeRows(filtered.data.transfers, [
+test("queryTransfers", async () => {
+  const filtered = await queryTransfers(client, {
+    fromBlock: 30_000_000n,
+    toBlock: 30_000_999n,
+    limit: 1,
+    filter: {
+      from: "0xd9f51b1e2a2f2b900a15096b9f7e077a7c8a64d6",
+      to: "0xacc0a0cf13571d30b4b8637996f5d6d774d4fd62",
+      isTopLevel: true,
+    },
+    fields: {
+      transfers: [
         "from",
         "to",
         "value",
@@ -1034,10 +1005,29 @@ describe("production RPC", () => {
         "transactionHash",
         "traceAddress",
         "status",
-      ]),
-      transactions: summarizeRows(filtered.data.transactions, ["hash"]),
-      blocks: summarizeRows(filtered.data.blocks, ["number"]),
-    }).toMatchInlineSnapshot(`
+      ],
+      transactions: ["hash"],
+      blocks: ["number"],
+    },
+  });
+  expect({
+    envelope: {
+      fromBlock: filtered.fromBlock.number,
+      toBlock: filtered.toBlock.number,
+      cursorBlock: filtered.cursorBlock.number,
+    },
+    transfers: summarizeRows(filtered.data.transfers, [
+      "from",
+      "to",
+      "value",
+      "blockNumber",
+      "transactionHash",
+      "traceAddress",
+      "status",
+    ]),
+    transactions: summarizeRows(filtered.data.transactions, ["hash"]),
+    blocks: summarizeRows(filtered.data.blocks, ["number"]),
+  }).toMatchInlineSnapshot(`
       {
         "blocks": {
           "firstRowKeys": [
@@ -1090,22 +1080,22 @@ describe("production RPC", () => {
       }
     `);
 
-    const ascPages = await collectPages(
-      queryTransfersWithPagination(client, {
-        fromBlock: 30_000_000n,
-        toBlock: 30_000_999n,
-        limit: 1,
-        fields: {
-          transfers: ["blockNumber", "traceAddress"],
-          transactions: ["hash"],
-          blocks: ["number"],
-        },
-      }),
-      3,
-    );
-    expect(
-      summarizePages(ascPages, "transfers", ["blockNumber", "traceAddress"]),
-    ).toMatchInlineSnapshot(`
+  const ascPages = await collectPages(
+    queryTransfersWithPagination(client, {
+      fromBlock: 30_000_000n,
+      toBlock: 30_000_999n,
+      limit: 1,
+      fields: {
+        transfers: ["blockNumber", "traceAddress"],
+        transactions: ["hash"],
+        blocks: ["number"],
+      },
+    }),
+    3,
+  );
+  expect(
+    summarizePages(ascPages, "transfers", ["blockNumber", "traceAddress"]),
+  ).toMatchInlineSnapshot(`
       [
         {
           "cursorBlock": 30000041n,
@@ -1146,23 +1136,23 @@ describe("production RPC", () => {
       ]
     `);
 
-    const descPages = await collectPages(
-      queryTransfersWithPagination(client, {
-        fromBlock: 30_000_999n,
-        toBlock: 30_000_000n,
-        order: "desc",
-        limit: 1,
-        fields: {
-          transfers: ["blockNumber", "traceAddress"],
-          transactions: ["hash"],
-          blocks: ["number"],
-        },
-      }),
-      3,
-    );
-    expect(
-      summarizePages(descPages, "transfers", ["blockNumber", "traceAddress"]),
-    ).toMatchInlineSnapshot(`
+  const descPages = await collectPages(
+    queryTransfersWithPagination(client, {
+      fromBlock: 30_000_999n,
+      toBlock: 30_000_000n,
+      order: "desc",
+      limit: 1,
+      fields: {
+        transfers: ["blockNumber", "traceAddress"],
+        transactions: ["hash"],
+        blocks: ["number"],
+      },
+    }),
+    3,
+  );
+  expect(
+    summarizePages(descPages, "transfers", ["blockNumber", "traceAddress"]),
+  ).toMatchInlineSnapshot(`
       [
         {
           "cursorBlock": 30000989n,
@@ -1203,19 +1193,19 @@ describe("production RPC", () => {
       ]
     `);
 
-    const empty = await queryTransfers(client, {
-      fromBlock: 30_000_000n,
-      toBlock: 30_000_003n,
-      filter: {
-        from: "0x0000000000000000000000000000000000000000",
-      },
-      fields: {
-        transfers: ["transactionHash"],
-      },
-    });
-    expect(
-      summarizeRows(empty.data.transfers, ["transactionHash"]),
-    ).toMatchInlineSnapshot(`
+  const empty = await queryTransfers(client, {
+    fromBlock: 30_000_000n,
+    toBlock: 30_000_003n,
+    filter: {
+      from: "0x0000000000000000000000000000000000000000",
+    },
+    fields: {
+      transfers: ["transactionHash"],
+    },
+  });
+  expect(
+    summarizeRows(empty.data.transfers, ["transactionHash"]),
+  ).toMatchInlineSnapshot(`
         {
           "firstRowKeys": [],
           "rowCount": 0,
@@ -1223,16 +1213,16 @@ describe("production RPC", () => {
         }
       `);
 
-    const invalidBlock = await captureRpcError(() =>
-      queryTransfers(client, {
-        fromBlock: "bad" as never,
-        toBlock: 30_000_003n,
-        fields: {
-          transfers: ["transactionHash"],
-        },
-      }),
-    );
-    expect(invalidBlock).toMatchInlineSnapshot(`
+  const invalidBlock = await captureRpcError(() =>
+    queryTransfers(client, {
+      fromBlock: "bad" as never,
+      toBlock: 30_000_003n,
+      fields: {
+        transfers: ["transactionHash"],
+      },
+    }),
+  );
+  expect(invalidBlock).toMatchInlineSnapshot(`
       {
         "code": -32602,
         "details": "Invalid params",
@@ -1243,5 +1233,4 @@ describe("production RPC", () => {
       ,
       }
     `);
-  });
 });
