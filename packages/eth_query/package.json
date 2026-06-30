@@ -24,6 +24,7 @@
   "files": [
     "dist",
     "src/**/*.ts",
+    "!benchmarks/**",
     "!**/*.test.ts"
   ],
   "scripts": {
