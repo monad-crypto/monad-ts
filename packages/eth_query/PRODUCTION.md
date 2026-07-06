@@ -92,6 +92,5 @@ Before publishing `@monad-crypto/eth_query` as production-ready:
 - Audit pagination edge cases, especially zero/one-row pages, inclusive block ranges, `latest`/`earliest` tags, and underflow when paginating descending from block `0`.
 - Remove or justify all `@ts-expect-error` casts in response formatting.
 - Decide whether `debug.ts` types belong in the public package or should be internalized/removed.
-- Add examples for standalone actions and `queryActions(client)` in the README.
 - Review this document against the final public API, trust boundaries, formatting behavior, and non-goals.
 - Add a changeset for the first release once the package API is finalized.
