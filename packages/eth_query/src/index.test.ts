@@ -1,9 +1,12 @@
 import { expect, test } from "bun:test";
 import {
+  blockFields,
   formatQueryBlocksResponse,
   formatQueryLogsResponse,
   formatQueryTracesResponse,
   formatQueryTransactionsResponse,
+  getFieldsForRequest,
+  transactionFields,
 } from "./index.js";
 
 const block = {
@@ -116,4 +119,28 @@ test("formatQueryTracesResponse normalizes status", () => {
       status: "reverted",
     },
   ]);
+});
+
+test("getFieldsForRequest resolves primary, relation, and omitted fields", () => {
+  expect(getFieldsForRequest("eth_queryBlocks")).toEqual({
+    blocks: [...blockFields],
+    transactions: [],
+    traces: [],
+    logs: [],
+    transfers: [],
+  });
+
+  expect(
+    getFieldsForRequest("eth_queryLogs", {
+      logs: ["address", "topics"],
+      transactions: true,
+      blocks: ["number"],
+    }),
+  ).toEqual({
+    blocks: ["number"],
+    transactions: [...transactionFields],
+    traces: [],
+    logs: ["address", "topics"],
+    transfers: [],
+  });
 });

@@ -3,6 +3,7 @@ import type { Client, Transport } from "viem";
 import { createClient, http } from "viem";
 import {
   type QueryRpcSchema,
+  queryActions,
   queryBlocks,
   queryBlocksWithPagination,
   queryLogs,
@@ -1233,4 +1234,93 @@ test("queryTransfers", async () => {
       ,
       }
     `);
+});
+
+test("queryActions binds all actions to the provided client", async () => {
+  const block = {
+    number: "0x1",
+    hash: "0x1111111111111111111111111111111111111111111111111111111111111111",
+    parentHash:
+      "0x0000000000000000000000000000000000000000000000000000000000000000",
+  };
+  const calls: { method: string; params: unknown }[] = [];
+  const mockClient = {
+    request: async ({
+      method,
+      params,
+    }: {
+      method: string;
+      params: unknown;
+    }) => {
+      calls.push({ method, params });
+      return {
+        fromBlock: block,
+        toBlock: block,
+        cursorBlock: block,
+        data: {
+          blocks: [],
+          logs: [],
+          traces: [],
+          transactions: [],
+          transfers: [],
+        },
+      };
+    },
+  } as never;
+  const actions = queryActions(mockClient);
+  const request = { fromBlock: 1n, toBlock: 1n, limit: 1 };
+
+  await actions.queryBlocks(request);
+  await actions.queryTransactions(request);
+  await actions.queryLogs(request);
+  await actions.queryTraces(request);
+  await actions.queryTransfers(request);
+  await collectPages(actions.queryBlocksWithPagination(request), 1);
+  await collectPages(actions.queryTransactionsWithPagination(request), 1);
+  await collectPages(actions.queryLogsWithPagination(request), 1);
+  await collectPages(actions.queryTracesWithPagination(request), 1);
+  await collectPages(actions.queryTransfersWithPagination(request), 1);
+
+  expect(calls).toEqual([
+    {
+      method: "eth_queryBlocks",
+      params: [{ fromBlock: "0x1", limit: "0x1", toBlock: "0x1" }],
+    },
+    {
+      method: "eth_queryTransactions",
+      params: [{ fromBlock: "0x1", limit: "0x1", toBlock: "0x1" }],
+    },
+    {
+      method: "eth_queryLogs",
+      params: [{ fromBlock: "0x1", limit: "0x1", toBlock: "0x1" }],
+    },
+    {
+      method: "eth_queryTraces",
+      params: [{ fromBlock: "0x1", limit: "0x1", toBlock: "0x1" }],
+    },
+    {
+      method: "eth_queryTransfers",
+      params: [{ fromBlock: "0x1", limit: "0x1", toBlock: "0x1" }],
+    },
+    {
+      method: "eth_queryBlocks",
+      params: [{ fromBlock: "0x1", limit: "0x1", toBlock: "0x1" }],
+    },
+    {
+      method: "eth_queryTransactions",
+      params: [{ fromBlock: "0x1", limit: "0x1", toBlock: "0x1" }],
+    },
+    {
+      method: "eth_queryLogs",
+      params: [{ fromBlock: "0x1", limit: "0x1", toBlock: "0x1" }],
+    },
+    {
+      method: "eth_queryTraces",
+      params: [{ fromBlock: "0x1", limit: "0x1", toBlock: "0x1" }],
+    },
+    {
+      method: "eth_queryTransfers",
+      params: [{ fromBlock: "0x1", limit: "0x1", toBlock: "0x1" }],
+    },
+  ]);
 });
