@@ -287,6 +287,8 @@ const response = await client.queryTransactions({
 
 ## API Reference
 
+ABI-aware wrapper actions are planned but not currently exported. This includes `queryContractLogs`, `queryContractLogsWithPagination`, `queryContractTraces`, and `queryContractTracesWithPagination` for typed event/call filtering and decoding.
+
 ### Client Actions
 
 | Action | Description |

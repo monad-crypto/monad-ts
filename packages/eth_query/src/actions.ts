@@ -50,6 +50,13 @@ type QueryClient<
   account extends Account | undefined = Account | undefined,
 > = Client<transport, chain, account, QueryRpcSchema>;
 
+function getNextFromBlock(order: CommonRequestFields["order"], cursor: bigint) {
+  if (order === "desc" && cursor === 0n) {
+    throw new Error("Cannot paginate descending past block 0");
+  }
+  return order === "desc" ? cursor - 1n : cursor + 1n;
+}
+
 export async function queryBlocks<const request extends QueryBlocksRequest>(
   client: QueryClient,
   request: request,
@@ -126,7 +133,7 @@ export async function* queryBlocksWithPagination<
     yield formatQueryBlocksResponse(raw) as QueryBlocksResponse<request>;
     if (isLastPage(raw)) break;
     const cursor = hexToBigInt(raw.cursorBlock.number);
-    request.fromBlock = request.order === "desc" ? cursor - 1n : cursor + 1n;
+    request.fromBlock = getNextFromBlock(request.order, cursor);
   }
 }
 
@@ -147,7 +154,7 @@ export async function* queryTransactionsWithPagination<
     ) as QueryTransactionsResponse<request>;
     if (isLastPage(raw)) break;
     const cursor = hexToBigInt(raw.cursorBlock.number);
-    request.fromBlock = request.order === "desc" ? cursor - 1n : cursor + 1n;
+    request.fromBlock = getNextFromBlock(request.order, cursor);
   }
 }
 
@@ -166,7 +173,7 @@ export async function* queryLogsWithPagination<
     yield formatQueryLogsResponse(raw) as QueryLogsResponse<request>;
     if (isLastPage(raw)) break;
     const cursor = hexToBigInt(raw.cursorBlock.number);
-    request.fromBlock = request.order === "desc" ? cursor - 1n : cursor + 1n;
+    request.fromBlock = getNextFromBlock(request.order, cursor);
   }
 }
 
@@ -185,7 +192,7 @@ export async function* queryTracesWithPagination<
     yield formatQueryTracesResponse(raw) as QueryTracesResponse<request>;
     if (isLastPage(raw)) break;
     const cursor = hexToBigInt(raw.cursorBlock.number);
-    request.fromBlock = request.order === "desc" ? cursor - 1n : cursor + 1n;
+    request.fromBlock = getNextFromBlock(request.order, cursor);
   }
 }
 
@@ -204,7 +211,7 @@ export async function* queryTransfersWithPagination<
     yield formatQueryTransfersResponse(raw) as QueryTransfersResponse<request>;
     if (isLastPage(raw)) break;
     const cursor = hexToBigInt(raw.cursorBlock.number);
-    request.fromBlock = request.order === "desc" ? cursor - 1n : cursor + 1n;
+    request.fromBlock = getNextFromBlock(request.order, cursor);
   }
 }
 

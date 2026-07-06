@@ -21,6 +21,13 @@ const client = createClient({
   transport: http(RPC_URL ?? "http://127.0.0.1"),
 }) as Client<Transport, undefined, undefined, QueryRpcSchema>;
 
+async function getLatestBlockNumber() {
+  const hex = await (
+    client as { request(args: { method: string }): Promise<`0x${string}`> }
+  ).request({ method: "eth_blockNumber" });
+  return BigInt(hex);
+}
+
 async function collectPages<T>(pages: AsyncGenerator<T>, limit: number) {
   const collected: T[] = [];
   for await (const page of pages) {
@@ -107,6 +114,259 @@ function summarizeRows(rows: readonly object[] | undefined, fields: string[]) {
       }) ?? [],
   };
 }
+
+const mockBlock = {
+  hash: "0x1111111111111111111111111111111111111111111111111111111111111111",
+  parentHash:
+    "0x0000000000000000000000000000000000000000000000000000000000000000",
+};
+
+function blockEnvelope(number: bigint) {
+  return {
+    ...mockBlock,
+    number: `0x${number.toString(16)}` as const,
+  };
+}
+
+function blockRow(number: bigint) {
+  return {
+    ...mockBlock,
+    number: `0x${number.toString(16)}` as const,
+  };
+}
+
+type MockPage = {
+  cursorBlock: bigint;
+  fromBlock: bigint;
+  rows?: bigint[];
+  toBlock: bigint;
+};
+
+function mockQueryClient(pages: MockPage[]) {
+  const calls: { method: string; params: unknown }[] = [];
+  let index = 0;
+  const mockClient = {
+    request: async ({
+      method,
+      params,
+    }: {
+      method: string;
+      params: unknown;
+    }) => {
+      calls.push({ method, params });
+      const page = pages[index++];
+      if (!page) throw new Error("Unexpected extra request");
+      return {
+        fromBlock: blockEnvelope(page.fromBlock),
+        toBlock: blockEnvelope(page.toBlock),
+        cursorBlock: blockEnvelope(page.cursorBlock),
+        data: {
+          blocks: (page.rows ?? []).map(blockRow),
+        },
+      };
+    },
+  } as never;
+  return { calls, mockClient };
+}
+
+test("queryBlocksWithPagination handles edge cases", async () => {
+  const oneRowPages = await collectPages(
+    queryBlocksWithPagination(client, {
+      fromBlock: 30_000_000n,
+      toBlock: 30_000_002n,
+      limit: 1,
+      fields: {
+        blocks: ["number"],
+      },
+    }),
+    3,
+  );
+  expect(
+    oneRowPages.map((page) => ({
+      cursorBlock: page.cursorBlock.number,
+      rowNumbers: page.data.blocks.map((block) => block.number),
+    })),
+  ).toEqual([
+    { cursorBlock: 30_000_000n, rowNumbers: [30_000_000n] },
+    { cursorBlock: 30_000_001n, rowNumbers: [30_000_001n] },
+    { cursorBlock: 30_000_002n, rowNumbers: [30_000_002n] },
+  ]);
+
+  const ascPages = await collectPages(
+    queryBlocksWithPagination(client, {
+      fromBlock: 30_000_000n,
+      toBlock: 30_000_003n,
+      limit: 2,
+      fields: {
+        blocks: ["number"],
+      },
+    }),
+    2,
+  );
+  expect(
+    ascPages.flatMap((page) => page.data.blocks.map((block) => block.number)),
+  ).toEqual([30_000_000n, 30_000_001n, 30_000_002n, 30_000_003n]);
+
+  const descPages = await collectPages(
+    queryBlocksWithPagination(client, {
+      fromBlock: 30_000_003n,
+      toBlock: 30_000_000n,
+      order: "desc",
+      limit: 2,
+      fields: {
+        blocks: ["number"],
+      },
+    }),
+    2,
+  );
+  expect(
+    descPages.flatMap((page) => page.data.blocks.map((block) => block.number)),
+  ).toEqual([30_000_003n, 30_000_002n, 30_000_001n, 30_000_000n]);
+
+  const latestBlockNumber = await getLatestBlockNumber();
+  const latestPage = await collectPages(
+    queryBlocksWithPagination(client, {
+      fromBlock: "latest",
+      toBlock: latestBlockNumber - 1_000n,
+      order: "desc",
+      limit: 1,
+      fields: {
+        blocks: ["number"],
+      },
+    }),
+    1,
+  );
+  expect(latestPage).toHaveLength(1);
+  expect(latestPage[0].fromBlock.number).toBeGreaterThan(
+    latestPage[0].toBlock.number,
+  );
+  expect(latestPage[0].toBlock.number).toBe(latestBlockNumber - 1_000n);
+  expect(latestPage[0].cursorBlock.number).toBe(latestPage[0].fromBlock.number);
+  expect(latestPage[0].data.blocks.map((block) => block.number)).toEqual([
+    latestPage[0].fromBlock.number,
+  ]);
+});
+
+test("queryTransactionsWithPagination handles an empty final page", async () => {
+  const pages = await collectPages(
+    queryTransactionsWithPagination(client, {
+      fromBlock: 30_000_000n,
+      toBlock: 30_000_003n,
+      filter: {
+        from: "0x0000000000000000000000000000000000000000",
+      },
+      limit: 1,
+      fields: {
+        transactions: ["hash"],
+      },
+    }),
+    2,
+  );
+
+  expect(pages).toHaveLength(1);
+  expect(pages[0].cursorBlock.number).toBe(pages[0].toBlock.number);
+  expect(pages[0].data.transactions).toEqual([]);
+});
+
+test.failing("eth_queryBlocks accepts explicit earliest tags per spec", async () => {
+  const page = await queryBlocks(client, {
+    fromBlock: "earliest",
+    toBlock: "earliest",
+    limit: 1,
+    fields: {
+      blocks: ["number"],
+    },
+  });
+
+  expect(page.fromBlock.number).toBe(0n);
+  expect(page.toBlock.number).toBe(0n);
+  expect(page.cursorBlock.number).toBe(0n);
+  expect(page.data.blocks.map((block) => block.number)).toEqual([0n]);
+});
+
+test.failing("eth_queryBlocks accepts explicit genesis range per spec", async () => {
+  const page = await queryBlocks(client, {
+    fromBlock: 0n,
+    toBlock: 0n,
+    limit: 1,
+    fields: {
+      blocks: ["number"],
+    },
+  });
+
+  expect(page.fromBlock.number).toBe(0n);
+  expect(page.toBlock.number).toBe(0n);
+  expect(page.cursorBlock.number).toBe(0n);
+  expect(page.data.blocks.map((block) => block.number)).toEqual([0n]);
+});
+
+test("pagination preserves block tags in the initial request", async () => {
+  const { calls, mockClient } = mockQueryClient([
+    { fromBlock: 0n, toBlock: 0n, cursorBlock: 0n, rows: [0n] },
+  ]);
+
+  await collectPages(
+    queryBlocksWithPagination(mockClient, {
+      fromBlock: "earliest",
+      toBlock: "latest",
+      limit: 1,
+      fields: {
+        blocks: ["number"],
+      },
+    }),
+    1,
+  );
+
+  expect(calls).toEqual([
+    {
+      method: "eth_queryBlocks",
+      params: [
+        {
+          fields: { blocks: ["number"] },
+          fromBlock: "earliest",
+          limit: "0x1",
+          toBlock: "latest",
+        },
+      ],
+    },
+  ]);
+});
+
+test("descending pagination does not request below block 0", async () => {
+  const { calls, mockClient } = mockQueryClient([
+    { fromBlock: 1n, toBlock: 1n, cursorBlock: 0n, rows: [1n] },
+  ]);
+  const pages = queryBlocksWithPagination(mockClient, {
+    fromBlock: 1n,
+    toBlock: 1n,
+    order: "desc",
+    limit: 1,
+    fields: {
+      blocks: ["number"],
+    },
+  });
+
+  await expect(async () => {
+    for await (const _page of pages) {
+      // Drain the generator to force the next-page calculation.
+    }
+  }).toThrow("Cannot paginate descending past block 0");
+
+  expect(calls).toEqual([
+    {
+      method: "eth_queryBlocks",
+      params: [
+        {
+          fields: { blocks: ["number"] },
+          fromBlock: "0x1",
+          limit: "0x1",
+          order: "desc",
+          toBlock: "0x1",
+        },
+      ],
+    },
+  ]);
+});
 
 test("queryBlocks", async () => {
   const projected = await queryBlocks(client, {
