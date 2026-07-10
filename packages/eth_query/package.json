@@ -1,6 +1,6 @@
 {
   "name": "@monad-crypto/eth_query",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "TypeScript client for eth_query JSON-RPC methods",
   "repository": {
     "type": "git",
@@ -24,7 +24,6 @@
   "files": [
     "dist",
     "src/**/*.ts",
-    "!benchmarks/**",
     "!**/*.test.ts"
   ],
   "scripts": {
