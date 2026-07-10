@@ -5,6 +5,7 @@ import {
   formatQueryLogsResponse,
   formatQueryTracesResponse,
   formatQueryTransactionsResponse,
+  formatQueryTransfersResponse,
   getFieldsForRequest,
   transactionFields,
 } from "./index.js";
@@ -110,6 +111,35 @@ test("formatQueryTracesResponse normalizes status", () => {
   } as never);
 
   expect(traces.data.traces as unknown).toEqual([
+    {
+      blockNumber: 1n,
+      status: "success",
+    },
+    {
+      blockNumber: 2n,
+      status: "reverted",
+    },
+  ]);
+});
+
+test("formatQueryTransfersResponse normalizes status", () => {
+  const transfers = formatQueryTransfersResponse({
+    ...envelope,
+    data: {
+      transfers: [
+        {
+          blockNumber: "0x1",
+          status: "0x0",
+        },
+        {
+          blockNumber: "0x2",
+          status: "0x1",
+        },
+      ],
+    },
+  } as never);
+
+  expect(transfers.data.transfers as unknown).toEqual([
     {
       blockNumber: 1n,
       status: "success",

@@ -6,7 +6,6 @@ import {
   formatQueryTracesResponse,
   formatQueryTransactionsResponse,
   formatQueryTransfersResponse,
-  isLastPage,
 } from "./index.js";
 import type {
   CommonRequestFields,
@@ -50,11 +49,45 @@ type QueryClient<
   account extends Account | undefined = Account | undefined,
 > = Client<transport, chain, account, QueryRpcSchema>;
 
-function getNextFromBlock(order: CommonRequestFields["order"], cursor: bigint) {
-  if (order === "desc" && cursor === 0n) {
-    throw new Error("Cannot paginate descending past block 0");
+function advancePagination(
+  request: CommonRequestFields,
+  response: {
+    fromBlock: { number: Hex };
+    toBlock: { number: Hex };
+    cursorBlock: { number: Hex };
+  },
+): boolean {
+  const fromBlock = hexToBigInt(response.fromBlock.number);
+  const toBlock = hexToBigInt(response.toBlock.number);
+  const cursorBlock = hexToBigInt(response.cursorBlock.number);
+
+  if (
+    typeof request.fromBlock === "bigint" &&
+    fromBlock !== request.fromBlock
+  ) {
+    throw new Error("Pagination response fromBlock does not match request");
   }
-  return order === "desc" ? cursor - 1n : cursor + 1n;
+
+  if (request.order === "desc") {
+    if (cursorBlock > fromBlock || cursorBlock < toBlock) {
+      throw new Error("Pagination cursorBlock is outside the requested range");
+    }
+    request.toBlock = toBlock;
+    if (cursorBlock === toBlock) return false;
+    if (cursorBlock === 0n) {
+      throw new Error("Cannot paginate descending past block 0");
+    }
+    request.fromBlock = cursorBlock - 1n;
+    return true;
+  }
+
+  if (cursorBlock < fromBlock || cursorBlock > toBlock) {
+    throw new Error("Pagination cursorBlock is outside the requested range");
+  }
+  request.toBlock = toBlock;
+  if (cursorBlock === toBlock) return false;
+  request.fromBlock = cursorBlock + 1n;
+  return true;
 }
 
 export async function queryBlocks<const request extends QueryBlocksRequest>(
@@ -118,6 +151,13 @@ export async function queryTransfers<
   return formatQueryTransfersResponse(raw) as QueryTransfersResponse<request>;
 }
 
+/**
+ * Query block pages over a fixed resolved range.
+ *
+ * If `toBlock` is omitted or set to a block tag, the first page's resolved
+ * `toBlock` is pinned for subsequent pages. This helper is snapshot-oriented
+ * and does not live-follow a moving chain tip.
+ */
 export async function* queryBlocksWithPagination<
   const request extends QueryBlocksRequest,
 >(
@@ -130,13 +170,19 @@ export async function* queryBlocksWithPagination<
       method: "eth_queryBlocks",
       params: [serializeRequest(request)],
     });
+    const hasNextPage = advancePagination(request, raw);
     yield formatQueryBlocksResponse(raw) as QueryBlocksResponse<request>;
-    if (isLastPage(raw)) break;
-    const cursor = hexToBigInt(raw.cursorBlock.number);
-    request.fromBlock = getNextFromBlock(request.order, cursor);
+    if (!hasNextPage) break;
   }
 }
 
+/**
+ * Query transaction pages over a fixed resolved range.
+ *
+ * If `toBlock` is omitted or set to a block tag, the first page's resolved
+ * `toBlock` is pinned for subsequent pages. This helper is snapshot-oriented
+ * and does not live-follow a moving chain tip.
+ */
 export async function* queryTransactionsWithPagination<
   const request extends QueryTransactionsRequest,
 >(
@@ -149,15 +195,21 @@ export async function* queryTransactionsWithPagination<
       method: "eth_queryTransactions",
       params: [serializeRequest(request)],
     });
+    const hasNextPage = advancePagination(request, raw);
     yield formatQueryTransactionsResponse(
       raw,
     ) as QueryTransactionsResponse<request>;
-    if (isLastPage(raw)) break;
-    const cursor = hexToBigInt(raw.cursorBlock.number);
-    request.fromBlock = getNextFromBlock(request.order, cursor);
+    if (!hasNextPage) break;
   }
 }
 
+/**
+ * Query log pages over a fixed resolved range.
+ *
+ * If `toBlock` is omitted or set to a block tag, the first page's resolved
+ * `toBlock` is pinned for subsequent pages. This helper is snapshot-oriented
+ * and does not live-follow a moving chain tip.
+ */
 export async function* queryLogsWithPagination<
   const request extends QueryLogsRequest,
 >(
@@ -170,13 +222,19 @@ export async function* queryLogsWithPagination<
       method: "eth_queryLogs",
       params: [serializeRequest(request)],
     });
+    const hasNextPage = advancePagination(request, raw);
     yield formatQueryLogsResponse(raw) as QueryLogsResponse<request>;
-    if (isLastPage(raw)) break;
-    const cursor = hexToBigInt(raw.cursorBlock.number);
-    request.fromBlock = getNextFromBlock(request.order, cursor);
+    if (!hasNextPage) break;
   }
 }
 
+/**
+ * Query trace pages over a fixed resolved range.
+ *
+ * If `toBlock` is omitted or set to a block tag, the first page's resolved
+ * `toBlock` is pinned for subsequent pages. This helper is snapshot-oriented
+ * and does not live-follow a moving chain tip.
+ */
 export async function* queryTracesWithPagination<
   const request extends QueryTracesRequest,
 >(
@@ -189,13 +247,19 @@ export async function* queryTracesWithPagination<
       method: "eth_queryTraces",
       params: [serializeRequest(request)],
     });
+    const hasNextPage = advancePagination(request, raw);
     yield formatQueryTracesResponse(raw) as QueryTracesResponse<request>;
-    if (isLastPage(raw)) break;
-    const cursor = hexToBigInt(raw.cursorBlock.number);
-    request.fromBlock = getNextFromBlock(request.order, cursor);
+    if (!hasNextPage) break;
   }
 }
 
+/**
+ * Query transfer pages over a fixed resolved range.
+ *
+ * If `toBlock` is omitted or set to a block tag, the first page's resolved
+ * `toBlock` is pinned for subsequent pages. This helper is snapshot-oriented
+ * and does not live-follow a moving chain tip.
+ */
 export async function* queryTransfersWithPagination<
   const request extends QueryTransfersRequest,
 >(
@@ -208,10 +272,9 @@ export async function* queryTransfersWithPagination<
       method: "eth_queryTransfers",
       params: [serializeRequest(request)],
     });
+    const hasNextPage = advancePagination(request, raw);
     yield formatQueryTransfersResponse(raw) as QueryTransfersResponse<request>;
-    if (isLastPage(raw)) break;
-    const cursor = hexToBigInt(raw.cursorBlock.number);
-    request.fromBlock = getNextFromBlock(request.order, cursor);
+    if (!hasNextPage) break;
   }
 }
 

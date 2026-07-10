@@ -6,7 +6,7 @@
  */
 
 import { expectTypeOf, test } from "bun:test";
-import type { Prettify } from "viem";
+import type { Hex, Prettify } from "viem";
 import type {
   BlockResponse,
   CallTraceResponse,
@@ -170,4 +170,18 @@ test("envelope LightBlock fields always use the quantity generic", () => {
   expectTypeOf<Response["fromBlock"]["number"]>().toEqualTypeOf<bigint>();
   expectTypeOf<Response["toBlock"]["number"]>().toEqualTypeOf<bigint>();
   expectTypeOf<Response["cursorBlock"]["number"]>().toEqualTypeOf<bigint>();
+});
+
+test("CallTraceResponse quantity fields use the quantity generic", () => {
+  expectTypeOf<CallTraceResponse["gas"]>().toEqualTypeOf<bigint>();
+  expectTypeOf<CallTraceResponse["gasUsed"]>().toEqualTypeOf<bigint>();
+  expectTypeOf<CallTraceResponse["value"]>().toEqualTypeOf<
+    bigint | undefined
+  >();
+
+  expectTypeOf<CallTraceResponse<Hex, Hex>["gas"]>().toEqualTypeOf<Hex>();
+  expectTypeOf<CallTraceResponse<Hex, Hex>["gasUsed"]>().toEqualTypeOf<Hex>();
+  expectTypeOf<CallTraceResponse<Hex, Hex>["value"]>().toEqualTypeOf<
+    Hex | undefined
+  >();
 });

@@ -332,25 +332,155 @@ test("pagination preserves block tags in the initial request", async () => {
   ]);
 });
 
-test("descending pagination does not request below block 0", async () => {
+test("pagination pins resolved toBlock after first page", async () => {
   const { calls, mockClient } = mockQueryClient([
-    { fromBlock: 1n, toBlock: 1n, cursorBlock: 0n, rows: [1n] },
+    { fromBlock: 1n, toBlock: 10n, cursorBlock: 1n, rows: [1n] },
+    { fromBlock: 2n, toBlock: 10n, cursorBlock: 10n, rows: [2n] },
   ]);
-  const pages = queryBlocksWithPagination(mockClient, {
-    fromBlock: 1n,
-    toBlock: 1n,
-    order: "desc",
-    limit: 1,
-    fields: {
-      blocks: ["number"],
+
+  await collectPages(
+    queryBlocksWithPagination(mockClient, {
+      fromBlock: 1n,
+      toBlock: "latest",
+      limit: 1,
+      fields: {
+        blocks: ["number"],
+      },
+    }),
+    2,
+  );
+
+  expect(calls).toEqual([
+    {
+      method: "eth_queryBlocks",
+      params: [
+        {
+          fields: { blocks: ["number"] },
+          fromBlock: "0x1",
+          limit: "0x1",
+          toBlock: "latest",
+        },
+      ],
     },
-  });
+    {
+      method: "eth_queryBlocks",
+      params: [
+        {
+          fields: { blocks: ["number"] },
+          fromBlock: "0x2",
+          limit: "0x1",
+          toBlock: "0xa",
+        },
+      ],
+    },
+  ]);
+});
+
+test("pagination pins omitted toBlock after first page", async () => {
+  const { calls, mockClient } = mockQueryClient([
+    { fromBlock: 1n, toBlock: 10n, cursorBlock: 1n, rows: [1n] },
+    { fromBlock: 2n, toBlock: 10n, cursorBlock: 10n, rows: [2n] },
+  ]);
+
+  await collectPages(
+    queryBlocksWithPagination(mockClient, {
+      fromBlock: 1n,
+      limit: 1,
+      fields: {
+        blocks: ["number"],
+      },
+    }),
+    2,
+  );
+
+  expect(calls).toEqual([
+    {
+      method: "eth_queryBlocks",
+      params: [
+        {
+          fields: { blocks: ["number"] },
+          fromBlock: "0x1",
+          limit: "0x1",
+        },
+      ],
+    },
+    {
+      method: "eth_queryBlocks",
+      params: [
+        {
+          fields: { blocks: ["number"] },
+          fromBlock: "0x2",
+          limit: "0x1",
+          toBlock: "0xa",
+        },
+      ],
+    },
+  ]);
+});
+
+test("pagination rejects cursorBlock outside the requested range", async () => {
+  const { calls, mockClient } = mockQueryClient([
+    { fromBlock: 5n, toBlock: 10n, cursorBlock: 4n, rows: [5n] },
+  ]);
 
   await expect(async () => {
-    for await (const _page of pages) {
-      // Drain the generator to force the next-page calculation.
-    }
-  }).toThrow("Cannot paginate descending past block 0");
+    await collectPages(
+      queryBlocksWithPagination(mockClient, {
+        fromBlock: 5n,
+        toBlock: 10n,
+        limit: 1,
+        fields: {
+          blocks: ["number"],
+        },
+      }),
+      1,
+    );
+  }).toThrow("Pagination cursorBlock is outside the requested range");
+
+  expect(calls).toHaveLength(1);
+});
+
+test("pagination rejects responses that do not advance fromBlock", async () => {
+  const { calls, mockClient } = mockQueryClient([
+    { fromBlock: 1n, toBlock: 10n, cursorBlock: 1n, rows: [1n] },
+    { fromBlock: 1n, toBlock: 10n, cursorBlock: 2n, rows: [2n] },
+  ]);
+
+  await expect(async () => {
+    await collectPages(
+      queryBlocksWithPagination(mockClient, {
+        fromBlock: 1n,
+        toBlock: 10n,
+        limit: 1,
+        fields: {
+          blocks: ["number"],
+        },
+      }),
+      2,
+    );
+  }).toThrow("Pagination response fromBlock does not match request");
+
+  expect(calls).toHaveLength(2);
+});
+
+test("descending pagination does not request below block 0", async () => {
+  const { calls, mockClient } = mockQueryClient([
+    { fromBlock: 1n, toBlock: 0n, cursorBlock: 0n, rows: [1n, 0n] },
+  ]);
+  const pages = await collectPages(
+    queryBlocksWithPagination(mockClient, {
+      fromBlock: 1n,
+      toBlock: 0n,
+      order: "desc",
+      limit: 1,
+      fields: {
+        blocks: ["number"],
+      },
+    }),
+    1,
+  );
+
+  expect(pages).toHaveLength(1);
 
   expect(calls).toEqual([
     {
@@ -361,7 +491,7 @@ test("descending pagination does not request below block 0", async () => {
           fromBlock: "0x1",
           limit: "0x1",
           order: "desc",
-          toBlock: "0x1",
+          toBlock: "0x0",
         },
       ],
     },

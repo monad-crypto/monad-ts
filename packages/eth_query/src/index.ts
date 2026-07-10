@@ -257,6 +257,9 @@ export function formatQueryTransfersResponse(
             transactionIndex: hexToNumber(t.transactionIndex),
           }),
           ...(t.value !== undefined && { value: hexToBigInt(t.value) }),
+          ...(t.status !== undefined && {
+            status: normalizeStatus(t.status, "trace"),
+          }),
         } as unknown as TransferResponse;
       }),
     },

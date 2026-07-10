@@ -348,7 +348,7 @@ export type CallTraceResponse<
   quantity = bigint,
   index = number,
   status = "success" | "reverted",
-> = Omit<CallFrame<Hex>, "calls" | "logs"> & {
+> = Omit<CallFrame<quantity>, "calls" | "logs"> & {
   /** Hash of block containing this trace. */
   blockHash: Hash;
   /** Number of block containing this trace. */
