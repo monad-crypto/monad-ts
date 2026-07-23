@@ -1,10 +1,19 @@
 import type {
+  Abi,
+  AbiStateMutability,
   Address,
   Block,
   BlockTag,
+  ContractEventArgs,
+  ContractEventName,
+  ContractFunctionArgs,
+  ContractFunctionName,
+  ContractFunctionReturnType,
+  GetEventArgs,
   Hash,
   Hex,
   Log,
+  ParseEventLogsReturnType,
   Prettify,
   Transaction,
   TransactionReceipt,
@@ -168,6 +177,38 @@ export type QueryLogsRequest<
   fields?: QueryLogsFields;
 };
 
+export type QueryContractLogsRequest<
+  abi extends Abi | readonly unknown[] = Abi | readonly unknown[],
+  eventName extends ContractEventName<abi> | undefined =
+    | ContractEventName<abi>
+    | undefined,
+  strict extends boolean | undefined = boolean | undefined,
+> = Omit<QueryLogsRequest, "filter"> & {
+  abi: abi;
+  address?: Address | Address[];
+  eventName?: eventName;
+  args?: ContractEventArgs<
+    abi,
+    eventName extends ContractEventName<abi>
+      ? eventName
+      : ContractEventName<abi>
+  >;
+  strict?: strict;
+};
+
+export type QueryContractTracesRequest<
+  abi extends Abi | readonly unknown[] = Abi | readonly unknown[],
+  functionName extends ContractFunctionName<abi> | undefined =
+    | ContractFunctionName<abi>
+    | undefined,
+> = Omit<QueryTracesRequest, "filter"> & {
+  abi: abi;
+  address?: Address | Address[];
+  from?: Address | Address[];
+  functionName?: functionName;
+  isTopLevel?: boolean;
+};
+
 export type QueryTracesRequest<
   quantity = bigint,
   limit = number,
@@ -314,6 +355,132 @@ export type QueryTracesResponse<
   } & TransactionRelation<request, quantity, index> &
     BlockRelation<request, quantity>;
 };
+
+export type ContractLogDecoded<
+  abi extends Abi | readonly unknown[] = Abi | readonly unknown[],
+  eventName extends ContractEventName<abi> | undefined =
+    | ContractEventName<abi>
+    | undefined,
+  strict extends boolean | undefined = boolean | undefined,
+> = ParseEventLogsReturnType<
+  abi,
+  eventName extends ContractEventName<abi> ? eventName : undefined,
+  strict
+>[number];
+
+type ContractLogDecodedFields<
+  abi extends Abi | readonly unknown[],
+  eventName extends ContractEventName<abi> | undefined,
+> =
+  eventName extends ContractEventName<abi>
+    ? {
+        eventName: eventName;
+        args: GetEventArgs<
+          abi,
+          eventName,
+          {
+            EnableUnion: false;
+            IndexedOnly: false;
+            Required: false;
+          }
+        >;
+      }
+    : {
+        [name in ContractEventName<abi>]: {
+          eventName: name;
+          args: GetEventArgs<
+            abi,
+            name,
+            {
+              EnableUnion: false;
+              IndexedOnly: false;
+              Required: false;
+            }
+          >;
+        };
+      }[ContractEventName<abi>];
+
+export type ContractLogResponse<
+  request extends QueryContractLogsRequest = QueryContractLogsRequest,
+  quantity = bigint,
+  index = number,
+> = Omit<
+  QueryLogsResponse<request & QueryLogsRequest, quantity, index>,
+  "data"
+> & {
+  data: Omit<
+    QueryLogsResponse<request & QueryLogsRequest, quantity, index>["data"],
+    "logs"
+  > & {
+    logs: (ResolveSelect<
+      LogResponse<quantity, index>,
+      ExtractField<request, "logs">
+    > &
+      ContractLogDecodedFields<
+        request["abi"],
+        request["eventName"] & ContractEventName<request["abi"]>
+      >)[];
+  };
+};
+
+type ContractTraceDecodedForName<
+  abi extends Abi | readonly unknown[],
+  functionName extends ContractFunctionName<abi>,
+> = {
+  functionName: functionName;
+  args: ContractFunctionArgs<abi, AbiStateMutability, functionName>;
+  result?: ContractFunctionReturnType<abi, AbiStateMutability, functionName>;
+};
+
+export type ContractTraceDecoded<
+  abi extends Abi | readonly unknown[] = Abi | readonly unknown[],
+  functionName extends ContractFunctionName<abi> | undefined =
+    | ContractFunctionName<abi>
+    | undefined,
+> =
+  functionName extends ContractFunctionName<abi>
+    ? ContractTraceDecodedForName<abi, functionName>
+    : {
+        [name in ContractFunctionName<abi>]: ContractTraceDecodedForName<
+          abi,
+          name
+        >;
+      }[ContractFunctionName<abi>];
+
+export type ContractTraceResponse<
+  request extends QueryContractTracesRequest = QueryContractTracesRequest,
+  quantity = bigint,
+  index = number,
+> = Omit<
+  QueryTracesResponse<request & QueryTracesRequest, quantity, index>,
+  "data"
+> & {
+  data: Omit<
+    QueryTracesResponse<request & QueryTracesRequest, quantity, index>["data"],
+    "traces"
+  > & {
+    traces: (ResolveSelect<
+      CallTraceResponse<quantity, index>,
+      ExtractField<request, "traces">
+    > &
+      ContractTraceDecoded<
+        request["abi"],
+        request["functionName"] & ContractFunctionName<request["abi"]>
+      >)[];
+  };
+};
+
+export type QueryContractLogsResponse<
+  request extends QueryContractLogsRequest = QueryContractLogsRequest,
+  quantity = bigint,
+  index = number,
+> = ContractLogResponse<request, quantity, index>;
+
+export type QueryContractTracesResponse<
+  request extends QueryContractTracesRequest = QueryContractTracesRequest,
+  quantity = bigint,
+  index = number,
+> = ContractTraceResponse<request, quantity, index>;
 
 export type QueryTransfersResponse<
   request extends QueryTransfersRequest = QueryTransfersRequest,

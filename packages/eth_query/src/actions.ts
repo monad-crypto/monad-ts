@@ -1,5 +1,15 @@
-import type { Account, Chain, Client, Hex, Transport } from "viem";
-import { hexToBigInt, numberToHex } from "viem";
+import type { Abi, Account, Chain, Client, Hex, Transport } from "viem";
+import {
+  decodeEventLog,
+  decodeFunctionData,
+  decodeFunctionResult,
+  encodeEventTopics,
+  hexToBigInt,
+  numberToHex,
+  parseEventLogs,
+  toEventSelector,
+  toFunctionSelector,
+} from "viem";
 import {
   formatQueryBlocksResponse,
   formatQueryLogsResponse,
@@ -9,8 +19,12 @@ import {
 } from "./index.js";
 import type {
   CommonRequestFields,
+  ContractLogResponse,
+  ContractTraceResponse,
   QueryBlocksRequest,
   QueryBlocksResponse,
+  QueryContractLogsRequest,
+  QueryContractTracesRequest,
   QueryLogsRequest,
   QueryLogsResponse,
   QueryRpcSchema,
@@ -49,6 +63,9 @@ type QueryClient<
   account extends Account | undefined = Account | undefined,
 > = Client<transport, chain, account, QueryRpcSchema>;
 
+type AbiEvent = Extract<Abi[number], { type: "event" }>;
+type EventTopic = Hex | Hex[] | null;
+
 function advancePagination(
   request: CommonRequestFields,
   response: {
@@ -74,9 +91,6 @@ function advancePagination(
     }
     request.toBlock = toBlock;
     if (cursorBlock === toBlock) return false;
-    if (cursorBlock === 0n) {
-      throw new Error("Cannot paginate descending past block 0");
-    }
     request.fromBlock = cursorBlock - 1n;
     return true;
   }
@@ -149,6 +163,282 @@ export async function queryTransfers<
     params: [serializeRequest(request)],
   });
   return formatQueryTransfersResponse(raw) as QueryTransfersResponse<request>;
+}
+
+function injectRequiredAbiDecodeFields<const table extends "logs" | "traces">(
+  fields: Partial<Record<table, readonly string[] | true>> | undefined,
+  table: table,
+  required: readonly string[],
+) {
+  const next: Partial<Record<table, readonly string[] | true>> = { ...fields };
+  const current = next[table];
+  if (current === undefined || current === true) next[table] = true;
+  else if (Array.isArray(current)) {
+    next[table] = [...new Set([...current, ...required])];
+  }
+  return next;
+}
+
+function restoreRequestedFields(
+  row: Record<string, unknown>,
+  fields: readonly string[] | true | undefined,
+) {
+  if (!Array.isArray(fields)) return row;
+  return Object.fromEntries(fields.map((field) => [field, row[field]]));
+}
+
+function getAbiEvents(abi: Abi | readonly unknown[]): AbiEvent[] {
+  return (abi as Abi).filter((item): item is AbiEvent => item.type === "event");
+}
+
+function mergeEventTopics(filters: readonly (readonly EventTopic[])[]) {
+  const length = Math.max(...filters.map((filter) => filter.length));
+  return Array.from({ length }, (_, index): EventTopic => {
+    const values = filters.map((filter) => filter[index]);
+    if (values.some((value) => value == null)) return null;
+    const options = [
+      ...new Set(
+        values.flatMap((value) => (Array.isArray(value) ? value : [value])),
+      ),
+    ] as Hex[];
+    return options.length === 1 ? options[0] : options;
+  });
+}
+
+function prepareContractLogsRequest(request: QueryContractLogsRequest) {
+  const { abi, eventName, args, strict, address, fields, ...rest } = request;
+  const events = getAbiEvents(abi);
+  const selectedEvents = events.filter(
+    (event) => eventName === undefined || event.name === eventName,
+  );
+  if (selectedEvents.length === 0) {
+    throw new Error(
+      eventName === undefined
+        ? "ABI does not contain any events"
+        : `ABI does not contain event ${eventName}`,
+    );
+  }
+  const encodeTopics = encodeEventTopics as unknown as (parameters: {
+    abi: Abi | readonly unknown[];
+    args?: unknown;
+  }) => readonly EventTopic[];
+  const encodedTopics = selectedEvents.map((event) =>
+    encodeTopics({ abi: [event], args: eventName ? args : undefined }),
+  );
+  const includesAnonymous = selectedEvents.some((event) => event.anonymous);
+  const includesNamed = selectedEvents.some((event) => !event.anonymous);
+  const topics =
+    includesAnonymous && includesNamed
+      ? undefined
+      : mergeEventTopics(
+          includesAnonymous
+            ? encodedTopics.map((filter) => filter.slice(1))
+            : encodedTopics,
+        );
+  const filter = {
+    ...(address !== undefined && { address }),
+    ...(topics !== undefined && { topics }),
+  };
+  return {
+    ...rest,
+    ...(Object.keys(filter).length > 0 && { filter }),
+    fields: injectRequiredAbiDecodeFields(fields, "logs", ["topics", "data"]),
+  } as QueryLogsRequest;
+}
+
+function decodeContractLog(
+  row: Record<string, unknown>,
+  request: QueryContractLogsRequest,
+) {
+  const events = getAbiEvents(request.abi).filter(
+    (event) =>
+      request.eventName === undefined || event.name === request.eventName,
+  );
+  const namedEvents = events.filter((event) => !event.anonymous);
+  const parsed = parseEventLogs({
+    abi: namedEvents,
+    logs: [row as never],
+    strict: request.strict ?? false,
+  } as never);
+  const decoded = parsed[0] as { eventName: string; args: unknown } | undefined;
+  if (decoded) return { eventName: decoded.eventName, args: decoded.args };
+
+  if (!Array.isArray(row.topics) || typeof row.data !== "string") {
+    return undefined;
+  }
+  for (const event of events) {
+    if (!event.anonymous) continue;
+    const indexedInputs = event.inputs.filter((input) => input.indexed).length;
+    if (row.topics.length !== indexedInputs) continue;
+    try {
+      const anonymous = decodeEventLog({
+        abi: [event],
+        data: row.data as Hex,
+        topics: [toEventSelector(event), ...(row.topics as Hex[])],
+        strict: request.strict ?? false,
+      } as never) as { eventName: string; args: unknown };
+      return { eventName: anonymous.eventName, args: anonymous.args };
+    } catch {
+      // The row may belong to another anonymous event in the ABI.
+    }
+  }
+  return undefined;
+}
+
+function prepareContractTracesRequest(request: QueryContractTracesRequest) {
+  const { abi, functionName, address, from, isTopLevel, fields, ...rest } =
+    request;
+  const functions = (abi as readonly Record<string, unknown>[]).filter(
+    (item) =>
+      item.type === "function" &&
+      (functionName === undefined || item.name === functionName),
+  );
+  if (functions.length === 0) {
+    throw new Error(
+      functionName === undefined
+        ? "ABI does not contain any functions"
+        : `ABI does not contain function ${functionName}`,
+    );
+  }
+  const selectors = functions.map((item) => toFunctionSelector(item as never));
+  const filter = {
+    ...(address !== undefined && { to: address }),
+    ...(from !== undefined && { from }),
+    ...(isTopLevel !== undefined && { isTopLevel }),
+    ...(selectors.length > 0 && {
+      selector: selectors.length === 1 ? selectors[0] : selectors,
+    }),
+  };
+  return {
+    ...rest,
+    fields: injectRequiredAbiDecodeFields(fields, "traces", [
+      "input",
+      "output",
+      "status",
+    ]),
+    ...(Object.keys(filter).length > 0 && { filter }),
+  } as QueryTracesRequest;
+}
+
+function decodeContractTrace(
+  row: Record<string, unknown>,
+  request: QueryContractTracesRequest,
+) {
+  if (typeof row.input !== "string") return undefined;
+  let decoded: { functionName: string; args: unknown };
+  try {
+    decoded = decodeFunctionData({
+      abi: request.abi as never,
+      data: row.input as Hex,
+    }) as never;
+  } catch {
+    return undefined;
+  }
+  const result: Record<string, unknown> = {
+    functionName: decoded.functionName,
+    args: decoded.args,
+  };
+  if (
+    (row.status === "success" || row.status === "0x0") &&
+    typeof row.output === "string"
+  ) {
+    try {
+      const decodedResult = decodeFunctionResult({
+        abi: request.abi as never,
+        functionName: decoded.functionName as never,
+        args: decoded.args as never,
+        data: row.output as Hex,
+      } as never);
+      if (decodedResult !== undefined) result.result = decodedResult;
+    } catch {
+      // A successful trace with malformed or empty output has no decoded result.
+      // Input decoding remains strict because undecodable calls are excluded.
+    }
+  }
+  return result;
+}
+
+function decodeContractLogs<const request extends QueryContractLogsRequest>(
+  response: QueryLogsResponse,
+  request: request,
+): ContractLogResponse<request> {
+  const rows = response.data.logs as Record<string, unknown>[];
+  response.data.logs = rows.flatMap((row) => {
+    const decoded = decodeContractLog(row, request);
+    if (!decoded) return [];
+    return [
+      {
+        ...restoreRequestedFields(row, request.fields?.logs),
+        ...decoded,
+      },
+    ];
+  }) as never;
+  return response as unknown as ContractLogResponse<request>;
+}
+
+function decodeContractTraces<const request extends QueryContractTracesRequest>(
+  response: QueryTracesResponse,
+  request: request,
+): ContractTraceResponse<request> {
+  const rows = response.data.traces as Record<string, unknown>[];
+  response.data.traces = rows.flatMap((row) => {
+    const decoded = decodeContractTrace(row, request);
+    if (!decoded) return [];
+    return [
+      {
+        ...restoreRequestedFields(row, request.fields?.traces),
+        ...decoded,
+      },
+    ];
+  }) as never;
+  return response as unknown as ContractTraceResponse<request>;
+}
+
+export async function queryContractLogs<
+  const request extends QueryContractLogsRequest,
+>(
+  client: QueryClient,
+  request: request,
+): Promise<ContractLogResponse<request>> {
+  const response = await queryLogs(client, prepareContractLogsRequest(request));
+  return decodeContractLogs(response, request);
+}
+
+export async function queryContractTraces<
+  const request extends QueryContractTracesRequest,
+>(
+  client: QueryClient,
+  request: request,
+): Promise<ContractTraceResponse<request>> {
+  const response = await queryTraces(
+    client,
+    prepareContractTracesRequest(request),
+  );
+  return decodeContractTraces(response, request);
+}
+
+export async function* queryContractLogsWithPagination<
+  const request extends QueryContractLogsRequest,
+>(
+  client: QueryClient,
+  request: request,
+): AsyncGenerator<ContractLogResponse<request>> {
+  const prepared = prepareContractLogsRequest(request);
+  for await (const response of queryLogsWithPagination(client, prepared)) {
+    yield decodeContractLogs(response, request);
+  }
+}
+
+export async function* queryContractTracesWithPagination<
+  const request extends QueryContractTracesRequest,
+>(
+  client: QueryClient,
+  request: request,
+): AsyncGenerator<ContractTraceResponse<request>> {
+  const prepared = prepareContractTracesRequest(request);
+  for await (const response of queryTracesWithPagination(client, prepared)) {
+    yield decodeContractTraces(response, request);
+  }
 }
 
 /**
@@ -292,6 +582,12 @@ export function queryActions(client: QueryClient) {
     queryTransfers: <const request extends QueryTransfersRequest>(
       request: request,
     ) => queryTransfers(client, request),
+    queryContractLogs: <const request extends QueryContractLogsRequest>(
+      request: request,
+    ) => queryContractLogs(client, request),
+    queryContractTraces: <const request extends QueryContractTracesRequest>(
+      request: request,
+    ) => queryContractTraces(client, request),
     queryBlocksWithPagination: <const request extends QueryBlocksRequest>(
       request: request,
     ) => queryBlocksWithPagination(client, request),
@@ -309,5 +605,15 @@ export function queryActions(client: QueryClient) {
     queryTransfersWithPagination: <const request extends QueryTransfersRequest>(
       request: request,
     ) => queryTransfersWithPagination(client, request),
+    queryContractLogsWithPagination: <
+      const request extends QueryContractLogsRequest,
+    >(
+      request: request,
+    ) => queryContractLogsWithPagination(client, request),
+    queryContractTracesWithPagination: <
+      const request extends QueryContractTracesRequest,
+    >(
+      request: request,
+    ) => queryContractTracesWithPagination(client, request),
   };
 }
