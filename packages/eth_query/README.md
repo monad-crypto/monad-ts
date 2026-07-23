@@ -19,7 +19,7 @@ pnpm add @monad-crypto/eth_query viem
 
 ## Quick Start
 
-Use an RPC endpoint that supports the Monad Data `eth_query*` methods. The standard public Monad RPC endpoint may not expose these methods.
+Use an RPC endpoint that supports the Monad Data `eth_query*` methods. The standard public Monad RPC endpoint may not yet expose these methods.
 
 ```ts
 import { createClient, http } from "viem";
