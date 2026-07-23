@@ -38,16 +38,29 @@ import type {
   QueryBlocksResponse,
   QueryContractLogsRequest,
   QueryContractTracesRequest,
+  QueryBlocksFields,
+  QueryLogsFields,
   QueryLogsRequest,
   QueryLogsResponse,
   QueryRpcSchema,
+  QueryTracesFields,
   QueryTracesRequest,
   QueryTracesResponse,
+  QueryTransactionsFields,
   QueryTransactionsRequest,
   QueryTransactionsResponse,
+  QueryTransfersFields,
   QueryTransfersRequest,
   QueryTransfersResponse,
 } from "./types.js";
+import {
+  asWatchClient,
+  startWatchQuery,
+  type WatchQueryConfig,
+  type WatchQueryOptions,
+  type WatchQueryResponse,
+  type WatchRuntimeParameters,
+} from "./watch.js";
 
 function serializeRequest<
   T extends Pick<CommonRequestFields, "fromBlock" | "toBlock" | "limit">,
@@ -79,6 +92,79 @@ type QueryClient<
 type AbiEvent = Extract<Abi[number], { type: "event" }>;
 type AbiFunction = Extract<Abi[number], { type: "function" }>;
 type EventTopic = Hex | Hex[] | null;
+
+export type WatchQueryBlocksRequest = Omit<
+  QueryBlocksRequest,
+  "fromBlock" | "toBlock" | "order"
+> & {
+  fromBlock?: bigint;
+};
+
+export type WatchQueryTransactionsRequest = Omit<
+  QueryTransactionsRequest,
+  "fromBlock" | "toBlock" | "order"
+> & {
+  fromBlock?: bigint;
+};
+
+export type WatchQueryLogsRequest = Omit<
+  QueryLogsRequest,
+  "fromBlock" | "toBlock" | "order"
+> & {
+  fromBlock?: bigint;
+};
+
+export type WatchQueryTracesRequest = Omit<
+  QueryTracesRequest,
+  "fromBlock" | "toBlock" | "order"
+> & {
+  fromBlock?: bigint;
+};
+
+export type WatchQueryTransfersRequest = Omit<
+  QueryTransfersRequest,
+  "fromBlock" | "toBlock" | "order"
+> & {
+  fromBlock?: bigint;
+};
+
+type RequestWithFields<fields> = [fields] extends [undefined]
+  ? Record<never, never>
+  : { fields: fields };
+
+export type WatchQueryBlocksParameters<
+  fields extends QueryBlocksFields | undefined = QueryBlocksFields | undefined,
+> = Omit<WatchQueryBlocksRequest, "fields"> & {
+  fields?: fields;
+} & WatchQueryOptions<QueryBlocksResponse<RequestWithFields<fields>>>;
+
+export type WatchQueryTransactionsParameters<
+  fields extends QueryTransactionsFields | undefined =
+    | QueryTransactionsFields
+    | undefined,
+> = Omit<WatchQueryTransactionsRequest, "fields"> & {
+  fields?: fields;
+} & WatchQueryOptions<QueryTransactionsResponse<RequestWithFields<fields>>>;
+
+export type WatchQueryLogsParameters<
+  fields extends QueryLogsFields | undefined = QueryLogsFields | undefined,
+> = Omit<WatchQueryLogsRequest, "fields"> & {
+  fields?: fields;
+} & WatchQueryOptions<QueryLogsResponse<RequestWithFields<fields>>>;
+
+export type WatchQueryTracesParameters<
+  fields extends QueryTracesFields | undefined = QueryTracesFields | undefined,
+> = Omit<WatchQueryTracesRequest, "fields"> & {
+  fields?: fields;
+} & WatchQueryOptions<QueryTracesResponse<RequestWithFields<fields>>>;
+
+export type WatchQueryTransfersParameters<
+  fields extends QueryTransfersFields | undefined =
+    | QueryTransfersFields
+    | undefined,
+> = Omit<WatchQueryTransfersRequest, "fields"> & {
+  fields?: fields;
+} & WatchQueryOptions<QueryTransfersResponse<RequestWithFields<fields>>>;
 
 function advancePagination(
   request: CommonRequestFields,
@@ -628,6 +714,114 @@ export async function* queryTransfersWithPagination<
   }
 }
 
+function watchConfig(
+  method: WatchQueryConfig["method"],
+  primaryTable: WatchQueryConfig["primaryTable"],
+  formatResponse: (raw: never) => unknown,
+): WatchQueryConfig {
+  return {
+    method,
+    primaryTable,
+    formatResponse: (raw) => formatResponse(raw as never) as WatchQueryResponse,
+  };
+}
+
+const watchBlocksConfig = watchConfig(
+  "eth_queryBlocks",
+  "blocks",
+  formatQueryBlocksResponse,
+);
+const watchTransactionsConfig = watchConfig(
+  "eth_queryTransactions",
+  "transactions",
+  formatQueryTransactionsResponse,
+);
+const watchLogsConfig = watchConfig(
+  "eth_queryLogs",
+  "logs",
+  formatQueryLogsResponse,
+);
+const watchTracesConfig = watchConfig(
+  "eth_queryTraces",
+  "traces",
+  formatQueryTracesResponse,
+);
+const watchTransfersConfig = watchConfig(
+  "eth_queryTransfers",
+  "transfers",
+  formatQueryTransfersResponse,
+);
+
+/** Watch blocks at a moving chain target and report reorg removals. */
+export function watchQueryBlocks<
+  const fields extends QueryBlocksFields | undefined,
+>(
+  client: QueryClient,
+  parameters: WatchQueryBlocksParameters<fields>,
+): () => void {
+  return startWatchQuery(
+    asWatchClient(client),
+    watchBlocksConfig,
+    parameters as unknown as WatchRuntimeParameters,
+  );
+}
+
+/** Watch transactions at a moving chain target and report reorg removals. */
+export function watchQueryTransactions<
+  const fields extends QueryTransactionsFields | undefined,
+>(
+  client: QueryClient,
+  parameters: WatchQueryTransactionsParameters<fields>,
+): () => void {
+  return startWatchQuery(
+    asWatchClient(client),
+    watchTransactionsConfig,
+    parameters as unknown as WatchRuntimeParameters,
+  );
+}
+
+/** Watch logs at a moving chain target and report reorg removals. */
+export function watchQueryLogs<
+  const fields extends QueryLogsFields | undefined,
+>(
+  client: QueryClient,
+  parameters: WatchQueryLogsParameters<fields>,
+): () => void {
+  return startWatchQuery(
+    asWatchClient(client),
+    watchLogsConfig,
+    parameters as unknown as WatchRuntimeParameters,
+  );
+}
+
+/** Watch traces at a moving chain target and report reorg removals. */
+export function watchQueryTraces<
+  const fields extends QueryTracesFields | undefined,
+>(
+  client: QueryClient,
+  parameters: WatchQueryTracesParameters<fields>,
+): () => void {
+  return startWatchQuery(
+    asWatchClient(client),
+    watchTracesConfig,
+    parameters as unknown as WatchRuntimeParameters,
+  );
+}
+
+/** Watch transfers at a moving chain target and report reorg removals. */
+export function watchQueryTransfers<
+  const fields extends QueryTransfersFields | undefined,
+>(
+  client: QueryClient,
+  parameters: WatchQueryTransfersParameters<fields>,
+): () => void {
+  return startWatchQuery(
+    asWatchClient(client),
+    watchTransfersConfig,
+    parameters as unknown as WatchRuntimeParameters,
+  );
+}
+
 export function queryActions(client: QueryClient) {
   return {
     queryBlocks: <const request extends QueryBlocksRequest>(request: request) =>
@@ -675,5 +869,24 @@ export function queryActions(client: QueryClient) {
     >(
       request: request,
     ) => queryContractTracesWithPagination(client, request),
+    watchQueryBlocks: <const fields extends QueryBlocksFields | undefined>(
+      parameters: WatchQueryBlocksParameters<fields>,
+    ) => watchQueryBlocks(client, parameters),
+    watchQueryTransactions: <
+      const fields extends QueryTransactionsFields | undefined,
+    >(
+      parameters: WatchQueryTransactionsParameters<fields>,
+    ) => watchQueryTransactions(client, parameters),
+    watchQueryLogs: <const fields extends QueryLogsFields | undefined>(
+      parameters: WatchQueryLogsParameters<fields>,
+    ) => watchQueryLogs(client, parameters),
+    watchQueryTraces: <const fields extends QueryTracesFields | undefined>(
+      parameters: WatchQueryTracesParameters<fields>,
+    ) => watchQueryTraces(client, parameters),
+    watchQueryTransfers: <
+      const fields extends QueryTransfersFields | undefined,
+    >(
+      parameters: WatchQueryTransfersParameters<fields>,
+    ) => watchQueryTransfers(client, parameters),
   };
 }

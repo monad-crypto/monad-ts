@@ -164,6 +164,40 @@ for await (const page of client.queryTransactionsWithPagination({
 
 Pagination is block-cursor based. A page is final when `cursorBlock.number === toBlock.number`; otherwise the helper resumes from `cursorBlock + 1n` for ascending queries or `cursorBlock - 1n` for descending queries. The `limit` is a target number of primary-table rows, and the server may return more rows to avoid splitting a block across pages.
 
+## Watching Queries
+
+Use the `watchQuery*` actions to poll a moving chain target. Watchers emit the current target immediately when `fromBlock` is omitted, scan new blocks in ascending order, and return an `unwatch` function.
+
+```ts
+const unwatch = client.watchQueryLogs({
+  filter: {
+    address: "0xb983b1b6f1fc04030f9d8935dbbfd2a1239d00d9",
+  },
+  fields: {
+    logs: ["blockNumber", "transactionHash", "logIndex", "topics", "data"],
+  },
+  pollingInterval: 1_000,
+  onData(response) {
+    processLogs(response.data.logs);
+  },
+  onReorg(reorg) {
+    // Removed rows are projected like onData rows and ordered newest-first.
+    rollbackLogs(reorg.removed.logs);
+  },
+  onError(error) {
+    console.error(error);
+  },
+});
+
+unwatch();
+```
+
+`onData` receives the same formatted, field-narrowed response shape as the corresponding one-shot query. Empty pages advance the internal cursor without invoking `onData`. Callbacks are awaited and a failed callback is reported through `onError` before its page is retried, so consumers should be idempotent.
+
+Watchers detect reorgs even when a query has no matching rows. `onReorg` receives the common ancestor, old and replacement block headers bounded by `maxReorgDepth`, and only the previously delivered rows from orphaned blocks. Replacement data is delivered through `onData` after `onReorg` completes and catches up through the full target.
+
+The default `maxReorgDepth` is `64`. A deeper reorg calls `onError` with `ReorgBeyondMaxDepthError` and stops the watcher. Set `targetBlock` to `"safe"` or `"finalized"` to follow those moving tags instead of the default `"latest"`. An explicit `fromBlock` must be a `bigint` and is backfilled inclusively before live polling begins.
+
 ## Examples
 
 Each action calls the corresponding Monad query method and returns a formatted Viem-style response. `bigint` block numbers and numeric limits are serialized before transport.
@@ -311,13 +345,24 @@ const response = await client.queryTransactions({
 | `client.queryContractLogsWithPagination` | Async generator over decoded event-log pages |
 | `client.queryContractTracesWithPagination` | Async generator over decoded contract-call pages |
 
+### Watch Actions
+
+| Action | Description |
+| --- | --- |
+| `client.watchQueryBlocks` | Watch blocks with reorg reconciliation |
+| `client.watchQueryTransactions` | Watch filtered transactions with reorg reconciliation |
+| `client.watchQueryLogs` | Watch filtered logs with reorg reconciliation |
+| `client.watchQueryTraces` | Watch filtered traces with reorg reconciliation |
+| `client.watchQueryTransfers` | Watch filtered native transfers with reorg reconciliation |
+
 ### Utilities
 
 | Export | Description |
 | --- | --- |
-| `queryActions` | Factory that bundles all query functions for a client |
+| `queryActions` | Factory that bundles all query and watch functions for a client |
 | `isLastPage` | Check if a response is the final page |
 | `getFieldsForRequest` | Resolve which fields will appear in a response |
+| `ReorgBeyondMaxDepthError` | Fatal error emitted when a reorg exceeds retained history |
 
 ### Formatters
 
@@ -342,6 +387,8 @@ const response = await client.queryTransactions({
 | `QueryContractTracesRequest`, `QueryContractTracesResponse` | ABI contract-call request and decoded response types |
 | `QueryTransfersRequest`, `QueryTransfersResponse` | Transfer query request and response types |
 | `TransactionsFilter`, `LogsFilter`, `TracesFilter`, `TransfersFilter` | Table-specific filter types |
+| `WatchQuery*Parameters` | Parameters and projected callbacks for each watch action |
+| `QueryReorg` | Common ancestor, changed headers, and removed-data payload |
 
 ### Field Constants
 

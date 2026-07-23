@@ -28,6 +28,18 @@ import type {
   TransferResponse,
 } from "./types.js";
 
+export type {
+  WatchQueryBlocksParameters,
+  WatchQueryBlocksRequest,
+  WatchQueryLogsParameters,
+  WatchQueryLogsRequest,
+  WatchQueryTracesParameters,
+  WatchQueryTracesRequest,
+  WatchQueryTransactionsParameters,
+  WatchQueryTransactionsRequest,
+  WatchQueryTransfersParameters,
+  WatchQueryTransfersRequest,
+} from "./actions.js";
 export {
   queryActions,
   queryBlocks,
@@ -44,6 +56,11 @@ export {
   queryTransactionsWithPagination,
   queryTransfers,
   queryTransfersWithPagination,
+  watchQueryBlocks,
+  watchQueryLogs,
+  watchQueryTraces,
+  watchQueryTransactions,
+  watchQueryTransfers,
 } from "./actions.js";
 export type {
   BlockResponse,
@@ -84,6 +101,8 @@ export type {
   TransferResponse,
   TransfersFilter,
 } from "./types.js";
+export type { QueryReorg, WatchQueryOptions } from "./watch.js";
+export { ReorgBeyondMaxDepthError } from "./watch.js";
 
 function formatLightBlock(block: LightBlock<Hex>): LightBlock {
   return {
