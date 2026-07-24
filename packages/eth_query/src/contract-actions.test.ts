@@ -351,13 +351,12 @@ test("queryContractLogsWithPagination decodes every page without mutating the re
   expect((calls[1].params as [{ fromBlock: string }])[0].fromBlock).toBe("0x2");
 });
 
-test("queryContractTraces decodes successful, reverted, and malformed calls", async () => {
+test("queryContractTraces decodes successful and reverted calls", async () => {
   const { calls, client } = mockClient([
     response({
       traces: [
         traceRow(forwardInput),
         traceRow(forwardInput, "0x1", "0x1234"),
-        traceRow("0x1234"),
       ],
     }),
   ]);
@@ -403,6 +402,21 @@ test("queryContractTraces decodes successful, reverted, and malformed calls", as
       args: [recipient, "0x1234"],
     },
   ]);
+});
+
+test("queryContractTraces passes through Viem decode errors", async () => {
+  const { client } = mockClient([
+    response({ traces: [traceRow("0x1234")] }),
+  ]);
+
+  await expect(
+    queryContractTraces(client, {
+      abi,
+      functionName: "forward",
+      fromBlock: 1n,
+      toBlock: 1n,
+    }),
+  ).rejects.toThrow();
 });
 
 test("queryContractTraces restores empty projections and decodes overloaded results", async () => {

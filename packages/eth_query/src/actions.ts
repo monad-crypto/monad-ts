@@ -270,17 +270,13 @@ function decodeContractLog(
     if (!event.anonymous) continue;
     const indexedInputs = event.inputs.filter((input) => input.indexed).length;
     if (row.topics.length !== indexedInputs) continue;
-    try {
-      const anonymous = decodeEventLog({
-        abi: [event],
-        data: row.data as Hex,
-        topics: [toEventSelector(event), ...(row.topics as Hex[])],
-        strict: request.strict ?? false,
-      } as never) as { eventName: string; args: unknown };
-      return { eventName: anonymous.eventName, args: anonymous.args };
-    } catch {
-      // The row may belong to another anonymous event in the ABI.
-    }
+    const anonymous = decodeEventLog({
+      abi: [event],
+      data: row.data as Hex,
+      topics: [toEventSelector(event), ...(row.topics as Hex[])],
+      strict: request.strict ?? false,
+    } as never) as { eventName: string; args: unknown };
+    return { eventName: anonymous.eventName, args: anonymous.args };
   }
   return undefined;
 }
@@ -325,15 +321,10 @@ function decodeContractTrace(
   request: QueryContractTracesRequest,
 ) {
   if (typeof row.input !== "string") return undefined;
-  let decoded: { functionName: string; args: unknown };
-  try {
-    decoded = decodeFunctionData({
-      abi: request.abi as never,
-      data: row.input as Hex,
-    }) as never;
-  } catch {
-    return undefined;
-  }
+  const decoded = decodeFunctionData({
+    abi: request.abi as never,
+    data: row.input as Hex,
+  }) as never as { functionName: string; args: unknown };
   const result: Record<string, unknown> = {
     functionName: decoded.functionName,
     args: decoded.args,
@@ -342,18 +333,13 @@ function decodeContractTrace(
     (row.status === "success" || row.status === "0x0") &&
     typeof row.output === "string"
   ) {
-    try {
-      const decodedResult = decodeFunctionResult({
-        abi: request.abi as never,
-        functionName: decoded.functionName as never,
-        args: decoded.args as never,
-        data: row.output as Hex,
-      } as never);
-      if (decodedResult !== undefined) result.result = decodedResult;
-    } catch {
-      // A successful trace with malformed or empty output has no decoded result.
-      // Input decoding remains strict because undecodable calls are excluded.
-    }
+    const decodedResult = decodeFunctionResult({
+      abi: request.abi as never,
+      functionName: decoded.functionName as never,
+      args: decoded.args as never,
+      data: row.output as Hex,
+    } as never);
+    if (decodedResult !== undefined) result.result = decodedResult;
   }
   return result;
 }
