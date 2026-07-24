@@ -287,8 +287,6 @@ const response = await client.queryTransactions({
 
 ## API Reference
 
-ABI-aware wrapper actions are planned but not currently exported. This includes `queryContractLogs`, `queryContractLogsWithPagination`, `queryContractTraces`, and `queryContractTracesWithPagination` for typed event/call filtering and decoding.
-
 ### Client Actions
 
 | Action | Description |
@@ -298,6 +296,8 @@ ABI-aware wrapper actions are planned but not currently exported. This includes 
 | `client.queryLogs` | Query event logs with optional filters |
 | `client.queryTraces` | Query call traces with optional filters |
 | `client.queryTransfers` | Query native transfers with optional filters |
+| `client.queryContractLogs` | Query and decode ABI event logs |
+| `client.queryContractTraces` | Query and decode ABI contract calls |
 
 ### Pagination Actions
 
@@ -308,6 +308,8 @@ ABI-aware wrapper actions are planned but not currently exported. This includes 
 | `client.queryLogsWithPagination` | Async generator over log pages |
 | `client.queryTracesWithPagination` | Async generator over trace pages |
 | `client.queryTransfersWithPagination` | Async generator over transfer pages |
+| `client.queryContractLogsWithPagination` | Async generator over decoded event-log pages |
+| `client.queryContractTracesWithPagination` | Async generator over decoded contract-call pages |
 
 ### Utilities
 
@@ -336,6 +338,8 @@ ABI-aware wrapper actions are planned but not currently exported. This includes 
 | `QueryTransactionsRequest`, `QueryTransactionsResponse` | Transaction query request and response types |
 | `QueryLogsRequest`, `QueryLogsResponse` | Log query request and response types |
 | `QueryTracesRequest`, `QueryTracesResponse` | Trace query request and response types |
+| `QueryContractLogsRequest`, `QueryContractLogsResponse` | ABI event-log request and decoded response types |
+| `QueryContractTracesRequest`, `QueryContractTracesResponse` | ABI contract-call request and decoded response types |
 | `QueryTransfersRequest`, `QueryTransfersResponse` | Transfer query request and response types |
 | `TransactionsFilter`, `LogsFilter`, `TracesFilter`, `TransfersFilter` | Table-specific filter types |
 

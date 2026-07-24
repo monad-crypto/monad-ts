@@ -23,18 +23,24 @@ const envelope = {
   cursorBlock: block,
 };
 
+function rpcFixture<type>(value: unknown): type {
+  return value as type;
+}
+
 test("formatters preserve projected row fields", () => {
-  const blocks = formatQueryBlocksResponse({
-    ...envelope,
-    data: {
-      blocks: [
-        {
-          number: "0x1",
-          hash: block.hash,
-        },
-      ],
-    },
-  } as never);
+  const blocks = formatQueryBlocksResponse(
+    rpcFixture<Parameters<typeof formatQueryBlocksResponse>[0]>({
+      ...envelope,
+      data: {
+        blocks: [
+          {
+            number: "0x1",
+            hash: block.hash,
+          },
+        ],
+      },
+    }),
+  );
   expect(blocks.data.blocks as unknown).toEqual([
     {
       number: 1n,
@@ -42,22 +48,24 @@ test("formatters preserve projected row fields", () => {
     },
   ]);
 
-  const transactions = formatQueryTransactionsResponse({
-    ...envelope,
-    data: {
-      transactions: [
-        {
-          hash: "0x2222222222222222222222222222222222222222222222222222222222222222",
-          blockNumber: "0x1",
-          gasUsed: "0x3",
-          status: "0x1",
-          transactionIndex: "0x0",
-          type: "0x2",
-          value: "0x2",
-        },
-      ],
-    },
-  } as never);
+  const transactions = formatQueryTransactionsResponse(
+    rpcFixture<Parameters<typeof formatQueryTransactionsResponse>[0]>({
+      ...envelope,
+      data: {
+        transactions: [
+          {
+            hash: "0x2222222222222222222222222222222222222222222222222222222222222222",
+            blockNumber: "0x1",
+            gasUsed: "0x3",
+            status: "0x1",
+            transactionIndex: "0x0",
+            type: "0x2",
+            value: "0x2",
+          },
+        ],
+      },
+    }),
+  );
   expect(transactions.data.transactions as unknown).toEqual([
     {
       hash: "0x2222222222222222222222222222222222222222222222222222222222222222",
@@ -70,19 +78,21 @@ test("formatters preserve projected row fields", () => {
     },
   ]);
 
-  const logs = formatQueryLogsResponse({
-    ...envelope,
-    data: {
-      logs: [
-        {
-          address: "0x3333333333333333333333333333333333333333",
-          blockNumber: "0x1",
-          logIndex: "0x0",
-          transactionIndex: "0x0",
-        },
-      ],
-    },
-  } as never);
+  const logs = formatQueryLogsResponse(
+    rpcFixture<Parameters<typeof formatQueryLogsResponse>[0]>({
+      ...envelope,
+      data: {
+        logs: [
+          {
+            address: "0x3333333333333333333333333333333333333333",
+            blockNumber: "0x1",
+            logIndex: "0x0",
+            transactionIndex: "0x0",
+          },
+        ],
+      },
+    }),
+  );
   expect(logs.data.logs as unknown).toEqual([
     {
       address: "0x3333333333333333333333333333333333333333",
@@ -94,21 +104,23 @@ test("formatters preserve projected row fields", () => {
 });
 
 test("formatQueryTracesResponse normalizes status", () => {
-  const traces = formatQueryTracesResponse({
-    ...envelope,
-    data: {
-      traces: [
-        {
-          blockNumber: "0x1",
-          status: "0x0",
-        },
-        {
-          blockNumber: "0x2",
-          status: "0x1",
-        },
-      ],
-    },
-  } as never);
+  const traces = formatQueryTracesResponse(
+    rpcFixture<Parameters<typeof formatQueryTracesResponse>[0]>({
+      ...envelope,
+      data: {
+        traces: [
+          {
+            blockNumber: "0x1",
+            status: "0x0",
+          },
+          {
+            blockNumber: "0x2",
+            status: "0x1",
+          },
+        ],
+      },
+    }),
+  );
 
   expect(traces.data.traces as unknown).toEqual([
     {
@@ -123,21 +135,23 @@ test("formatQueryTracesResponse normalizes status", () => {
 });
 
 test("formatQueryTransfersResponse normalizes status", () => {
-  const transfers = formatQueryTransfersResponse({
-    ...envelope,
-    data: {
-      transfers: [
-        {
-          blockNumber: "0x1",
-          status: "0x0",
-        },
-        {
-          blockNumber: "0x2",
-          status: "0x1",
-        },
-      ],
-    },
-  } as never);
+  const transfers = formatQueryTransfersResponse(
+    rpcFixture<Parameters<typeof formatQueryTransfersResponse>[0]>({
+      ...envelope,
+      data: {
+        transfers: [
+          {
+            blockNumber: "0x1",
+            status: "0x0",
+          },
+          {
+            blockNumber: "0x2",
+            status: "0x1",
+          },
+        ],
+      },
+    }),
+  );
 
   expect(transfers.data.transfers as unknown).toEqual([
     {

@@ -10,6 +10,8 @@ import type { Hex, Prettify } from "viem";
 import type {
   BlockResponse,
   CallTraceResponse,
+  ContractLogResponse,
+  ContractTraceResponse,
   LogResponse,
   QueryBlocksResponse,
   QueryLogsResponse,
@@ -19,6 +21,34 @@ import type {
   TransactionResponse,
   TransferResponse,
 } from "./types.js";
+
+const contractAbi = [
+  {
+    type: "event",
+    name: "Transfer",
+    inputs: [
+      { name: "from", type: "address", indexed: true },
+      { name: "value", type: "uint256", indexed: false },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "Approval",
+    inputs: [
+      { name: "owner", type: "address", indexed: true },
+      { name: "value", type: "uint256", indexed: false },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "function",
+    name: "forward",
+    stateMutability: "nonpayable",
+    inputs: [{ name: "to", type: "address" }],
+    outputs: [{ name: "ok", type: "bool" }],
+  },
+] as const;
 
 test("default QueryTransactionsResponse has full types and optional relations", () => {
   type Response = QueryTransactionsResponse;
@@ -184,4 +214,47 @@ test("CallTraceResponse quantity fields use the quantity generic", () => {
   expectTypeOf<CallTraceResponse<Hex, Hex>["value"]>().toEqualTypeOf<
     Hex | undefined
   >();
+});
+
+test("ABI log responses infer decoded event names and arguments", () => {
+  type Request = {
+    abi: typeof contractAbi;
+    eventName: "Transfer";
+    fields: { logs: readonly ["address"] };
+  };
+  type Row = ContractLogResponse<Request>["data"]["logs"][number];
+
+  expectTypeOf<Row["eventName"]>().toEqualTypeOf<"Transfer">();
+  expectTypeOf<Row["address"]>().toEqualTypeOf<`0x${string}`>();
+  expectTypeOf<
+    Row["args"] extends { value?: bigint } ? true : false
+  >().toEqualTypeOf<true>();
+});
+
+test("ABI log responses preserve discriminated unions when event is omitted", () => {
+  type Request = { abi: typeof contractAbi };
+  type Row = ContractLogResponse<Request>["data"]["logs"][number];
+  type Transfer = Extract<Row, { eventName: "Transfer" }>;
+  type Approval = Extract<Row, { eventName: "Approval" }>;
+
+  expectTypeOf<
+    Transfer["args"] extends { value?: bigint } ? true : false
+  >().toEqualTypeOf<true>();
+  expectTypeOf<
+    Approval["args"] extends { value?: bigint } ? true : false
+  >().toEqualTypeOf<true>();
+});
+
+test("ABI trace responses infer function arguments and optional results", () => {
+  type Request = {
+    abi: typeof contractAbi;
+    functionName: "forward";
+    fields: { traces: readonly ["to"] };
+  };
+  type Row = ContractTraceResponse<Request>["data"]["traces"][number];
+
+  expectTypeOf<Row["functionName"]>().toEqualTypeOf<"forward">();
+  expectTypeOf<Row["to"]>().toEqualTypeOf<`0x${string}` | undefined>();
+  expectTypeOf<Row["args"]>().toEqualTypeOf<readonly [`0x${string}`]>();
+  expectTypeOf<Row["result"]>().toEqualTypeOf<boolean | undefined>();
 });

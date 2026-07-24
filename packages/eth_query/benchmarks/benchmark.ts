@@ -3,23 +3,33 @@
 // Set RPC_URL to the JSON-RPC endpoint; defaults to http://127.0.0.1.
 // Optional filter: only run benchmarks whose name contains the filter string
 
-import type { Client, Transport } from "viem";
-import { createClient, http } from "viem";
-import type { QueryRpcSchema } from "../src/index.js";
-
-const TABLE_METHOD = {
-  logs: "eth_queryLogs",
-  traces: "eth_queryTraces",
-  transactions: "eth_queryTransactions",
-  blocks: "eth_queryBlocks",
-  transfers: "eth_queryTransfers",
-} as const;
+import type { Hex } from "viem";
+import { createClient, http, rpcSchema } from "viem";
+import type {
+  QueryBlocksRequest,
+  QueryLogsRequest,
+  QueryRpcSchema,
+  QueryTracesRequest,
+  QueryTransactionsRequest,
+  QueryTransfersRequest,
+  TracesFilter,
+} from "../src/index.js";
 
 const RPC_URL = process.env.RPC_URL ?? "http://127.0.0.1";
 const DISPLAY_RPC_URL = displayRpcUrl(RPC_URL);
 const client = createClient({
+  rpcSchema: rpcSchema<QueryRpcSchema>(),
   transport: http(RPC_URL),
-}) as Client<Transport, undefined, undefined, QueryRpcSchema>;
+});
+
+type BenchmarkParams =
+  | ({ table: "blocks" } & QueryBlocksRequest<Hex, Hex>)
+  | ({ table: "transactions" } & QueryTransactionsRequest<Hex, Hex>)
+  | ({ table: "logs" } & QueryLogsRequest<Hex, Hex>)
+  | ({ table: "transfers" } & QueryTransfersRequest<Hex, Hex>)
+  | ({ table: "traces" } & Omit<QueryTracesRequest<Hex, Hex>, "filter"> & {
+        filter?: TracesFilter & { traceType?: ("call" | "create")[] };
+      });
 
 function displayRpcUrl(url: string): string {
   try {
@@ -35,24 +45,51 @@ function formatError(error: unknown): string {
   return message.replaceAll(RPC_URL, DISPLAY_RPC_URL);
 }
 
-function toHex(n: number): string {
+function toHex(n: number): Hex {
   return `0x${n.toString(16)}`;
 }
 
-async function rpc(
-  params: Record<string, unknown>,
-): Promise<{ rows: number; bytes: number }> {
-  const table = params.table;
-  if (typeof table !== "string" || !(table in TABLE_METHOD)) {
-    throw new Error("Benchmark params must include a valid table");
+async function rpc(params: BenchmarkParams): Promise<{
+  rows: number;
+  bytes: number;
+}> {
+  let result: unknown;
+  if (params.table === "blocks") {
+    const { table, ...request } = params;
+    void table;
+    result = await client.request({
+      method: "eth_queryBlocks",
+      params: [request],
+    });
+  } else if (params.table === "transactions") {
+    const { table, ...request } = params;
+    void table;
+    result = await client.request({
+      method: "eth_queryTransactions",
+      params: [request],
+    });
+  } else if (params.table === "logs") {
+    const { table, ...request } = params;
+    void table;
+    result = await client.request({
+      method: "eth_queryLogs",
+      params: [request],
+    });
+  } else if (params.table === "traces") {
+    const { table, ...request } = params;
+    void table;
+    result = await client.request({
+      method: "eth_queryTraces",
+      params: [request],
+    });
+  } else {
+    const { table, ...request } = params;
+    void table;
+    result = await client.request({
+      method: "eth_queryTransfers",
+      params: [request],
+    });
   }
-
-  const request = { ...params };
-  delete request.table;
-  const result: unknown = await client.request({
-    method: TABLE_METHOD[table as keyof typeof TABLE_METHOD],
-    params: [request as never],
-  } as never);
   const text = stringifyResult(result);
   const bytes = new TextEncoder().encode(text).byteLength;
   return { rows: countRows(result), bytes };
@@ -375,7 +412,7 @@ const benchmarks = [
       limit: toHex(50),
     },
   },
-];
+] satisfies { name: string; params: BenchmarkParams }[];
 
 const filter = process.argv[2];
 const selected = filter

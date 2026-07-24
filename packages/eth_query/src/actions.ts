@@ -1,5 +1,25 @@
-import type { Account, Chain, Client, Hex, Transport } from "viem";
-import { hexToBigInt, numberToHex } from "viem";
+import type {
+  Abi,
+  Account,
+  Chain,
+  Client,
+  ContractEventArgs,
+  ContractEventName,
+  ContractFunctionName,
+  Hex,
+  Transport,
+} from "viem";
+import {
+  decodeEventLog,
+  decodeFunctionData,
+  decodeFunctionResult,
+  encodeEventTopics,
+  hexToBigInt,
+  numberToHex,
+  parseEventLogs,
+  toEventSelector,
+  toFunctionSelector,
+} from "viem";
 import {
   formatQueryBlocksResponse,
   formatQueryLogsResponse,
@@ -8,9 +28,16 @@ import {
   formatQueryTransfersResponse,
 } from "./index.js";
 import type {
+  CallTraceResponse,
   CommonRequestFields,
+  ContractLogResponse,
+  ContractTraceDecoded,
+  ContractTraceResponse,
+  LogResponse,
   QueryBlocksRequest,
   QueryBlocksResponse,
+  QueryContractLogsRequest,
+  QueryContractTracesRequest,
   QueryLogsRequest,
   QueryLogsResponse,
   QueryRpcSchema,
@@ -49,6 +76,10 @@ type QueryClient<
   account extends Account | undefined = Account | undefined,
 > = Client<transport, chain, account, QueryRpcSchema>;
 
+type AbiEvent = Extract<Abi[number], { type: "event" }>;
+type AbiFunction = Extract<Abi[number], { type: "function" }>;
+type EventTopic = Hex | Hex[] | null;
+
 function advancePagination(
   request: CommonRequestFields,
   response: {
@@ -74,9 +105,6 @@ function advancePagination(
     }
     request.toBlock = toBlock;
     if (cursorBlock === toBlock) return false;
-    if (cursorBlock === 0n) {
-      throw new Error("Cannot paginate descending past block 0");
-    }
     request.fromBlock = cursorBlock - 1n;
     return true;
   }
@@ -149,6 +177,328 @@ export async function queryTransfers<
     params: [serializeRequest(request)],
   });
   return formatQueryTransfersResponse(raw) as QueryTransfersResponse<request>;
+}
+
+function injectRequiredAbiDecodeFields<
+  field extends string,
+  table extends string,
+>(
+  fields: Partial<Record<table, readonly field[] | true>> | undefined,
+  table: table,
+  required: readonly field[],
+) {
+  const next: Partial<Record<table, readonly field[] | true>> = { ...fields };
+  const current = next[table];
+  if (current === undefined || current === true) next[table] = true;
+  else if (Array.isArray(current)) {
+    next[table] = [...new Set([...current, ...required])];
+  }
+  return next;
+}
+
+function restoreRequestedFields<row extends object, key extends keyof row>(
+  row: row,
+  fields: readonly key[] | true | undefined,
+): row | Pick<row, key> {
+  if (fields === undefined || fields === true) return row;
+  return Object.fromEntries(fields.map((field) => [field, row[field]])) as Pick<
+    row,
+    key
+  >;
+}
+
+function isAbiEvent(item: unknown): item is AbiEvent {
+  return (
+    typeof item === "object" &&
+    item !== null &&
+    "type" in item &&
+    item.type === "event"
+  );
+}
+
+function isAbiFunction(item: unknown): item is AbiFunction {
+  return (
+    typeof item === "object" &&
+    item !== null &&
+    "type" in item &&
+    item.type === "function"
+  );
+}
+
+function getAbiEvents(abi: Abi | readonly unknown[]): AbiEvent[] {
+  return Array.from(abi).filter(isAbiEvent);
+}
+
+function mergeEventTopics(filters: readonly (readonly EventTopic[])[]) {
+  const length = Math.max(...filters.map((filter) => filter.length));
+  return Array.from({ length }, (_, index): EventTopic => {
+    const values = filters.map((filter) => filter[index]);
+    if (values.some((value) => value == null)) return null;
+    const options = [
+      ...new Set(
+        values.flatMap((value) => (Array.isArray(value) ? value : [value])),
+      ),
+    ] as Hex[];
+    return options.length === 1 ? options[0] : options;
+  });
+}
+
+function prepareContractLogsRequest<
+  const abi extends Abi | readonly unknown[],
+  eventName extends ContractEventName<abi> | undefined,
+  strict extends boolean | undefined,
+>(request: QueryContractLogsRequest<abi, eventName, strict>): QueryLogsRequest {
+  const {
+    abi,
+    eventName,
+    args,
+    strict: decodeStrict,
+    address,
+    fields,
+    ...rest
+  } = request;
+  void decodeStrict;
+  const events = getAbiEvents(abi);
+  const selectedEvents = events.filter(
+    (event) => eventName === undefined || event.name === eventName,
+  );
+  if (selectedEvents.length === 0) {
+    throw new Error(
+      eventName === undefined
+        ? "ABI does not contain any events"
+        : `ABI does not contain event ${eventName}`,
+    );
+  }
+  const encodedTopics =
+    eventName === undefined
+      ? selectedEvents.map((event) => encodeEventTopics({ abi: [event] }))
+      : selectedEvents.map((event) =>
+          encodeEventTopics({
+            abi: [event],
+            args: args as ContractEventArgs<readonly [AbiEvent]>,
+          }),
+        );
+  const includesAnonymous = selectedEvents.some((event) => event.anonymous);
+  const includesNamed = selectedEvents.some((event) => !event.anonymous);
+  const topics =
+    includesAnonymous && includesNamed
+      ? undefined
+      : mergeEventTopics(
+          includesAnonymous
+            ? encodedTopics.map((filter) => filter.slice(1))
+            : encodedTopics,
+        );
+  const filter = {
+    ...(address !== undefined && { address }),
+    ...(topics !== undefined && { topics }),
+  };
+  return {
+    ...rest,
+    ...(Object.keys(filter).length > 0 && { filter }),
+    fields: injectRequiredAbiDecodeFields<keyof LogResponse, "logs">(
+      fields,
+      "logs",
+      ["topics", "data"],
+    ),
+  };
+}
+
+function decodeContractLog<
+  const abi extends Abi | readonly unknown[],
+  eventName extends ContractEventName<abi> | undefined,
+  strict extends boolean | undefined,
+>(row: LogResponse, request: QueryContractLogsRequest<abi, eventName, strict>) {
+  const events = getAbiEvents(request.abi).filter(
+    (event) =>
+      request.eventName === undefined || event.name === request.eventName,
+  );
+  const namedEvents = events.filter((event) => !event.anonymous);
+  const parsed = parseEventLogs({
+    abi: namedEvents,
+    logs: [row],
+    strict: request.strict ?? false,
+  });
+  const decoded = parsed[0];
+  if (decoded) return { eventName: decoded.eventName, args: decoded.args };
+
+  for (const event of events) {
+    if (!event.anonymous) continue;
+    const indexedInputs = event.inputs.filter((input) => input.indexed).length;
+    if (row.topics.length !== indexedInputs) continue;
+    const topics: [Hex, ...Hex[]] = [toEventSelector(event), ...row.topics];
+    const eventAbi = [event] as const;
+    const anonymous = decodeEventLog<
+      typeof eventAbi,
+      undefined,
+      Hex[],
+      Hex,
+      boolean
+    >({
+      abi: eventAbi,
+      data: row.data,
+      topics,
+      strict: request.strict ?? false,
+    });
+    return { eventName: anonymous.eventName, args: anonymous.args };
+  }
+  return undefined;
+}
+
+function prepareContractTracesRequest<
+  const abi extends Abi | readonly unknown[],
+  functionName extends ContractFunctionName<abi> | undefined,
+>(request: QueryContractTracesRequest<abi, functionName>): QueryTracesRequest {
+  const { abi, functionName, address, from, isTopLevel, fields, ...rest } =
+    request;
+  const functions = Array.from(abi).filter(
+    (item): item is AbiFunction =>
+      isAbiFunction(item) &&
+      (functionName === undefined || item.name === functionName),
+  );
+  if (functions.length === 0) {
+    throw new Error(
+      functionName === undefined
+        ? "ABI does not contain any functions"
+        : `ABI does not contain function ${functionName}`,
+    );
+  }
+  const selectors = functions.map((item) => toFunctionSelector(item));
+  const filter = {
+    ...(address !== undefined && { to: address }),
+    ...(from !== undefined && { from }),
+    ...(isTopLevel !== undefined && { isTopLevel }),
+    ...(selectors.length > 0 && {
+      selector: selectors.length === 1 ? selectors[0] : selectors,
+    }),
+  };
+  return {
+    ...rest,
+    fields: injectRequiredAbiDecodeFields<keyof CallTraceResponse, "traces">(
+      fields,
+      "traces",
+      ["input", "output", "status"],
+    ),
+    ...(Object.keys(filter).length > 0 && { filter }),
+  };
+}
+
+function decodeContractTrace<
+  const abi extends Abi | readonly unknown[],
+  functionName extends ContractFunctionName<abi> | undefined,
+>(
+  row: CallTraceResponse,
+  request: QueryContractTracesRequest<abi, functionName>,
+): ContractTraceDecoded<abi, functionName> {
+  const decoded = decodeFunctionData({
+    abi: request.abi,
+    data: row.input,
+  });
+  if (row.status === "success" && row.output !== undefined) {
+    const abiFunction = request.abi.find(
+      (item): item is AbiFunction =>
+        isAbiFunction(item) &&
+        toFunctionSelector(item) === row.input.slice(0, 10),
+    );
+    if (!abiFunction) return decoded as ContractTraceDecoded<abi, functionName>;
+    const decodedResult = decodeFunctionResult({
+      abi: [abiFunction],
+      data: row.output,
+    });
+    if (decodedResult !== undefined) {
+      return { ...decoded, result: decodedResult } as ContractTraceDecoded<
+        abi,
+        functionName
+      >;
+    }
+  }
+  return decoded as ContractTraceDecoded<abi, functionName>;
+}
+
+function decodeContractLogs<const request extends QueryContractLogsRequest>(
+  response: QueryLogsResponse,
+  request: request,
+): ContractLogResponse<request> {
+  const decodedResponse: unknown = {
+    ...response,
+    data: {
+      ...response.data,
+      logs: response.data.logs.flatMap((row) => {
+        const decoded = decodeContractLog(row, request);
+        if (!decoded) return [];
+        return [
+          {
+            ...restoreRequestedFields(row, request.fields?.logs),
+            ...decoded,
+          },
+        ];
+      }),
+    },
+  };
+  return decodedResponse as ContractLogResponse<request>;
+}
+
+function decodeContractTraces<const request extends QueryContractTracesRequest>(
+  response: QueryTracesResponse,
+  request: request,
+): ContractTraceResponse<request> {
+  const decodedResponse: unknown = {
+    ...response,
+    data: {
+      ...response.data,
+      traces: response.data.traces.map((row) => ({
+        ...restoreRequestedFields(row, request.fields?.traces),
+        ...decodeContractTrace(row, request),
+      })),
+    },
+  };
+  return decodedResponse as ContractTraceResponse<request>;
+}
+
+export async function queryContractLogs<
+  const request extends QueryContractLogsRequest,
+>(
+  client: QueryClient,
+  request: request,
+): Promise<ContractLogResponse<request>> {
+  const response = await queryLogs(client, prepareContractLogsRequest(request));
+  return decodeContractLogs(response, request);
+}
+
+export async function queryContractTraces<
+  const request extends QueryContractTracesRequest,
+>(
+  client: QueryClient,
+  request: request,
+): Promise<ContractTraceResponse<request>> {
+  const response = await queryTraces(
+    client,
+    prepareContractTracesRequest(request),
+  );
+  return decodeContractTraces(response, request);
+}
+
+export async function* queryContractLogsWithPagination<
+  const request extends QueryContractLogsRequest,
+>(
+  client: QueryClient,
+  request: request,
+): AsyncGenerator<ContractLogResponse<request>> {
+  const prepared = prepareContractLogsRequest(request);
+  for await (const response of queryLogsWithPagination(client, prepared)) {
+    yield decodeContractLogs(response, request);
+  }
+}
+
+export async function* queryContractTracesWithPagination<
+  const request extends QueryContractTracesRequest,
+>(
+  client: QueryClient,
+  request: request,
+): AsyncGenerator<ContractTraceResponse<request>> {
+  const prepared = prepareContractTracesRequest(request);
+  for await (const response of queryTracesWithPagination(client, prepared)) {
+    yield decodeContractTraces(response, request);
+  }
 }
 
 /**
@@ -292,6 +642,12 @@ export function queryActions(client: QueryClient) {
     queryTransfers: <const request extends QueryTransfersRequest>(
       request: request,
     ) => queryTransfers(client, request),
+    queryContractLogs: <const request extends QueryContractLogsRequest>(
+      request: request,
+    ) => queryContractLogs(client, request),
+    queryContractTraces: <const request extends QueryContractTracesRequest>(
+      request: request,
+    ) => queryContractTraces(client, request),
     queryBlocksWithPagination: <const request extends QueryBlocksRequest>(
       request: request,
     ) => queryBlocksWithPagination(client, request),
@@ -309,5 +665,15 @@ export function queryActions(client: QueryClient) {
     queryTransfersWithPagination: <const request extends QueryTransfersRequest>(
       request: request,
     ) => queryTransfersWithPagination(client, request),
+    queryContractLogsWithPagination: <
+      const request extends QueryContractLogsRequest,
+    >(
+      request: request,
+    ) => queryContractLogsWithPagination(client, request),
+    queryContractTracesWithPagination: <
+      const request extends QueryContractTracesRequest,
+    >(
+      request: request,
+    ) => queryContractTracesWithPagination(client, request),
   };
 }
