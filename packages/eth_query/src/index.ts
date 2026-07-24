@@ -117,36 +117,37 @@ function formatBlocks(blocks: BlockResponse<Hex>[]): BlockResponse[] {
 }
 
 function formatTransactions(
-  transactions: TransactionResponse[],
+  transactions: (TransactionResponse | TransactionResponse<Hex, Hex>)[],
 ): TransactionResponse[] {
   return transactions.map((t) => {
     // TransactionResponse combines transaction and receipt fields. Viem's
     // formatTransaction handles the transaction fields, so normalize receipt
     // fields here before delegating to it.
-    const transaction = Object.fromEntries(
-      Object.entries(t).map(([key, value]) => {
-        if (value == null) return [key, value];
-        if (
-          [
-            "blobGasPrice",
-            "blobGasUsed",
-            "cumulativeGasUsed",
-            "effectiveGasPrice",
-            "gasUsed",
-          ].includes(key) &&
-          typeof value === "string"
-        ) {
-          return [key, hexToBigInt(value as Hex)];
-        }
-        if (key === "status" && typeof value === "string") {
-          return [key, normalizeStatus(value, "receipt")];
-        }
-        return [key, value];
-      }),
-    ) as TransactionResponse;
+    const transaction: Parameters<typeof formatTransaction>[0] =
+      Object.fromEntries(
+        Object.entries(t).map(([key, value]) => {
+          if (value == null) return [key, value];
+          if (
+            [
+              "blobGasPrice",
+              "blobGasUsed",
+              "cumulativeGasUsed",
+              "effectiveGasPrice",
+              "gasUsed",
+            ].includes(key) &&
+            typeof value === "string"
+          ) {
+            return [key, hexToBigInt(value as Hex)];
+          }
+          if (key === "status" && typeof value === "string") {
+            return [key, normalizeStatus(value, "receipt")];
+          }
+          return [key, value];
+        }),
+      );
 
     return filterProperties(
-      formatTransaction(transaction as never) as TransactionResponse,
+      formatTransaction(transaction) as TransactionResponse,
       Object.keys(t) as (keyof TransactionResponse)[],
     ) as TransactionResponse;
   });
@@ -184,7 +185,6 @@ export function formatQueryTransactionsResponse(
     toBlock: formatLightBlock(raw.toBlock),
     cursorBlock: formatLightBlock(raw.cursorBlock),
     data: {
-      // @ts-expect-error
       transactions: formatTransactions(raw.data.transactions),
     },
   };
@@ -204,7 +204,6 @@ export function formatQueryLogsResponse(
     },
   };
   if (raw.data.transactions) {
-    // @ts-expect-error
     result.data.transactions = formatTransactions(raw.data.transactions);
   }
   if (raw.data.blocks) result.data.blocks = formatBlocks(raw.data.blocks);
@@ -221,7 +220,7 @@ export function formatQueryTracesResponse(
     data: {
       traces: raw.data.traces.map((rawTrace) => {
         const t = rawTrace as Partial<CallTraceResponse<Hex, Hex>>;
-        return {
+        const trace: unknown = {
           ...t,
           ...(t.blockNumber !== undefined && {
             blockNumber: hexToBigInt(t.blockNumber),
@@ -238,12 +237,12 @@ export function formatQueryTracesResponse(
           ...(t.status !== undefined && {
             status: normalizeStatus(t.status, "trace"),
           }),
-        } as unknown as CallTraceResponse;
+        };
+        return trace as CallTraceResponse;
       }),
     },
   };
   if (raw.data.transactions) {
-    // @ts-expect-error
     result.data.transactions = formatTransactions(raw.data.transactions);
   }
   if (raw.data.blocks) result.data.blocks = formatBlocks(raw.data.blocks);
@@ -260,7 +259,7 @@ export function formatQueryTransfersResponse(
     data: {
       transfers: raw.data.transfers.map((rawTransfer) => {
         const t = rawTransfer as Partial<TransferResponse<Hex, Hex>>;
-        return {
+        const transfer: unknown = {
           ...t,
           ...(t.blockNumber !== undefined && {
             blockNumber: hexToBigInt(t.blockNumber),
@@ -272,12 +271,12 @@ export function formatQueryTransfersResponse(
           ...(t.status !== undefined && {
             status: normalizeStatus(t.status, "trace"),
           }),
-        } as unknown as TransferResponse;
+        };
+        return transfer as TransferResponse;
       }),
     },
   };
   if (raw.data.transactions) {
-    // @ts-expect-error
     result.data.transactions = formatTransactions(raw.data.transactions);
   }
   if (raw.data.blocks) result.data.blocks = formatBlocks(raw.data.blocks);
@@ -436,7 +435,7 @@ export function getFieldsForRequest(
   const resolve = (key: TableName): string[] => {
     const val = fields?.[key];
     if (val === true || (val === undefined && key === primaryTable)) {
-      return FIELDS[key] as unknown as string[];
+      return Array.from(FIELDS[key]);
     }
     if (Array.isArray(val)) {
       return val;
