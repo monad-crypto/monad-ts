@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
-import { hasReorg, watchQueryLogs } from "./index.js";
-import type { QueryLogsResponse } from "./types.js";
+import { createClient, custom, type Hex, rpcSchema } from "viem";
+import { hasReorg, type QueryRpcSchema, watchQueryLogs } from "./index.js";
+import type { QueryLogsRequest, QueryLogsResponse } from "./types.js";
 
 type Hash = `0x${string}`;
 
@@ -22,8 +23,8 @@ type TestLog = {
 };
 
 type RpcCall = {
-  method: string;
-  request: Record<string, unknown>;
+  method: "eth_queryLogs";
+  request: QueryLogsRequest<Hex, Hex>;
 };
 
 type BlockNumberResponse = QueryLogsResponse<{
@@ -76,10 +77,11 @@ function blockNumber(value: unknown, latest: bigint): bigint {
   throw new Error(`Unsupported block number: ${String(value)}`);
 }
 
-function project(row: Record<string, unknown>, fields: unknown) {
+function project(row: object, fields: readonly string[] | true | undefined) {
   if (fields === true || fields === undefined) return { ...row };
-  if (!Array.isArray(fields)) return {};
-  return Object.fromEntries(fields.map((field) => [field, row[field]]));
+  return Object.fromEntries(
+    fields.map((field) => [field, Reflect.get(row, field)]),
+  );
 }
 
 function rawBlock(block: TestBlock) {
@@ -99,7 +101,7 @@ function rawLog(log: TestLog) {
   };
 }
 
-function createClient(options: {
+function createMockClient(options: {
   chain: TestBlock[];
   logs?: TestLog[];
   pageCursor?: (fromBlock: bigint, toBlock: bigint) => bigint;
@@ -114,61 +116,58 @@ function createClient(options: {
     logsByHash.set(log.blockHash, logs);
   }
 
-  const client = {
+  const client = createClient({
     pollingInterval: 1,
-    request: async ({
-      method,
-      params,
-    }: {
-      method: string;
-      params: readonly [Record<string, unknown>];
-    }) => {
-      const request = params[0];
-      calls.push({ method, request: structuredClone(request) });
-      if (method !== "eth_queryLogs") {
-        throw new Error(`Unexpected RPC method: ${method}`);
-      }
+    rpcSchema: rpcSchema<QueryRpcSchema>(),
+    transport: custom({
+      async request({ method, params }) {
+        if (method !== "eth_queryLogs") {
+          throw new Error(`Unexpected RPC method: ${method}`);
+        }
+        const [request] = params;
+        calls.push({ method, request: structuredClone(request) });
 
-      const latest = BigInt(chain.length - 1);
-      const fromBlock = blockNumber(request.fromBlock, latest);
-      const toBlock = blockNumber(request.toBlock, latest);
-      if (fromBlock > toBlock) throw new Error("Invalid query range");
+        const latest = BigInt(chain.length - 1);
+        const fromBlock = blockNumber(request.fromBlock, latest);
+        const toBlock = blockNumber(request.toBlock, latest);
+        if (fromBlock > toBlock) throw new Error("Invalid query range");
 
-      const from = chain[Number(fromBlock)];
-      const to = chain[Number(toBlock)];
-      if (!from || !to) throw new Error("Requested block is unavailable");
+        const from = chain[Number(fromBlock)];
+        const to = chain[Number(toBlock)];
+        if (!from || !to) throw new Error("Requested block is unavailable");
 
-      const cursorBlock = options.pageCursor?.(fromBlock, toBlock) ?? toBlock;
-      const cursor = chain[Number(cursorBlock)];
-      if (!cursor || cursorBlock < fromBlock || cursorBlock > toBlock) {
-        throw new Error("Invalid test cursor");
-      }
+        const cursorBlock = options.pageCursor?.(fromBlock, toBlock) ?? toBlock;
+        const cursor = chain[Number(cursorBlock)];
+        if (!cursor || cursorBlock < fromBlock || cursorBlock > toBlock) {
+          throw new Error("Invalid test cursor");
+        }
 
-      const fields = (request.fields ?? {}) as Record<string, unknown>;
-      const pageBlocks = chain.slice(
-        Number(fromBlock),
-        Number(cursorBlock) + 1,
-      );
-      const logs = pageBlocks.flatMap(
-        (block) => logsByHash.get(block.hash) ?? [],
-      );
-      const data: Record<string, unknown> = {
-        logs: logs.map((log) => project(rawLog(log), fields.logs)),
-      };
-      if (Object.hasOwn(fields, "blocks")) {
-        data.blocks = pageBlocks
-          .filter((block) => logsByHash.has(block.hash))
-          .map((block) => project(rawBlock(block), fields.blocks));
-      }
+        const fields = request.fields ?? {};
+        const pageBlocks = chain.slice(
+          Number(fromBlock),
+          Number(cursorBlock) + 1,
+        );
+        const logs = pageBlocks.flatMap(
+          (block) => logsByHash.get(block.hash) ?? [],
+        );
+        const data = {
+          logs: logs.map((log) => project(rawLog(log), fields.logs)),
+          ...(Object.hasOwn(fields, "blocks") && {
+            blocks: pageBlocks
+              .filter((block) => logsByHash.has(block.hash))
+              .map((block) => project(rawBlock(block), fields.blocks)),
+          }),
+        };
 
-      return {
-        fromBlock: rawBlock(from),
-        toBlock: rawBlock(to),
-        cursorBlock: rawBlock(cursor),
-        data,
-      };
-    },
-  } as never;
+        return {
+          fromBlock: rawBlock(from),
+          toBlock: rawBlock(to),
+          cursorBlock: rawBlock(cursor),
+          data,
+        };
+      },
+    }),
+  });
 
   return {
     calls,
@@ -205,7 +204,7 @@ test("detects overlapping and adjacent reorgs", () => {
 
 test("queries latest/latest first and paginates the underlying method", async () => {
   const chain = makeChain(5, 300);
-  const mock = createClient({
+  const mock = createMockClient({
     chain: chain.slice(0, 2),
     logs: [makeLog(chain[1], 11), makeLog(chain[2], 12), makeLog(chain[5], 15)],
     pageCursor(fromBlock, toBlock) {
@@ -258,7 +257,7 @@ test("rewinds whole pages through the underlying method and replays", async () =
     makeLog(newChain[4], 24),
     makeLog(newChain[5], 25),
   ];
-  const mock = createClient({ chain: oldChain.slice(0, 2), logs });
+  const mock = createMockClient({ chain: oldChain.slice(0, 2), logs });
   const delivered: number[][] = [];
   const removed: number[][] = [];
 

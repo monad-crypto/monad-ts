@@ -6,6 +6,22 @@ type WatchRequest = {
   limit?: number;
 };
 
+type WatchTableData = Partial<Record<TableName, readonly object[]>>;
+
+type WatchRange = {
+  fromBlock: bigint | "latest";
+  toBlock: bigint | "latest";
+  order: "asc";
+};
+
+const tableNames = [
+  "blocks",
+  "transactions",
+  "logs",
+  "traces",
+  "transfers",
+] as const satisfies readonly TableName[];
+
 export type WatchQueryResponse<data extends object = object> = {
   fromBlock: LightBlock;
   toBlock: LightBlock;
@@ -51,13 +67,21 @@ function addRequiredBlockNumberFields(
   return result;
 }
 
+function rowsForTable(data: object, table: TableName): readonly object[] {
+  return (data as WatchTableData)[table] ?? [];
+}
+
+function hasRows(data: object, table: TableName): boolean {
+  return rowsForTable(data, table).length > 0;
+}
+
 function removeRequiredBlockNumberFields<data extends object>(
   data: data,
   primaryTable: TableName,
   tables: readonly TableName[],
   fields: WatchRequest["fields"],
 ): data {
-  const result = {} as data;
+  const result: WatchTableData = {};
   for (const table of tables) {
     const selection =
       fields?.[table] ?? (table === primaryTable ? true : undefined);
@@ -65,19 +89,24 @@ function removeRequiredBlockNumberFields<data extends object>(
     const blockNumberField = table === "blocks" ? "number" : "blockNumber";
     const removeBlockNumber =
       selection !== true && !selection.includes(blockNumberField);
-    // @ts-expect-error Query data is generically typed but normalized by table.
-    result[table] = (data[table] ?? []).map((row: object) => {
-      const copy = { ...row } as Record<string, unknown>;
-      if (removeBlockNumber) delete copy[blockNumberField];
+    result[table] = rowsForTable(data, table).map((row) => {
+      const copy = { ...row };
+      if (removeBlockNumber) Reflect.deleteProperty(copy, blockNumberField);
       return copy;
     });
   }
-  return result;
+  return result as data;
 }
 
 function rowBlockNumber(table: TableName, row: object): bigint {
-  // @ts-expect-error Normalized rows use number for blocks and blockNumber otherwise.
-  const number = table === "blocks" ? row.number : row.blockNumber;
+  const number =
+    table === "blocks"
+      ? "number" in row
+        ? row.number
+        : undefined
+      : "blockNumber" in row
+        ? row.blockNumber
+        : undefined;
   if (typeof number !== "bigint") {
     throw new Error(`Watch response ${table} row is missing its block number`);
   }
@@ -89,14 +118,13 @@ function filterRowsByBlockNumber<data extends object>(
   tables: readonly TableName[],
   include: (number: bigint) => boolean,
 ): data {
-  const result = {} as data;
+  const result: WatchTableData = {};
   for (const table of tables) {
-    // @ts-expect-error Query data is generically typed but normalized by table.
-    result[table] = (data[table] ?? []).filter((row: object) =>
+    result[table] = rowsForTable(data, table).filter((row) =>
       include(rowBlockNumber(table, row)),
     );
   }
-  return result;
+  return result as data;
 }
 
 function collectReorgedRows<data extends object>(
@@ -104,20 +132,16 @@ function collectReorgedRows<data extends object>(
   ancestorBlockNumber: bigint,
   tables: readonly TableName[],
 ): data {
-  const removed = {} as data;
+  const removed: WatchTableData = {};
   const reversedDeliveries = [...deliveries].reverse();
   for (const table of tables) {
-    // @ts-expect-error Query data is generically typed but normalized by table.
     removed[table] = reversedDeliveries.flatMap((delivery) =>
-      // @ts-expect-error Query data is generically typed but normalized by table.
-      (delivery[table] ?? [])
-        .filter(
-          (row: object) => rowBlockNumber(table, row) > ancestorBlockNumber,
-        )
+      rowsForTable(delivery, table)
+        .filter((row) => rowBlockNumber(table, row) > ancestorBlockNumber)
         .reverse(),
     );
   }
-  return removed;
+  return removed as data;
 }
 
 function sleep(milliseconds: number) {
@@ -158,7 +182,9 @@ export function startWatchQuery<
   const tables = [
     ...new Set([
       primaryTable,
-      ...(Object.keys(requestedFields ?? {}) as TableName[]),
+      ...tableNames.filter(
+        (table) => requestedFields && Object.hasOwn(requestedFields, table),
+      ),
     ]),
   ];
   const internalFields = addRequiredBlockNumberFields(
@@ -175,14 +201,14 @@ export function startWatchQuery<
     fromBlock: bigint | "latest",
     toBlock: bigint | "latest",
   ) => {
-    // @ts-expect-error Internal identity fields intentionally exceed the caller's projection.
-    return query({
+    const internalRequest: WatchRequest & WatchRange = {
       ...queryParameters,
       fields: internalFields,
       fromBlock,
       toBlock,
       order: "asc",
-    });
+    };
+    return query(internalRequest as request & WatchRange);
   };
 
   const remember = (response: response) => {
@@ -207,16 +233,12 @@ export function startWatchQuery<
   const retainDeliveries = (predicate: (number: bigint) => boolean) => {
     deliveries = deliveries
       .map((data) => filterRowsByBlockNumber(data, tables, predicate))
-      .filter((data) => {
-        // @ts-expect-error primaryTable is a key whose generic value is an array.
-        return (data[primaryTable]?.length ?? 0) > 0;
-      });
+      .filter((data) => hasRows(data, primaryTable));
   };
 
   const commit = async (response: response) => {
     if (!active) return;
-    // @ts-expect-error primaryTable is a key whose generic value is an array.
-    if ((response.data[primaryTable]?.length ?? 0) > 0) {
+    if (hasRows(response.data, primaryTable)) {
       await onData({
         ...response,
         data: removeRequiredBlockNumberFields(
