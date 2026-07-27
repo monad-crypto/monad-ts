@@ -101,8 +101,8 @@ export type {
   TransferResponse,
   TransfersFilter,
 } from "./types.js";
-export type { QueryReorg, WatchQueryOptions } from "./watch.js";
-export { ReorgBeyondMaxDepthError } from "./watch.js";
+export type { WatchQueryOptions } from "./watch.js";
+export { hasReorg } from "./watch.js";
 
 function formatLightBlock(block: LightBlock<Hex>): LightBlock {
   return {

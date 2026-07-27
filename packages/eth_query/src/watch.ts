@@ -1,466 +1,151 @@
-import type { Hex } from "viem";
-import { hexToBigInt, numberToHex } from "viem";
-import type { LightBlock, MethodName, TableName } from "./types.js";
+import type { LightBlock, TableName } from "./types.js";
 
-type Row = Record<string, unknown>;
-type Data = Partial<Record<TableName, Row[]>>;
+type WatchRequest = {
+  fields?: Partial<Record<TableName, readonly string[] | true | undefined>>;
+  filter?: object;
+  limit?: number;
+};
 
-export type WatchQueryResponse = {
+export type WatchQueryResponse<data extends object = object> = {
   fromBlock: LightBlock;
   toBlock: LightBlock;
   cursorBlock: LightBlock;
-  data: Data;
+  data: data;
 };
 
-export type QueryReorg<data extends object> = {
-  commonAncestor: LightBlock;
-  oldBlocks: readonly LightBlock[];
-  newBlocks: readonly LightBlock[];
-  removed: data;
-};
-
-export type WatchQueryOptions<response extends { data: object }> = {
+export type WatchQueryOptions<response extends WatchQueryResponse> = {
   /** Called with each non-empty formatted query page. */
   onData: (response: response) => void | Promise<void>;
-  /** Called before replacement data when previously delivered rows are removed. */
-  onReorg?: (reorg: QueryReorg<response["data"]>) => void | Promise<void>;
-  /** Called for polling and callback errors. */
-  onError?: (error: Error) => void;
+  /** Called before replaying pages rewound by a reorg. */
+  onReorg?: (reorg: { removed: response["data"] }) => void | Promise<void>;
   /** Polling interval in milliseconds. Defaults to the client's interval. */
   pollingInterval?: number;
-  /** Maximum recoverable reorg depth. @default 64 */
+  /** Maximum page-rewind distance in blocks. @default 64 */
   maxReorgDepth?: number;
-  /** Moving block tag to follow. @default "latest" */
-  targetBlock?: "latest" | "safe" | "finalized";
 };
 
-type WatchClient = {
-  pollingInterval: number;
-  request: (args: {
-    method: MethodName;
-    params: readonly [Record<string, unknown>];
-  }) => Promise<unknown>;
-};
-
-export type WatchRuntimeParameters = {
-  fields?: Record<string, readonly string[] | true | undefined>;
-  filter?: object;
-  fromBlock?: bigint;
-  limit?: number;
-  maxReorgDepth?: number;
-  onData: (response: WatchQueryResponse) => void | Promise<void>;
-  onError?: (error: Error) => void;
-  onReorg?: (reorg: QueryReorg<Data>) => void | Promise<void>;
-  pollingInterval?: number;
-  targetBlock?: "latest" | "safe" | "finalized";
-};
-
-export type WatchQueryConfig = {
-  formatResponse: (raw: unknown) => WatchQueryResponse;
-  method: MethodName;
-  primaryTable: TableName;
-};
-
-type RawLightBlock = LightBlock<Hex>;
-
-type RawResponse = {
-  fromBlock: RawLightBlock;
-  toBlock: RawLightBlock;
-  cursorBlock: RawLightBlock;
-  data: Record<string, Row[]>;
-};
-
-type Delivery = {
-  data: Data;
-};
-
-const identityFields = {
-  blocks: ["number", "hash"],
-  transactions: ["blockNumber", "blockHash", "hash"],
-  logs: ["blockNumber", "blockHash", "transactionHash", "logIndex"],
-  traces: ["blockNumber", "blockHash", "transactionHash", "traceAddress"],
-  transfers: ["blockNumber", "blockHash", "transactionHash", "traceAddress"],
-} as const satisfies Record<TableName, readonly string[]>;
-
-const headerFields = ["number", "hash", "parentHash"] as const;
-const scanRangeSize = 1_000n;
-
-class WatchConsistencyError extends Error {
-  override name = "WatchConsistencyError";
+export function hasReorg(previous: LightBlock, next: LightBlock): boolean {
+  return next.number === previous.number
+    ? next.hash !== previous.hash
+    : next.number !== previous.number + 1n || next.parentHash !== previous.hash;
 }
 
-class ChainChangedError extends Error {
-  override name = "ChainChangedError";
-}
-
-export class ReorgBeyondMaxDepthError extends Error {
-  override name = "ReorgBeyondMaxDepthError";
-
-  constructor(public readonly maxReorgDepth: number) {
-    super(
-      `Reorg exceeded maxReorgDepth (${maxReorgDepth}): unable to reconcile`,
-    );
-  }
-}
-
-function asError(error: unknown): Error {
-  return error instanceof Error ? error : new Error(String(error));
-}
-
-function isLimitExceeded(error: unknown): boolean {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "code" in error &&
-    error.code === -32005
-  );
-}
-
-function formatLightBlock(block: RawLightBlock): LightBlock {
-  return {
-    number: hexToBigInt(block.number),
-    hash: block.hash,
-    parentHash: block.parentHash,
-  };
-}
-
-function parseRawResponse(raw: unknown): RawResponse {
-  return raw as RawResponse;
-}
-
-async function request(
-  client: WatchClient,
-  method: MethodName,
-  parameters: Record<string, unknown>,
-): Promise<RawResponse> {
-  return parseRawResponse(
-    await client.request({ method, params: [parameters] }),
-  );
-}
-
-function headerFromRow(row: Row): LightBlock {
-  if (
-    typeof row.number !== "string" ||
-    typeof row.hash !== "string" ||
-    typeof row.parentHash !== "string"
-  ) {
-    throw new WatchConsistencyError("Block header response is missing fields");
-  }
-  return {
-    number: hexToBigInt(row.number as Hex),
-    hash: row.hash as Hex,
-    parentHash: row.parentHash as Hex,
-  };
-}
-
-function validateHeaderSequence(headers: readonly LightBlock[]) {
-  for (let index = 1; index < headers.length; index++) {
-    const previous = headers[index - 1];
-    const current = headers[index];
-    if (
-      !previous ||
-      !current ||
-      current.number !== previous.number + 1n ||
-      current.parentHash !== previous.hash
-    ) {
-      throw new WatchConsistencyError("Block header range is not contiguous");
-    }
-  }
-}
-
-async function resolveTarget(
-  client: WatchClient,
-  targetBlock: "latest" | "safe" | "finalized",
-): Promise<LightBlock> {
-  const raw = await request(client, "eth_queryBlocks", {
-    fields: { blocks: headerFields },
-    fromBlock: targetBlock,
-    toBlock: targetBlock,
-    limit: "0x1",
-    order: "asc",
-  });
-  return formatLightBlock(raw.toBlock);
-}
-
-async function fetchHeaders(
-  client: WatchClient,
-  fromBlock: bigint,
-  toBlock: bigint,
-): Promise<LightBlock[]> {
-  if (fromBlock > toBlock) return [];
-
-  const headers: LightBlock[] = [];
-  let nextBlock = fromBlock;
-  let rangeSize = scanRangeSize;
-
-  while (nextBlock <= toBlock) {
-    const rangeEnd =
-      nextBlock + rangeSize - 1n < toBlock
-        ? nextBlock + rangeSize - 1n
-        : toBlock;
-    let raw: RawResponse;
-    try {
-      raw = await request(client, "eth_queryBlocks", {
-        fields: { blocks: headerFields },
-        fromBlock: numberToHex(nextBlock),
-        toBlock: numberToHex(rangeEnd),
-        limit: numberToHex(rangeEnd - nextBlock + 1n),
-        order: "asc",
-      });
-    } catch (error) {
-      if (isLimitExceeded(error) && rangeSize > 1n) {
-        rangeSize = rangeSize / 2n;
-        continue;
-      }
-      throw error;
-    }
-    const from = formatLightBlock(raw.fromBlock);
-    const to = formatLightBlock(raw.toBlock);
-    const cursor = formatLightBlock(raw.cursorBlock);
-
-    if (from.number !== nextBlock || to.number !== rangeEnd) {
-      throw new WatchConsistencyError(
-        "Block header response does not match requested range",
-      );
-    }
-    if (cursor.number < nextBlock || cursor.number > rangeEnd) {
-      throw new WatchConsistencyError(
-        "Block header cursor is outside the requested range",
-      );
-    }
-
-    const rows = raw.data.blocks ?? [];
-    const pageHeaders = rows.map(headerFromRow);
-    if (
-      pageHeaders.length === 0 ||
-      pageHeaders[0]?.number !== nextBlock ||
-      pageHeaders.at(-1)?.number !== cursor.number
-    ) {
-      throw new WatchConsistencyError(
-        "Block header rows do not cover the scanned range",
-      );
-    }
-    validateHeaderSequence(pageHeaders);
-    if (
-      headers.length > 0 &&
-      pageHeaders[0]?.parentHash !== headers.at(-1)?.hash
-    ) {
-      throw new ChainChangedError("Block header pages do not connect");
-    }
-    headers.push(...pageHeaders);
-
-    if (cursor.number === toBlock) break;
-    nextBlock = cursor.number + 1n;
-  }
-
-  return headers;
-}
-
-function includedTables(
+function addRequiredBlockNumberFields(
   primaryTable: TableName,
-  fields: Record<string, readonly string[] | true | undefined> | undefined,
-): TableName[] {
-  const tables = new Set<TableName>([primaryTable]);
-  for (const table of Object.keys(fields ?? {}) as TableName[]) {
-    if (fields?.[table] !== undefined) tables.add(table);
-  }
-  return [...tables];
-}
-
-function augmentFields(
-  primaryTable: TableName,
-  fields: Record<string, readonly string[] | true | undefined> | undefined,
-): Record<string, readonly string[] | true> {
-  const result: Record<string, readonly string[] | true> = {};
-  for (const table of includedTables(primaryTable, fields)) {
+  tables: readonly TableName[],
+  fields: WatchRequest["fields"],
+): NonNullable<WatchRequest["fields"]> {
+  const result: NonNullable<WatchRequest["fields"]> = {};
+  for (const table of tables) {
     const selection = fields?.[table];
-    if (
-      selection === true ||
-      (selection === undefined && table === primaryTable)
-    ) {
-      result[table] = true;
-      continue;
-    }
-    result[table] = [
-      ...new Set([...(selection ?? []), ...identityFields[table]]),
-    ];
+    result[table] =
+      selection === true || (selection === undefined && table === primaryTable)
+        ? true
+        : [
+            ...new Set([
+              ...(selection ?? []),
+              table === "blocks" ? "number" : "blockNumber",
+            ]),
+          ];
   }
   return result;
 }
 
-function selectionFor(
-  table: TableName,
+function removeRequiredBlockNumberFields<data extends object>(
+  data: data,
   primaryTable: TableName,
-  fields: Record<string, readonly string[] | true | undefined> | undefined,
-): readonly string[] | true | undefined {
-  const selection = fields?.[table];
-  if (selection !== undefined) return selection;
-  return table === primaryTable ? true : undefined;
-}
-
-function projectRow(row: Row, selection: readonly string[] | true): Row {
-  if (selection === true) return { ...row };
-  return Object.fromEntries(selection.map((field) => [field, row[field]]));
-}
-
-function projectData(
-  data: Data,
-  primaryTable: TableName,
-  fields: Record<string, readonly string[] | true | undefined> | undefined,
-): Data {
-  const result: Data = {};
-  for (const table of includedTables(primaryTable, fields)) {
-    const selection = selectionFor(table, primaryTable, fields);
+  tables: readonly TableName[],
+  fields: WatchRequest["fields"],
+): data {
+  const result = {} as data;
+  for (const table of tables) {
+    const selection =
+      fields?.[table] ?? (table === primaryTable ? true : undefined);
     if (selection === undefined) continue;
-    result[table] = (data[table] ?? []).map((row) =>
-      projectRow(row, selection),
-    );
+    const blockNumberField = table === "blocks" ? "number" : "blockNumber";
+    const removeBlockNumber =
+      selection !== true && !selection.includes(blockNumberField);
+    // @ts-expect-error Query data is generically typed but normalized by table.
+    result[table] = (data[table] ?? []).map((row: object) => {
+      const copy = { ...row } as Record<string, unknown>;
+      if (removeBlockNumber) delete copy[blockNumberField];
+      return copy;
+    });
   }
   return result;
 }
 
-function projectResponse(
-  response: WatchQueryResponse,
-  primaryTable: TableName,
-  fields: Record<string, readonly string[] | true | undefined> | undefined,
-): WatchQueryResponse {
-  return {
-    ...response,
-    data: projectData(response.data, primaryTable, fields),
-  };
-}
-
-function rowBlockNumber(table: TableName, row: Row): bigint {
+function rowBlockNumber(table: TableName, row: object): bigint {
+  // @ts-expect-error Normalized rows use number for blocks and blockNumber otherwise.
   const number = table === "blocks" ? row.number : row.blockNumber;
   if (typeof number !== "bigint") {
-    throw new WatchConsistencyError(
-      `Watch response ${table} row is missing its block number`,
-    );
+    throw new Error(`Watch response ${table} row is missing its block number`);
   }
   return number;
 }
 
-function filterData(
-  data: Data,
+function filterRowsByBlockNumber<data extends object>(
+  data: data,
   tables: readonly TableName[],
-  predicate: (number: bigint) => boolean,
-): Data {
-  const result: Data = {};
+  include: (number: bigint) => boolean,
+): data {
+  const result = {} as data;
   for (const table of tables) {
-    result[table] = (data[table] ?? []).filter((row) =>
-      predicate(rowBlockNumber(table, row)),
+    // @ts-expect-error Query data is generically typed but normalized by table.
+    result[table] = (data[table] ?? []).filter((row: object) =>
+      include(rowBlockNumber(table, row)),
     );
   }
   return result;
 }
 
-function removedData(
-  deliveries: readonly Delivery[],
-  commonAncestor: bigint,
-  primaryTable: TableName,
-  fields: Record<string, readonly string[] | true | undefined> | undefined,
-): Data {
-  const tables = includedTables(primaryTable, fields);
-  const result: Data = Object.fromEntries(
-    tables.map((table) => [table, []]),
-  ) as Data;
-
-  for (const delivery of [...deliveries].reverse()) {
-    for (const table of tables) {
-      const rows = (delivery.data[table] ?? [])
-        .filter((row) => rowBlockNumber(table, row) > commonAncestor)
-        .reverse();
-      result[table]?.push(...rows);
-    }
-  }
-  return projectData(result, primaryTable, fields);
-}
-
-function retainDeliveries(
-  deliveries: readonly Delivery[],
+function collectReorgedRows<data extends object>(
+  deliveries: readonly data[],
+  ancestorBlockNumber: bigint,
   tables: readonly TableName[],
-  predicate: (number: bigint) => boolean,
-): Delivery[] {
-  return deliveries
-    .map((delivery) => ({
-      data: filterData(delivery.data, tables, predicate),
-    }))
-    .filter((delivery) =>
-      tables.some((table) => (delivery.data[table]?.length ?? 0) > 0),
-    );
-}
-
-function trimHeaders(
-  headers: readonly LightBlock[],
-  tip: bigint,
-  maxReorgDepth: number,
-): LightBlock[] {
-  const minimum = tip - BigInt(maxReorgDepth);
-  return headers.filter(
-    (header) => header.number >= minimum && header.number <= tip,
-  );
-}
-
-function canonicalMap(headers: readonly LightBlock[]) {
-  return new Map(headers.map((header) => [header.number, header]));
-}
-
-function validateResponse(
-  response: WatchQueryResponse,
-  expectedFrom: bigint,
-  expectedTo: bigint,
-  canonical: ReadonlyMap<bigint, LightBlock>,
-) {
-  if (
-    response.fromBlock.number !== expectedFrom ||
-    response.toBlock.number !== expectedTo
-  ) {
-    throw new WatchConsistencyError(
-      "Watch response does not match requested range",
+): data {
+  const removed = {} as data;
+  const reversedDeliveries = [...deliveries].reverse();
+  for (const table of tables) {
+    // @ts-expect-error Query data is generically typed but normalized by table.
+    removed[table] = reversedDeliveries.flatMap((delivery) =>
+      // @ts-expect-error Query data is generically typed but normalized by table.
+      (delivery[table] ?? [])
+        .filter(
+          (row: object) => rowBlockNumber(table, row) > ancestorBlockNumber,
+        )
+        .reverse(),
     );
   }
-  if (
-    response.cursorBlock.number < expectedFrom ||
-    response.cursorBlock.number > expectedTo
-  ) {
-    throw new WatchConsistencyError(
-      "Watch cursor is outside the requested range",
-    );
-  }
-  for (const block of [
-    response.fromBlock,
-    response.toBlock,
-    response.cursorBlock,
-  ]) {
-    const expected = canonical.get(block.number);
-    if (expected && expected.hash !== block.hash) {
-      throw new ChainChangedError(
-        "Watch response changed while the range was being scanned",
-      );
-    }
-  }
+  return removed;
 }
 
 function sleep(milliseconds: number) {
   return new Promise<void>((resolve) => setTimeout(resolve, milliseconds));
 }
 
-export function startWatchQuery(
-  client: WatchClient,
-  config: WatchQueryConfig,
-  parameters: WatchRuntimeParameters,
+export function startWatchQuery<
+  request extends WatchRequest,
+  response extends WatchQueryResponse,
+  primaryTable extends TableName & keyof response["data"],
+>(
+  query: (
+    request: request & {
+      fromBlock: bigint | "latest";
+      toBlock: bigint | "latest";
+      order: "asc";
+    },
+  ) => Promise<response>,
+  primaryTable: primaryTable,
+  parameters: request & WatchQueryOptions<response>,
+  defaultPollingInterval: number,
 ): () => void {
   const {
-    fields,
-    filter,
-    fromBlock,
-    limit,
     maxReorgDepth = 64,
     onData,
-    onError,
     onReorg,
-    pollingInterval = client.pollingInterval,
-    targetBlock = "latest",
+    pollingInterval = defaultPollingInterval,
+    ...queryParameters
   } = parameters;
   if (!Number.isInteger(maxReorgDepth) || maxReorgDepth < 1) {
     throw new RangeError("maxReorgDepth must be a positive integer");
@@ -469,350 +154,198 @@ export function startWatchQuery(
     throw new RangeError("pollingInterval must be a non-negative number");
   }
 
-  const tables = includedTables(config.primaryTable, fields);
-  const internalFields = augmentFields(config.primaryTable, fields);
-  const query = {
-    ...(filter !== undefined && { filter }),
-    fields: internalFields,
-    ...(limit !== undefined && { limit: numberToHex(limit) }),
-    order: "asc",
-  };
-
+  const requestedFields = parameters.fields;
+  const tables = [
+    ...new Set([
+      primaryTable,
+      ...(Object.keys(requestedFields ?? {}) as TableName[]),
+    ]),
+  ];
+  const internalFields = addRequiredBlockNumberFields(
+    primaryTable,
+    tables,
+    requestedFields,
+  );
   let active = true;
-  let initialized = false;
-  let startFloor = fromBlock;
-  let nextBlock = fromBlock;
-  let checkpoint: LightBlock | undefined;
-  let headers: LightBlock[] = [];
-  let deliveries: Delivery[] = [];
+  let tip: LightBlock | undefined;
+  let checkpoints: Pick<LightBlock, "number" | "hash">[] = [];
+  let deliveries: response["data"][] = [];
 
-  const commitProgress = (
-    cursor: LightBlock,
-    canonical: readonly LightBlock[],
+  const request = (
+    fromBlock: bigint | "latest",
+    toBlock: bigint | "latest",
   ) => {
-    checkpoint = cursor;
-    nextBlock = cursor.number + 1n;
-    const mergedHeaders = new Map(
-      headers.map((header) => [header.number, header]),
-    );
-    for (const header of canonical) {
-      if (header.number <= cursor.number) {
-        mergedHeaders.set(header.number, header);
-      }
-    }
-    headers = trimHeaders(
-      [...mergedHeaders.values()].sort((a, b) =>
-        a.number < b.number ? -1 : a.number > b.number ? 1 : 0,
-      ),
-      cursor.number,
-      maxReorgDepth,
-    );
-    const minimum = cursor.number - BigInt(maxReorgDepth);
-    deliveries = retainDeliveries(
-      deliveries,
-      tables,
-      (number) => number >= minimum,
-    );
+    // @ts-expect-error Internal identity fields intentionally exceed the caller's projection.
+    return query({
+      ...queryParameters,
+      fields: internalFields,
+      fromBlock,
+      toBlock,
+      order: "asc",
+    });
   };
 
-  const scanData = async (from: bigint, to: bigint) => {
-    if (from > to) return;
-    let pageFrom = from;
-    let rangeSize = scanRangeSize;
-
-    while (active && pageFrom <= to) {
-      const rangeEnd =
-        pageFrom + rangeSize - 1n < to ? pageFrom + rangeSize - 1n : to;
-      const canonical = await fetchHeaders(client, pageFrom, rangeEnd);
-      const firstHeader = canonical[0];
-      if (
-        checkpoint &&
-        pageFrom === checkpoint.number + 1n &&
-        firstHeader?.parentHash !== checkpoint.hash
-      ) {
-        throw new ChainChangedError(
-          "Watch range does not connect to its checkpoint",
-        );
-      }
-
-      let raw: RawResponse;
-      try {
-        raw = await request(client, config.method, {
-          ...query,
-          fromBlock: numberToHex(pageFrom),
-          toBlock: numberToHex(rangeEnd),
+  const remember = (response: response) => {
+    const remembered = new Map(
+      checkpoints.map((block) => [block.number, block]),
+    );
+    for (const block of [response.fromBlock, response.cursorBlock]) {
+      if (block.number > 0n) {
+        remembered.set(block.number - 1n, {
+          number: block.number - 1n,
+          hash: block.parentHash,
         });
-      } catch (error) {
-        if (isLimitExceeded(error) && rangeSize > 1n) {
-          rangeSize = rangeSize / 2n;
-          continue;
-        }
-        throw error;
       }
-      if (!active) return;
-      const enriched = config.formatResponse(raw);
-      validateResponse(enriched, pageFrom, rangeEnd, canonicalMap(canonical));
-
-      if ((enriched.data[config.primaryTable]?.length ?? 0) > 0) {
-        const projected = projectResponse(
-          enriched,
-          config.primaryTable,
-          fields,
-        );
-        await onData(projected);
-        if (!active) return;
-        deliveries.push({ data: enriched.data });
-      }
-
-      commitProgress(enriched.cursorBlock, canonical);
-      if (enriched.cursorBlock.number === to) break;
-      pageFrom = enriched.cursorBlock.number + 1n;
+      remembered.set(block.number, block);
     }
+    const minimum = response.cursorBlock.number - BigInt(maxReorgDepth);
+    checkpoints = [...remembered.values()]
+      .filter((block) => block.number >= minimum)
+      .sort((a, b) => (a.number < b.number ? -1 : 1));
+  };
+
+  const retainDeliveries = (predicate: (number: bigint) => boolean) => {
+    deliveries = deliveries
+      .map((data) => filterRowsByBlockNumber(data, tables, predicate))
+      .filter((data) => {
+        // @ts-expect-error primaryTable is a key whose generic value is an array.
+        return (data[primaryTable]?.length ?? 0) > 0;
+      });
+  };
+
+  const commit = async (response: response) => {
+    if (!active) return;
+    // @ts-expect-error primaryTable is a key whose generic value is an array.
+    if ((response.data[primaryTable]?.length ?? 0) > 0) {
+      await onData({
+        ...response,
+        data: removeRequiredBlockNumberFields(
+          response.data,
+          primaryTable,
+          tables,
+          requestedFields,
+        ),
+      });
+      if (!active) return;
+      deliveries.push(response.data);
+    }
+    tip = response.cursorBlock;
+    remember(response);
+    const minimum = tip.number - BigInt(maxReorgDepth);
+    retainDeliveries((number) => number >= minimum);
+  };
+
+  const reconcile = async () => {
+    const previousTip = tip;
+    if (!previousTip) return;
+
+    let ancestor: LightBlock | undefined;
+    for (const checkpoint of [...checkpoints].reverse()) {
+      if (previousTip.number - checkpoint.number > BigInt(maxReorgDepth)) {
+        continue;
+      }
+      const response = await request(checkpoint.number, checkpoint.number);
+      if (!active) return;
+      if (response.fromBlock.hash === checkpoint.hash) {
+        ancestor = response.fromBlock;
+        break;
+      }
+    }
+    if (!ancestor) {
+      throw new Error(
+        `Reorg exceeded maxReorgDepth (${maxReorgDepth}): unable to reconcile`,
+      );
+    }
+
+    await onReorg?.({
+      removed: removeRequiredBlockNumberFields(
+        collectReorgedRows(deliveries, ancestor.number, tables),
+        primaryTable,
+        tables,
+        requestedFields,
+      ),
+    });
+    if (!active) return;
+
+    retainDeliveries((number) => number <= ancestor.number);
+    checkpoints = checkpoints.filter(
+      (checkpoint) => checkpoint.number <= ancestor.number,
+    );
+    tip = ancestor;
   };
 
   const initialize = async () => {
-    const target = await resolveTarget(client, targetBlock);
-    startFloor ??= target.number;
-    nextBlock ??= startFloor;
-    const firstBlock = nextBlock;
-    const hasProgress = firstBlock > startFloor;
-
-    if (hasProgress) {
-      if (
-        checkpoint &&
-        (target.number < checkpoint.number ||
-          (target.number === checkpoint.number &&
-            target.hash !== checkpoint.hash))
-      ) {
-        initialized = true;
-        throw new ChainChangedError(
-          "Chain changed while historical data was being scanned",
-        );
-      }
-      if (firstBlock <= target.number) {
-        try {
-          await scanData(firstBlock, target.number);
-        } catch (error) {
-          if (error instanceof ChainChangedError) initialized = true;
-          throw error;
-        }
-      }
-      return;
+    const response = await request("latest", "latest");
+    if (!active) return;
+    if (
+      response.fromBlock.number !== response.toBlock.number ||
+      response.cursorBlock.number !== response.toBlock.number
+    ) {
+      throw new Error("Initial watch response did not resolve one block");
     }
-
-    const seedFrom =
-      target.number > BigInt(maxReorgDepth)
-        ? target.number - BigInt(maxReorgDepth)
-        : 0n;
-    const canonical = await fetchHeaders(client, seedFrom, target.number);
-    const canonicalTarget = canonical.at(-1);
-    if (!canonicalTarget || canonicalTarget.hash !== target.hash) {
-      throw new ChainChangedError(
-        "Target changed while watch history was initialized",
-      );
-    }
-    headers = canonical;
-
-    if (firstBlock > target.number) {
-      checkpoint = canonicalTarget;
-      return;
-    }
-
-    checkpoint = canonical.find((header) => header.number === firstBlock - 1n);
-    await scanData(firstBlock, target.number);
+    await commit(response);
   };
 
   const poll = async () => {
-    const target = await resolveTarget(client, targetBlock);
-    const oldest = headers[0];
-    if (!oldest || target.number < oldest.number) {
-      throw new ReorgBeyondMaxDepthError(maxReorgDepth);
-    }
-    const comparisonEnd =
-      checkpoint && checkpoint.number < target.number
-        ? checkpoint.number
-        : target.number;
-    const canonicalHistory = await fetchHeaders(
-      client,
-      oldest.number,
-      comparisonEnd,
-    );
+    if (!tip) return;
+
+    const previousTip = tip;
+    // TODO: If latest is below previousTip.number, query latest/latest and
+    // reconcile the rollback instead of throwing an invalid-range error.
+    const firstPage = await request(previousTip.number, "latest");
     if (!active) return;
-    const historyByNumber = canonicalMap(canonicalHistory);
-    const checkpointIsCanonical =
-      checkpoint === undefined ||
-      (target.number >= checkpoint.number &&
-        historyByNumber.get(checkpoint.number)?.hash === checkpoint.hash);
+    if (
+      hasReorg(previousTip, firstPage.fromBlock) ||
+      (firstPage.cursorBlock.number === firstPage.fromBlock.number + 1n &&
+        hasReorg(firstPage.fromBlock, firstPage.cursorBlock))
+    ) {
+      await reconcile();
+      return;
+    }
 
-    if (!checkpointIsCanonical) {
-      const commonAncestor = [...headers]
-        .reverse()
-        .find(
-          (header) =>
-            header.number <= target.number &&
-            historyByNumber.get(header.number)?.hash === header.hash,
-        );
-      if (!commonAncestor) {
-        throw new ReorgBeyondMaxDepthError(maxReorgDepth);
-      }
-
-      const oldBlocks = headers.filter(
-        (header) => header.number > commonAncestor.number,
-      );
-      const newBlocksEnd =
-        commonAncestor.number + BigInt(maxReorgDepth) < target.number
-          ? commonAncestor.number + BigInt(maxReorgDepth)
-          : target.number;
-      const newBlocks = await fetchHeaders(
-        client,
-        commonAncestor.number + 1n,
-        newBlocksEnd,
-      );
-      if (
-        newBlocks.length > 0 &&
-        newBlocks[0]?.parentHash !== commonAncestor.hash
-      ) {
-        throw new ChainChangedError(
-          "Replacement branch changed during reconciliation",
-        );
-      }
-      const removed = removedData(
-        deliveries,
-        commonAncestor.number,
-        config.primaryTable,
-        fields,
-      );
-      await onReorg?.({ commonAncestor, oldBlocks, newBlocks, removed });
-      if (!active) return;
-
-      const validatedNewBlocks = await fetchHeaders(
-        client,
-        commonAncestor.number + 1n,
-        newBlocksEnd,
-      );
-      if (
-        validatedNewBlocks.length !== newBlocks.length ||
-        validatedNewBlocks.some(
-          (header, index) => header.hash !== newBlocks[index]?.hash,
-        )
-      ) {
-        throw new ChainChangedError(
-          "Replacement branch changed during reorg notification",
-        );
-      }
-
-      const replacementStart =
-        startFloor !== undefined && startFloor > commonAncestor.number + 1n
-          ? startFloor
-          : commonAncestor.number + 1n;
-      let recoveryHeaders: LightBlock[];
-      if (replacementStart <= target.number) {
-        const recoveryTip = replacementStart - 1n;
-        const recoveryStart =
-          recoveryTip > BigInt(maxReorgDepth)
-            ? recoveryTip - BigInt(maxReorgDepth)
-            : 0n;
-        recoveryHeaders = await fetchHeaders(
-          client,
-          recoveryStart,
-          recoveryTip,
-        );
-      } else {
-        const seedFrom =
-          target.number > BigInt(maxReorgDepth)
-            ? target.number - BigInt(maxReorgDepth)
-            : 0n;
-        recoveryHeaders = await fetchHeaders(client, seedFrom, target.number);
-      }
-
-      const expectedHeaders = canonicalMap([commonAncestor, ...newBlocks]);
-      const branchChanged = recoveryHeaders.some((header) => {
-        const expected = expectedHeaders.get(header.number);
-        return expected !== undefined && expected.hash !== header.hash;
+    const target = firstPage.toBlock;
+    if (firstPage.cursorBlock.number > previousTip.number) {
+      await commit({
+        ...firstPage,
+        data: filterRowsByBlockNumber(
+          firstPage.data,
+          tables,
+          (number) => number > previousTip.number,
+        ),
       });
+      if (!active) return;
+    }
+
+    while (active && tip && tip.number < target.number) {
+      const page = await request(tip.number + 1n, target.number);
+      if (!active) return;
       if (
-        branchChanged ||
-        (replacementStart > target.number &&
-          recoveryHeaders.at(-1)?.hash !== target.hash)
+        hasReorg(tip, page.fromBlock) ||
+        hasReorg(target, page.toBlock) ||
+        (page.cursorBlock.number === page.fromBlock.number + 1n &&
+          hasReorg(page.fromBlock, page.cursorBlock))
       ) {
-        throw new ChainChangedError(
-          "Replacement branch changed during reorg notification",
-        );
+        await reconcile();
+        return;
       }
-
-      deliveries = retainDeliveries(
-        deliveries,
-        tables,
-        (number) => number <= commonAncestor.number,
-      );
-      nextBlock = replacementStart;
-      checkpoint = recoveryHeaders.at(-1);
-      headers = trimHeaders(
-        recoveryHeaders,
-        checkpoint?.number ?? commonAncestor.number,
-        maxReorgDepth,
-      );
-      if (replacementStart <= target.number) {
-        await scanData(replacementStart, target.number);
-      }
-      return;
+      await commit(page);
     }
-
-    if (nextBlock !== undefined && nextBlock <= target.number) {
-      await scanData(nextBlock, target.number);
-      return;
-    }
-
-    const seedFrom =
-      target.number > BigInt(maxReorgDepth)
-        ? target.number - BigInt(maxReorgDepth)
-        : 0n;
-    const canonicalTarget =
-      comparisonEnd === target.number && oldest.number === seedFrom
-        ? canonicalHistory
-        : await fetchHeaders(client, seedFrom, target.number);
-    if (canonicalTarget.at(-1)?.hash !== target.hash) {
-      throw new ChainChangedError("Target changed while watch was polling");
-    }
-    checkpoint = canonicalTarget.at(-1);
-    headers = canonicalTarget;
   };
 
   const run = async () => {
+    await initialize();
     while (active) {
-      try {
-        if (!initialized) {
-          await initialize();
-          initialized = true;
-        } else {
-          await poll();
-        }
-      } catch (error) {
-        if (!active) return;
-        const cause = asError(error);
-        try {
-          onError?.(cause);
-        } catch {
-          // Error handlers must not create an unhandled rejection in the poller.
-        }
-        if (
-          cause instanceof ReorgBeyondMaxDepthError ||
-          cause instanceof WatchConsistencyError
-        ) {
-          active = false;
-          return;
-        }
-      }
-      if (active) await sleep(pollingInterval);
+      await sleep(pollingInterval);
+      if (active) await poll();
     }
   };
 
-  void run();
+  void run().catch((error) => {
+    queueMicrotask(() => {
+      throw error;
+    });
+  });
   return () => {
     active = false;
   };
-}
-
-export function asWatchClient(client: unknown): WatchClient {
-  return client as WatchClient;
 }

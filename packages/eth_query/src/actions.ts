@@ -34,11 +34,11 @@ import type {
   ContractTraceDecoded,
   ContractTraceResponse,
   LogResponse,
+  QueryBlocksFields,
   QueryBlocksRequest,
   QueryBlocksResponse,
   QueryContractLogsRequest,
   QueryContractTracesRequest,
-  QueryBlocksFields,
   QueryLogsFields,
   QueryLogsRequest,
   QueryLogsResponse,
@@ -53,14 +53,7 @@ import type {
   QueryTransfersRequest,
   QueryTransfersResponse,
 } from "./types.js";
-import {
-  asWatchClient,
-  startWatchQuery,
-  type WatchQueryConfig,
-  type WatchQueryOptions,
-  type WatchQueryResponse,
-  type WatchRuntimeParameters,
-} from "./watch.js";
+import { startWatchQuery, type WatchQueryOptions } from "./watch.js";
 
 function serializeRequest<
   T extends Pick<CommonRequestFields, "fromBlock" | "toBlock" | "limit">,
@@ -96,108 +89,91 @@ type EventTopic = Hex | Hex[] | null;
 export type WatchQueryBlocksRequest = Omit<
   QueryBlocksRequest,
   "fromBlock" | "toBlock" | "order"
-> & {
-  fromBlock?: bigint;
-};
+>;
 
 export type WatchQueryTransactionsRequest = Omit<
   QueryTransactionsRequest,
   "fromBlock" | "toBlock" | "order"
-> & {
-  fromBlock?: bigint;
-};
+>;
 
 export type WatchQueryLogsRequest = Omit<
   QueryLogsRequest,
   "fromBlock" | "toBlock" | "order"
-> & {
-  fromBlock?: bigint;
-};
+>;
 
 export type WatchQueryTracesRequest = Omit<
   QueryTracesRequest,
   "fromBlock" | "toBlock" | "order"
-> & {
-  fromBlock?: bigint;
-};
+>;
 
 export type WatchQueryTransfersRequest = Omit<
   QueryTransfersRequest,
   "fromBlock" | "toBlock" | "order"
-> & {
-  fromBlock?: bigint;
-};
+>;
 
-type RequestWithFields<fields> = [fields] extends [undefined]
-  ? Record<never, never>
-  : { fields: fields };
+type RequestWithFields<request, fields> = Omit<request, "fields"> &
+  ([fields] extends [undefined]
+    ? { fields?: undefined }
+    : undefined extends fields
+      ? { fields?: fields }
+      : { fields: fields });
 
 export type WatchQueryBlocksParameters<
-  fields extends QueryBlocksFields | undefined = QueryBlocksFields | undefined,
-> = Omit<WatchQueryBlocksRequest, "fields"> & {
-  fields?: fields;
-} & WatchQueryOptions<QueryBlocksResponse<RequestWithFields<fields>>>;
+  fields extends QueryBlocksFields | undefined = undefined,
+> = RequestWithFields<WatchQueryBlocksRequest, fields> &
+  WatchQueryOptions<
+    QueryBlocksResponse<RequestWithFields<WatchQueryBlocksRequest, fields>>
+  >;
 
 export type WatchQueryTransactionsParameters<
-  fields extends QueryTransactionsFields | undefined =
-    | QueryTransactionsFields
-    | undefined,
-> = Omit<WatchQueryTransactionsRequest, "fields"> & {
-  fields?: fields;
-} & WatchQueryOptions<QueryTransactionsResponse<RequestWithFields<fields>>>;
+  fields extends QueryTransactionsFields | undefined = undefined,
+> = RequestWithFields<WatchQueryTransactionsRequest, fields> &
+  WatchQueryOptions<
+    QueryTransactionsResponse<
+      RequestWithFields<WatchQueryTransactionsRequest, fields>
+    >
+  >;
 
 export type WatchQueryLogsParameters<
-  fields extends QueryLogsFields | undefined = QueryLogsFields | undefined,
-> = Omit<WatchQueryLogsRequest, "fields"> & {
-  fields?: fields;
-} & WatchQueryOptions<QueryLogsResponse<RequestWithFields<fields>>>;
+  fields extends QueryLogsFields | undefined = undefined,
+> = RequestWithFields<WatchQueryLogsRequest, fields> &
+  WatchQueryOptions<
+    QueryLogsResponse<RequestWithFields<WatchQueryLogsRequest, fields>>
+  >;
 
 export type WatchQueryTracesParameters<
-  fields extends QueryTracesFields | undefined = QueryTracesFields | undefined,
-> = Omit<WatchQueryTracesRequest, "fields"> & {
-  fields?: fields;
-} & WatchQueryOptions<QueryTracesResponse<RequestWithFields<fields>>>;
+  fields extends QueryTracesFields | undefined = undefined,
+> = RequestWithFields<WatchQueryTracesRequest, fields> &
+  WatchQueryOptions<
+    QueryTracesResponse<RequestWithFields<WatchQueryTracesRequest, fields>>
+  >;
 
 export type WatchQueryTransfersParameters<
-  fields extends QueryTransfersFields | undefined =
-    | QueryTransfersFields
-    | undefined,
-> = Omit<WatchQueryTransfersRequest, "fields"> & {
-  fields?: fields;
-} & WatchQueryOptions<QueryTransfersResponse<RequestWithFields<fields>>>;
+  fields extends QueryTransfersFields | undefined = undefined,
+> = RequestWithFields<WatchQueryTransfersRequest, fields> &
+  WatchQueryOptions<
+    QueryTransfersResponse<
+      RequestWithFields<WatchQueryTransfersRequest, fields>
+    >
+  >;
 
 function advancePagination(
   request: CommonRequestFields,
   response: {
-    fromBlock: { number: Hex };
     toBlock: { number: Hex };
     cursorBlock: { number: Hex };
   },
 ): boolean {
-  const fromBlock = hexToBigInt(response.fromBlock.number);
   const toBlock = hexToBigInt(response.toBlock.number);
   const cursorBlock = hexToBigInt(response.cursorBlock.number);
 
-  if (
-    typeof request.fromBlock === "bigint" &&
-    fromBlock !== request.fromBlock
-  ) {
-    throw new Error("Pagination response fromBlock does not match request");
-  }
-
   if (request.order === "desc") {
-    if (cursorBlock > fromBlock || cursorBlock < toBlock) {
-      throw new Error("Pagination cursorBlock is outside the requested range");
-    }
     request.toBlock = toBlock;
     if (cursorBlock === toBlock) return false;
     request.fromBlock = cursorBlock - 1n;
     return true;
   }
 
-  if (cursorBlock < fromBlock || cursorBlock > toBlock) {
-    throw new Error("Pagination cursorBlock is outside the requested range");
-  }
   request.toBlock = toBlock;
   if (cursorBlock === toBlock) return false;
   request.fromBlock = cursorBlock + 1n;
@@ -714,111 +690,87 @@ export async function* queryTransfersWithPagination<
   }
 }
 
-function watchConfig(
-  method: WatchQueryConfig["method"],
-  primaryTable: WatchQueryConfig["primaryTable"],
-  formatResponse: (raw: never) => unknown,
-): WatchQueryConfig {
-  return {
-    method,
-    primaryTable,
-    formatResponse: (raw) => formatResponse(raw as never) as WatchQueryResponse,
-  };
-}
-
-const watchBlocksConfig = watchConfig(
-  "eth_queryBlocks",
-  "blocks",
-  formatQueryBlocksResponse,
-);
-const watchTransactionsConfig = watchConfig(
-  "eth_queryTransactions",
-  "transactions",
-  formatQueryTransactionsResponse,
-);
-const watchLogsConfig = watchConfig(
-  "eth_queryLogs",
-  "logs",
-  formatQueryLogsResponse,
-);
-const watchTracesConfig = watchConfig(
-  "eth_queryTraces",
-  "traces",
-  formatQueryTracesResponse,
-);
-const watchTransfersConfig = watchConfig(
-  "eth_queryTransfers",
-  "transfers",
-  formatQueryTransfersResponse,
-);
-
-/** Watch blocks at a moving chain target and report reorg removals. */
+/** Watch live block query pages and report pages rewound by reorgs. */
 export function watchQueryBlocks<
-  const fields extends QueryBlocksFields | undefined,
+  const fields extends QueryBlocksFields | undefined = undefined,
 >(
   client: QueryClient,
   parameters: WatchQueryBlocksParameters<fields>,
 ): () => void {
-  return startWatchQuery(
-    asWatchClient(client),
-    watchBlocksConfig,
-    parameters as unknown as WatchRuntimeParameters,
+  type Request = RequestWithFields<WatchQueryBlocksRequest, fields>;
+  return startWatchQuery<Request, QueryBlocksResponse<Request>, "blocks">(
+    (request) => queryBlocks(client, request),
+    "blocks",
+    parameters,
+    client.pollingInterval,
   );
 }
 
-/** Watch transactions at a moving chain target and report reorg removals. */
+/** Watch live transaction query pages and report pages rewound by reorgs. */
 export function watchQueryTransactions<
-  const fields extends QueryTransactionsFields | undefined,
+  const fields extends QueryTransactionsFields | undefined = undefined,
 >(
   client: QueryClient,
   parameters: WatchQueryTransactionsParameters<fields>,
 ): () => void {
-  return startWatchQuery(
-    asWatchClient(client),
-    watchTransactionsConfig,
-    parameters as unknown as WatchRuntimeParameters,
+  type Request = RequestWithFields<WatchQueryTransactionsRequest, fields>;
+  return startWatchQuery<
+    Request,
+    QueryTransactionsResponse<Request>,
+    "transactions"
+  >(
+    (request) => queryTransactions(client, request),
+    "transactions",
+    parameters,
+    client.pollingInterval,
   );
 }
 
-/** Watch logs at a moving chain target and report reorg removals. */
+/** Watch live log query pages and report pages rewound by reorgs. */
 export function watchQueryLogs<
-  const fields extends QueryLogsFields | undefined,
+  const fields extends QueryLogsFields | undefined = undefined,
 >(
   client: QueryClient,
   parameters: WatchQueryLogsParameters<fields>,
 ): () => void {
-  return startWatchQuery(
-    asWatchClient(client),
-    watchLogsConfig,
-    parameters as unknown as WatchRuntimeParameters,
+  type Request = RequestWithFields<WatchQueryLogsRequest, fields>;
+  return startWatchQuery<Request, QueryLogsResponse<Request>, "logs">(
+    (request) => queryLogs(client, request),
+    "logs",
+    parameters,
+    client.pollingInterval,
   );
 }
 
-/** Watch traces at a moving chain target and report reorg removals. */
+/** Watch live trace query pages and report pages rewound by reorgs. */
 export function watchQueryTraces<
-  const fields extends QueryTracesFields | undefined,
+  const fields extends QueryTracesFields | undefined = undefined,
 >(
   client: QueryClient,
   parameters: WatchQueryTracesParameters<fields>,
 ): () => void {
-  return startWatchQuery(
-    asWatchClient(client),
-    watchTracesConfig,
-    parameters as unknown as WatchRuntimeParameters,
+  type Request = RequestWithFields<WatchQueryTracesRequest, fields>;
+  return startWatchQuery<Request, QueryTracesResponse<Request>, "traces">(
+    (request) => queryTraces(client, request),
+    "traces",
+    parameters,
+    client.pollingInterval,
   );
 }
 
-/** Watch transfers at a moving chain target and report reorg removals. */
+/** Watch live transfer query pages and report pages rewound by reorgs. */
 export function watchQueryTransfers<
-  const fields extends QueryTransfersFields | undefined,
+  const fields extends QueryTransfersFields | undefined = undefined,
 >(
   client: QueryClient,
   parameters: WatchQueryTransfersParameters<fields>,
 ): () => void {
-  return startWatchQuery(
-    asWatchClient(client),
-    watchTransfersConfig,
-    parameters as unknown as WatchRuntimeParameters,
+  type Request = RequestWithFields<WatchQueryTransfersRequest, fields>;
+  return startWatchQuery<Request, QueryTransfersResponse<Request>, "transfers">(
+    (request) => queryTransfers(client, request),
+    "transfers",
+    parameters,
+    client.pollingInterval,
   );
 }
 
@@ -869,22 +821,28 @@ export function queryActions(client: QueryClient) {
     >(
       request: request,
     ) => queryContractTracesWithPagination(client, request),
-    watchQueryBlocks: <const fields extends QueryBlocksFields | undefined>(
+    watchQueryBlocks: <
+      const fields extends QueryBlocksFields | undefined = undefined,
+    >(
       parameters: WatchQueryBlocksParameters<fields>,
     ) => watchQueryBlocks(client, parameters),
     watchQueryTransactions: <
-      const fields extends QueryTransactionsFields | undefined,
+      const fields extends QueryTransactionsFields | undefined = undefined,
     >(
       parameters: WatchQueryTransactionsParameters<fields>,
     ) => watchQueryTransactions(client, parameters),
-    watchQueryLogs: <const fields extends QueryLogsFields | undefined>(
+    watchQueryLogs: <
+      const fields extends QueryLogsFields | undefined = undefined,
+    >(
       parameters: WatchQueryLogsParameters<fields>,
     ) => watchQueryLogs(client, parameters),
-    watchQueryTraces: <const fields extends QueryTracesFields | undefined>(
+    watchQueryTraces: <
+      const fields extends QueryTracesFields | undefined = undefined,
+    >(
       parameters: WatchQueryTracesParameters<fields>,
     ) => watchQueryTraces(client, parameters),
     watchQueryTransfers: <
-      const fields extends QueryTransfersFields | undefined,
+      const fields extends QueryTransfersFields | undefined = undefined,
     >(
       parameters: WatchQueryTransfersParameters<fields>,
     ) => watchQueryTransfers(client, parameters),

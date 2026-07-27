@@ -3,6 +3,7 @@ import type { Client, Prettify, Transport } from "viem";
 import {
   type QueryRpcSchema,
   queryActions,
+  type WatchQueryLogsParameters,
   watchQueryBlocks,
   watchQueryLogs,
   watchQueryTraces,
@@ -21,10 +22,8 @@ declare const client: Client<Transport, undefined, undefined, QueryRpcSchema>;
 
 test.todo("standalone watch actions preserve field projection and return unwatch", () => {
   const unwatchBlocks = watchQueryBlocks(client, {
-    fromBlock: 1n,
     fields: { blocks: ["number", "hash"] },
     limit: 10,
-    targetBlock: "latest",
     pollingInterval: 1_000,
     maxReorgDepth: 64,
     onData(response) {
@@ -42,7 +41,6 @@ test.todo("standalone watch actions preserve field projection and return unwatch
       transactions: ["hash", "value"],
       blocks: ["number"],
     },
-    targetBlock: "safe",
     onData(response) {
       expectTypeOf(response.data.transactions).toEqualTypeOf<
         Prettify<Pick<TransactionResponse, "hash" | "value">>[]
@@ -60,7 +58,6 @@ test.todo("standalone watch actions preserve field projection and return unwatch
       logs: ["address", "topics"],
       transactions: ["hash"],
     },
-    targetBlock: "finalized",
     onData(response) {
       expectTypeOf(response.data.logs).toEqualTypeOf<
         Prettify<Pick<LogResponse, "address" | "topics">>[]
@@ -70,30 +67,12 @@ test.todo("standalone watch actions preserve field projection and return unwatch
       >();
     },
     onReorg(reorg) {
-      expectTypeOf(reorg.commonAncestor.number).toEqualTypeOf<bigint>();
-      expectTypeOf(reorg.oldBlocks).toEqualTypeOf<
-        readonly {
-          number: bigint;
-          hash: `0x${string}`;
-          parentHash: `0x${string}`;
-        }[]
-      >();
-      expectTypeOf(reorg.newBlocks).toEqualTypeOf<
-        readonly {
-          number: bigint;
-          hash: `0x${string}`;
-          parentHash: `0x${string}`;
-        }[]
-      >();
       expectTypeOf(reorg.removed.logs).toEqualTypeOf<
         Prettify<Pick<LogResponse, "address" | "topics">>[]
       >();
       expectTypeOf(reorg.removed.transactions).toEqualTypeOf<
         Prettify<Pick<TransactionResponse, "hash">>[]
       >();
-    },
-    onError(error) {
-      expectTypeOf(error).toEqualTypeOf<Error>();
     },
   });
   expectTypeOf(unwatchLogs).toEqualTypeOf<() => void>();
@@ -124,7 +103,6 @@ test.todo("standalone watch actions preserve field projection and return unwatch
 test.todo("queryActions exposes projected decorated watch actions", () => {
   const actions = queryActions(client);
   const unwatch = actions.watchQueryLogs({
-    fromBlock: 1n,
     fields: { logs: ["blockNumber", "logIndex"] },
     onData(response) {
       expectTypeOf(response.data.logs).toEqualTypeOf<
@@ -153,18 +131,27 @@ test.todo("queryActions exposes projected decorated watch actions", () => {
   >();
 });
 
-test.todo("watch parameters reject fixed ranges, block tags as starts, and emitOnBegin", () => {
+test.todo("watch parameters reject ranges, order, and emitOnBegin", () => {
   type Parameters = globalThis.Parameters<typeof watchQueryBlocks>[1];
   const acceptsParameters = (_parameters: Parameters) => undefined;
 
-  // @ts-expect-error watch starts accept bigint only
+  // @ts-expect-error watch actions are always live-only
   acceptsParameters({ fromBlock: "latest", onData() {} });
+  // @ts-expect-error watch actions do not backfill numeric ranges
+  acceptsParameters({ fromBlock: 1n, onData() {} });
   // @ts-expect-error a watcher has a moving target instead of toBlock
   acceptsParameters({ toBlock: 10n, onData() {} });
   // @ts-expect-error watchers always scan in ascending order
   acceptsParameters({ order: "desc", onData() {} });
   // @ts-expect-error initialization is immediate and has no emitOnBegin option
   acceptsParameters({ emitOnBegin: false, onData() {} });
-  // @ts-expect-error pending is not a supported moving target
+  // @ts-expect-error live watchers always follow latest
   acceptsParameters({ targetBlock: "pending", onData() {} });
+  // @ts-expect-error watch errors are thrown as uncaught exceptions
+  acceptsParameters({ onData() {}, onError() {} });
+
+  type WithBlocks = WatchQueryLogsParameters<{ blocks: true }>;
+  const acceptsWithBlocks = (_parameters: WithBlocks) => undefined;
+  // @ts-expect-error explicit field generics require matching runtime fields
+  acceptsWithBlocks({ onData() {} });
 });

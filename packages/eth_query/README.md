@@ -166,7 +166,7 @@ Pagination is block-cursor based. A page is final when `cursorBlock.number === t
 
 ## Watching Queries
 
-Use the `watchQuery*` actions to poll a moving chain target. Watchers emit the current target immediately when `fromBlock` is omitted, scan new blocks in ascending order, and return an `unwatch` function.
+Use the `watchQuery*` actions to follow live query data. Watchers first query `latest` to `latest`, scan new blocks in ascending order, and return an `unwatch` function. They do not accept `fromBlock`, `toBlock`, or `order`.
 
 ```ts
 const unwatch = client.watchQueryLogs({
@@ -181,22 +181,21 @@ const unwatch = client.watchQueryLogs({
     processLogs(response.data.logs);
   },
   onReorg(reorg) {
-    // Removed rows are projected like onData rows and ordered newest-first.
+    // Rewound rows are projected like onData rows and ordered newest-first.
     rollbackLogs(reorg.removed.logs);
-  },
-  onError(error) {
-    console.error(error);
   },
 });
 
 unwatch();
 ```
 
-`onData` receives the same formatted, field-narrowed response shape as the corresponding one-shot query. Empty pages advance the internal cursor without invoking `onData`. Callbacks are awaited and a failed callback is reported through `onError` before its page is retried, so consumers should be idempotent.
+`onData` receives the same formatted, field-narrowed response shape as the corresponding one-shot query. Empty pages advance the internal cursor without invoking `onData`. Callbacks are awaited, preserving callback order and backpressure.
 
-Watchers detect reorgs even when a query has no matching rows. `onReorg` receives the common ancestor, old and replacement block headers bounded by `maxReorgDepth`, and only the previously delivered rows from orphaned blocks. Replacement data is delivered through `onData` after `onReorg` completes and catches up through the full target.
+Each outer poll overlaps the local tip and resolves `latest` from that response. If the response paginates, inner requests resume at `cursorBlock.number + 1` and pin the resolved `toBlock`. All requests use the watched `eth_query*` method; non-block watchers do not issue `eth_queryBlocks` requests.
 
-The default `maxReorgDepth` is `64`. A deeper reorg calls `onError` with `ReorgBeyondMaxDepthError` and stops the watcher. Set `targetBlock` to `"safe"` or `"finalized"` to follow those moving tags instead of the default `"latest"`. An explicit `fromBlock` must be a `bigint` and is backfilled inclusively before live polling begins.
+When a boundary hash changes, the watcher probes retained page checkpoints through the same query method, rewinds to the newest matching checkpoint, calls `onReorg` with the rewound rows, and replays them through `onData`. A rewind can include rows that remained canonical when a page spans the exact common ancestor. The default `maxReorgDepth` is `64`.
+
+Watch errors are fatal. RPC failures, malformed responses, callback exceptions, and reorgs beyond `maxReorgDepth` stop the watcher and are rethrown asynchronously as uncaught `Error` instances with descriptive messages. Install a process-level `uncaughtException` handler only if the application has a deliberate recovery policy; otherwise the runtime's normal uncaught-exception behavior applies.
 
 ## Examples
 
@@ -362,7 +361,6 @@ const response = await client.queryTransactions({
 | `queryActions` | Factory that bundles all query and watch functions for a client |
 | `isLastPage` | Check if a response is the final page |
 | `getFieldsForRequest` | Resolve which fields will appear in a response |
-| `ReorgBeyondMaxDepthError` | Fatal error emitted when a reorg exceeds retained history |
 
 ### Formatters
 
@@ -388,7 +386,6 @@ const response = await client.queryTransactions({
 | `QueryTransfersRequest`, `QueryTransfersResponse` | Transfer query request and response types |
 | `TransactionsFilter`, `LogsFilter`, `TracesFilter`, `TransfersFilter` | Table-specific filter types |
 | `WatchQuery*Parameters` | Parameters and projected callbacks for each watch action |
-| `QueryReorg` | Common ancestor, changed headers, and removed-data payload |
 
 ### Field Constants
 
