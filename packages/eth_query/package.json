@@ -1,5 +1,5 @@
 {
-  "name": "@monad-crypto/eth_query",
+  "name": "@monad-crypto/eth-query",
   "version": "0.0.1",
   "description": "TypeScript client for eth_query JSON-RPC methods",
   "repository": {
