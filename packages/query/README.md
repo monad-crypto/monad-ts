@@ -1,4 +1,4 @@
-# @monad-crypto/eth-query
+# @monad-crypto/query
 
 Experimental [Viem](https://viem.sh) client for Monad RPC methods that query raw chain history: blocks, transactions, traces, logs, and native transfers. The methods support filtering, relations, field selection, ascending and descending ordering, and limit-based pagination.
 
@@ -7,14 +7,14 @@ Experimental [Viem](https://viem.sh) client for Monad RPC methods that query raw
 Install the package with its Viem peer dependency:
 
 ```bash
-bun add @monad-crypto/eth-query viem
+bun add @monad-crypto/query viem
 ```
 
 With npm or pnpm:
 
 ```bash
-npm install @monad-crypto/eth-query viem
-pnpm add @monad-crypto/eth-query viem
+npm install @monad-crypto/query viem
+pnpm add @monad-crypto/query viem
 ```
 
 ## Quick Start
@@ -24,7 +24,7 @@ Use an RPC endpoint that supports the Monad Data `eth_query*` methods. The stand
 ```ts
 import { createClient, http } from "viem";
 import { monad } from "viem/chains";
-import { queryActions } from "@monad-crypto/eth-query";
+import { queryActions } from "@monad-crypto/query";
 
 const client = createClient({
   transport: http("https://your-query-enabled-rpc.example"),

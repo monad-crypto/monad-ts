@@ -1,11 +1,11 @@
 {
-  "name": "@monad-crypto/eth-query",
+  "name": "@monad-crypto/query",
   "version": "0.0.1",
   "description": "TypeScript client for eth_query JSON-RPC methods",
   "repository": {
     "type": "git",
     "url": "https://github.com/monad-crypto/monad-ts.git",
-    "directory": "packages/eth-query"
+    "directory": "packages/query"
   },
   "publishConfig": {
     "access": "public",
