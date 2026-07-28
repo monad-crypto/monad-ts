@@ -1,5 +1,5 @@
 // Benchmark — runs representative expensive queries against the JSON-RPC server
-// Usage: bun packages/eth_query/benchmarks/benchmark.ts [filter]
+// Usage: bun packages/eth-query/benchmarks/benchmark.ts [filter]
 // Set RPC_URL to the JSON-RPC endpoint; defaults to http://127.0.0.1.
 // Optional filter: only run benchmarks whose name contains the filter string
 

@@ -5,7 +5,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/monad-crypto/monad-ts.git",
-    "directory": "packages/eth_query"
+    "directory": "packages/eth-query"
   },
   "publishConfig": {
     "access": "public",
