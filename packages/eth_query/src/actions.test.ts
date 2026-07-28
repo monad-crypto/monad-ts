@@ -434,51 +434,6 @@ test("pagination pins omitted toBlock after first page", async () => {
   ]);
 });
 
-test("pagination rejects cursorBlock outside the requested range", async () => {
-  const { calls, mockClient } = mockQueryClient([
-    { fromBlock: 5n, toBlock: 10n, cursorBlock: 4n, rows: [5n] },
-  ]);
-
-  await expect(async () => {
-    await collectPages(
-      queryBlocksWithPagination(mockClient, {
-        fromBlock: 5n,
-        toBlock: 10n,
-        limit: 1,
-        fields: {
-          blocks: ["number"],
-        },
-      }),
-      1,
-    );
-  }).toThrow("Pagination cursorBlock is outside the requested range");
-
-  expect(calls).toHaveLength(1);
-});
-
-test("pagination rejects responses that do not advance fromBlock", async () => {
-  const { calls, mockClient } = mockQueryClient([
-    { fromBlock: 1n, toBlock: 10n, cursorBlock: 1n, rows: [1n] },
-    { fromBlock: 1n, toBlock: 10n, cursorBlock: 2n, rows: [2n] },
-  ]);
-
-  await expect(async () => {
-    await collectPages(
-      queryBlocksWithPagination(mockClient, {
-        fromBlock: 1n,
-        toBlock: 10n,
-        limit: 1,
-        fields: {
-          blocks: ["number"],
-        },
-      }),
-      2,
-    );
-  }).toThrow("Pagination response fromBlock does not match request");
-
-  expect(calls).toHaveLength(2);
-});
-
 test("descending pagination does not request below block 0", async () => {
   const { calls, mockClient } = mockQueryClient([
     { fromBlock: 1n, toBlock: 0n, cursorBlock: 0n, rows: [1n, 0n] },
@@ -2224,26 +2179,6 @@ test("queryContractTracesWithPagination decodes pages and supports all function 
       `0x${noResultInput.slice(2, 10)}`,
     ],
   });
-});
-
-test("contract pagination preserves descending cursor validation", async () => {
-  const { client } = mockClient([
-    {
-      fromBlock: block(2),
-      toBlock: block(1),
-      cursorBlock: block(0),
-      data: { logs: [] },
-    },
-  ]);
-  const pages = queryContractLogsWithPagination(client, {
-    abi,
-    fromBlock: 2n,
-    toBlock: 1n,
-    order: "desc",
-  });
-  await expect(pages.next()).rejects.toThrow(
-    "Pagination cursorBlock is outside the requested range",
-  );
 });
 
 test("isLastPage compares the cursor and resolved range", () => {

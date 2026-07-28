@@ -164,6 +164,39 @@ for await (const page of client.queryTransactionsWithPagination({
 
 Pagination is block-cursor based. A page is final when `cursorBlock.number === toBlock.number`; otherwise the helper resumes from `cursorBlock + 1n` for ascending queries or `cursorBlock - 1n` for descending queries. The `limit` is a target number of primary-table rows, and the server may return more rows to avoid splitting a block across pages.
 
+## Watching Queries
+
+Use the `watchQuery*` actions to follow live query data. Watchers first query `latest` to `latest`, scan new blocks in ascending order, and return an `unwatch` function. They do not accept `fromBlock`, `toBlock`, or `order`.
+
+```ts
+const unwatch = client.watchQueryLogs({
+  filter: {
+    address: "0xb983b1b6f1fc04030f9d8935dbbfd2a1239d00d9",
+  },
+  fields: {
+    logs: ["blockNumber", "transactionHash", "logIndex", "topics", "data"],
+  },
+  pollingInterval: 1_000,
+  onData(response) {
+    processLogs(response.data.logs);
+  },
+  onReorg(reorg) {
+    // Rewound rows are projected like onData rows and ordered newest-first.
+    rollbackLogs(reorg.removed.logs);
+  },
+});
+
+unwatch();
+```
+
+`onData` receives the same formatted, field-narrowed response shape as the corresponding one-shot query. Empty pages advance the internal cursor without invoking `onData`. Callbacks are awaited, preserving callback order and backpressure.
+
+Each outer poll overlaps the local tip and resolves `latest` from that response. If the response paginates, inner requests resume at `cursorBlock.number + 1` and pin the resolved `toBlock`. All requests use the watched `eth_query*` method; non-block watchers do not issue `eth_queryBlocks` requests.
+
+When a boundary hash changes, the watcher probes retained page checkpoints through the same query method, rewinds to the newest matching checkpoint, calls `onReorg` with the rewound rows, and replays them through `onData`. A rewind can include rows that remained canonical when a page spans the exact common ancestor. The default `maxReorgDepth` is `64`.
+
+Watch errors are fatal. RPC failures, malformed responses, callback exceptions, and reorgs beyond `maxReorgDepth` stop the watcher and are rethrown asynchronously as uncaught `Error` instances with descriptive messages. Install a process-level `uncaughtException` handler only if the application has a deliberate recovery policy; otherwise the runtime's normal uncaught-exception behavior applies.
+
 ## Examples
 
 Each action calls the corresponding Monad query method and returns a formatted Viem-style response. `bigint` block numbers and numeric limits are serialized before transport.
@@ -311,11 +344,21 @@ const response = await client.queryTransactions({
 | `client.queryContractLogsWithPagination` | Async generator over decoded event-log pages |
 | `client.queryContractTracesWithPagination` | Async generator over decoded contract-call pages |
 
+### Watch Actions
+
+| Action | Description |
+| --- | --- |
+| `client.watchQueryBlocks` | Watch blocks with reorg reconciliation |
+| `client.watchQueryTransactions` | Watch filtered transactions with reorg reconciliation |
+| `client.watchQueryLogs` | Watch filtered logs with reorg reconciliation |
+| `client.watchQueryTraces` | Watch filtered traces with reorg reconciliation |
+| `client.watchQueryTransfers` | Watch filtered native transfers with reorg reconciliation |
+
 ### Utilities
 
 | Export | Description |
 | --- | --- |
-| `queryActions` | Factory that bundles all query functions for a client |
+| `queryActions` | Factory that bundles all query and watch functions for a client |
 | `isLastPage` | Check if a response is the final page |
 | `getFieldsForRequest` | Resolve which fields will appear in a response |
 
@@ -342,6 +385,7 @@ const response = await client.queryTransactions({
 | `QueryContractTracesRequest`, `QueryContractTracesResponse` | ABI contract-call request and decoded response types |
 | `QueryTransfersRequest`, `QueryTransfersResponse` | Transfer query request and response types |
 | `TransactionsFilter`, `LogsFilter`, `TracesFilter`, `TransfersFilter` | Table-specific filter types |
+| `WatchQuery*Parameters` | Parameters and projected callbacks for each watch action |
 
 ### Field Constants
 
