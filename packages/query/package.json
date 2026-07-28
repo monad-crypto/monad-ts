@@ -1,6 +1,7 @@
 {
   "name": "@monad-crypto/query",
   "version": "0.0.1",
+  "license": "MIT",
   "description": "TypeScript client for eth_query JSON-RPC methods",
   "repository": {
     "type": "git",
