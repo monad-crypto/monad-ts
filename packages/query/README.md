@@ -3,7 +3,7 @@
 TypeScript client for new RPC methods that query raw chain history: blocks, transactions, traces, logs, and native transfers. The methods support filtering, relations, field selection, ascending and descending ordering, and limit-based pagination.
 
 > [!WARNING]
-> The `eth_query*` methods and the nodes that serve them are pre-production and experimental. Standard public Monad RPC nodes do not implement these methods; this client works only with selected experimental endpoints where they have been enabled. Availability, behavior, and response formats may change without notice, so do not rely on these endpoints for production workloads.
+> The `eth_query*` methods and the nodes that serve them are pre-production and experimental. Standard public Monad RPC nodes do not implement these methods. This client works only with selected experimental endpoints where they have been enabled. Availability, behavior, and response formats may change without notice. Do not rely on these endpoints for production workloads.
 
 ## Installation
 
