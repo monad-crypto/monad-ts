@@ -209,6 +209,34 @@ The `fields` object accepts the following keys. The value is an array of field n
 
 `eth_queryBlocks` does not support any relations.
 
+#### Response
+
+| Field | Type | Description | Availability |
+| --- | --- | --- | --- |
+| `number` | `QUANTITY` | Block number. | Required |
+| `hash` | `DATA` | Block hash. | Required |
+| `parentHash` | `DATA` | Parent block hash. | Required |
+| `timestamp` | `QUANTITY` | Block timestamp. | Required |
+| `nonce` | `DATA` | Block nonce. | Required |
+| `sha3Uncles` | `DATA` | Ommers hash. | Required |
+| `logsBloom` | `DATA` | Logs bloom filter. | Required |
+| `transactionsRoot` | `DATA` | Transactions root. | Required |
+| `stateRoot` | `DATA` | State root. | Required |
+| `receiptsRoot` | `DATA` | Receipts root. | Required |
+| `miner` | `DATA` | Coinbase address. | Required |
+| `difficulty` | `QUANTITY` | Block difficulty. | Fork-dependent |
+| `totalDifficulty` | `QUANTITY` | Total difficulty of the chain up to this block. | Fork-dependent |
+| `extraData` | `DATA` | Extra data. | Required |
+| `size` | `QUANTITY` | Block size. | Required |
+| `gasLimit` | `QUANTITY` | Block gas limit. | Required |
+| `gasUsed` | `QUANTITY` | Gas used by transactions in the block. | Required |
+| `baseFeePerGas` | `QUANTITY` | Base fee per gas. | Fork-dependent |
+| `blobGasUsed` | `QUANTITY` | Blob gas used. | Fork-dependent |
+| `excessBlobGas` | `QUANTITY` | Excess blob gas. | Fork-dependent |
+| `withdrawalsRoot` | `DATA` | Withdrawals root. | Fork-dependent |
+| `parentBeaconBlockRoot` | `DATA` | Parent Beacon block root. | Fork-dependent |
+| `withdrawals` | `object[]` | Validator withdrawals. | Fork-dependent |
+
 ### eth_queryTransactions
 
 Query for transactions included in blocks.
@@ -240,6 +268,53 @@ The `fields` object accepts the following keys. Each value is an array of field 
 | --- | --- | --- |
 | `transactions` | `string[] \| true` | Fields to include from the `transactions` schema. |
 | `blocks` | `string[] \| true` | Fields to include from the `blocks` schema for related objects. |
+
+#### Response
+
+The `transactions` rows combine transaction fields with receipt fields. The
+receipt `logs` field is not included.
+
+Availability describes whether a field is present in the row schema; field
+projection can still omit any field that is not selected in `fields`.
+
+| Field | Type | Description | Availability |
+| --- | --- | --- | --- |
+| `hash` | `DATA` | Transaction hash. | Required |
+| `blockHash` | `DATA` | Hash of the containing block. | Required |
+| `blockNumber` | `QUANTITY` | Number of the containing block. | Required |
+| `transactionIndex` | `QUANTITY` | Transaction index in the block. | Required |
+| `from` | `DATA` | Sender address. | Required |
+| `to` | `DATA \| null` | Recipient address, or `null` for contract creation. | Required |
+| `nonce` | `QUANTITY` | Sender nonce. | Required |
+| `input` | `DATA` | Calldata. | Required |
+| `value` | `QUANTITY` | Transferred value. | Required |
+| `gas` | `QUANTITY` | Gas limit. | Required |
+| `gasPrice` | `QUANTITY` | Gas price for legacy and EIP-2930 transactions. | Type-dependent |
+| `type` | `DATA` | Transaction type, such as `0x0` or `0x2`. | Required |
+| `chainId` | `QUANTITY` | Chain ID. | Type-dependent |
+| `accessList` | `object[]` | Access list for typed transactions. | Type-dependent |
+| `maxFeePerGas` | `QUANTITY` | EIP-1559 maximum fee per gas. | Type-dependent |
+| `maxPriorityFeePerGas` | `QUANTITY` | EIP-1559 maximum priority fee. | Type-dependent |
+| `maxFeePerBlobGas` | `QUANTITY` | Maximum blob fee per gas. | Fork-dependent |
+| `blobVersionedHashes` | `DATA[]` | Versioned blob hashes. | Fork-dependent |
+| `v` | `QUANTITY` | ECDSA signature recovery value. | Required |
+| `yParity` | `QUANTITY` | ECDSA signature parity for typed transactions. | Type-dependent |
+| `r` | `DATA` | ECDSA signature r value. | Required |
+| `s` | `DATA` | ECDSA signature s value. | Required |
+| `transactionHash` | `DATA` | Transaction hash from the receipt. | Required |
+| `blockTimestamp` | `QUANTITY` | Timestamp of the containing block. | Optional |
+| `contractAddress` | `DATA \| null` | Created contract address, or `null`. | Required |
+| `cumulativeGasUsed` | `QUANTITY` | Cumulative gas used in the block. | Required |
+| `gasUsed` | `QUANTITY` | Gas used by the transaction. | Required |
+| `effectiveGasPrice` | `QUANTITY` | Effective gas price paid. | Required |
+| `logsBloom` | `DATA` | Receipt logs bloom filter. | Required |
+| `status` | `QUANTITY` | `0x1` for success or `0x0` for reverted. | Required |
+| `root` | `DATA` | Post-state root. | Fork-dependent |
+| `blobGasUsed` | `QUANTITY` | Blob gas used. | Fork-dependent |
+| `blobGasPrice` | `QUANTITY` | Blob gas price. | Fork-dependent |
+
+If requested, each related `blocks` row has the fields listed in the
+[`eth_queryBlocks` response](#eth_queryblocks).
 
 ### eth_queryLogs
 
@@ -280,6 +355,25 @@ The `fields` object accepts the following keys. Each value is an array of field 
 | `transactions` | `string[] \| true` | Fields to include from the `transactions` schema for related objects. |
 | `blocks` | `string[] \| true` | Fields to include from the `blocks` schema for related objects. |
 
+#### Response
+
+| Field | Type | Description | Availability |
+| --- | --- | --- | --- |
+| `address` | `DATA` | Address that emitted the log. | Required |
+| `blockHash` | `DATA` | Hash of the containing block. | Required |
+| `blockNumber` | `QUANTITY` | Number of the containing block. | Required |
+| `blockTimestamp` | `QUANTITY` | Timestamp of the containing block. | Optional |
+| `transactionHash` | `DATA` | Hash of the containing transaction. | Required |
+| `transactionIndex` | `QUANTITY` | Transaction index in the block. | Required |
+| `logIndex` | `QUANTITY` | Log index in the receipt. | Required |
+| `topics` | `DATA[]` | Indexed event topics. | Required |
+| `data` | `DATA` | Non-indexed event data. | Required |
+| `removed` | `boolean` | Whether the log was removed by a reorg. | Required |
+
+If requested, related `transactions` rows have the fields listed in the
+[`eth_queryTransactions` response](#eth_querytransactions), and related `blocks` rows
+have the fields listed in the [`eth_queryBlocks` response](#eth_queryblocks).
+
 ### eth_queryTraces
 
 Query for internal call traces.
@@ -314,6 +408,34 @@ The `fields` object accepts the following keys. Each value is an array of field 
 | `transactions` | `string[] \| true` | Fields to include from the `transactions` schema for related objects. |
 | `blocks` | `string[] \| true` | Fields to include from the `blocks` schema for related objects. |
 
+#### Response
+
+Trace rows are flattened Geth `callTracer` frames. They omit nested `calls` and
+trace `logs`.
+
+| Field | Type | Description | Availability |
+| --- | --- | --- | --- |
+| `type` | `string` | Call type: `CALL`, `CALLCODE`, `DELEGATECALL`, `STATICCALL`, `CREATE`, `CREATE2`, or `SELFDESTRUCT`. | Required |
+| `from` | `DATA` | Address initiating the call. | Required |
+| `to` | `DATA` | Target address receiving the call. | Optional |
+| `value` | `QUANTITY` | Amount of native token transferred. | Optional |
+| `gas` | `QUANTITY` | Gas provided for the call. | Required |
+| `gasUsed` | `QUANTITY` | Gas used during the call. | Required |
+| `input` | `DATA` | Call data. | Required |
+| `output` | `DATA` | Return data. | Optional |
+| `error` | `string` | Call failure information. | Optional |
+| `revertReason` | `string` | Solidity revert reason. | Optional |
+| `blockHash` | `DATA` | Hash of the containing block. | Required |
+| `blockNumber` | `QUANTITY` | Number of the containing block. | Required |
+| `transactionHash` | `DATA` | Hash of the containing transaction. | Required |
+| `transactionIndex` | `QUANTITY` | Transaction index in the block. | Required |
+| `traceAddress` | `number[]` | Path through the nested call tree. | Required |
+| `status` | `QUANTITY` | `0x1` for success or `0x0` for reverted. | Required |
+
+If requested, related `transactions` rows have the fields listed in the
+[`eth_queryTransactions` response](#eth_querytransactions), and related `blocks` rows
+have the fields listed in the [`eth_queryBlocks` response](#eth_queryblocks).
+
 ### eth_queryTransfers
 
 Query for native token transfers.
@@ -346,6 +468,33 @@ The `fields` object accepts the following keys. Each value is an array of field 
 | `transfers` | `string[] \| true` | Fields to include from the `transfers` schema. |
 | `transactions` | `string[] \| true` | Fields to include from the `transactions` schema for related objects. |
 | `blocks` | `string[] \| true` | Fields to include from the `blocks` schema for related objects. |
+
+#### Response
+
+Transfer rows contain the trace context for a native-token value movement.
+
+| Field | Type | Description | Availability |
+| --- | --- | --- | --- |
+| `type` | `string` | Call type that produced the transfer. | Required |
+| `from` | `DATA` | Address initiating the transfer. | Required |
+| `to` | `DATA` | Target address receiving the transfer. | Required |
+| `value` | `QUANTITY` | Amount of native token transferred. | Required |
+| `gas` | `QUANTITY` | Gas provided for the call. | Required |
+| `gasUsed` | `QUANTITY` | Gas used during the call. | Required |
+| `input` | `DATA` | Call data. | Required |
+| `output` | `DATA` | Return data. | Optional |
+| `error` | `string` | Call failure information. | Optional |
+| `revertReason` | `string` | Solidity revert reason. | Optional |
+| `blockHash` | `DATA` | Hash of the containing block. | Required |
+| `blockNumber` | `QUANTITY` | Number of the containing block. | Required |
+| `transactionHash` | `DATA` | Hash of the containing transaction. | Required |
+| `transactionIndex` | `QUANTITY` | Transaction index in the block. | Required |
+| `traceAddress` | `number[]` | Path through the nested call tree. | Required |
+| `status` | `QUANTITY` | `0x1` for success or `0x0` for reverted. | Required |
+
+If requested, related `transactions` rows have the fields listed in the
+[`eth_queryTransactions` response](#eth_querytransactions), and related `blocks` rows
+have the fields listed in the [`eth_queryBlocks` response](#eth_queryblocks).
 
 ## Usage
 

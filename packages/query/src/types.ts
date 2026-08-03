@@ -661,8 +661,6 @@ export type RpcCallTraceResponse = Omit<CallFrame<Hex>, "calls" | "logs"> & {
   transactionIndex: Hex;
   /** Path through nested call tree. */
   traceAddress: number[];
-  /** Number of sub-calls. */
-  subcalls: Hex;
   /** Receipt-style status: `0x1` for success and `0x0` for reverted. */
   status: Status;
 };
@@ -689,25 +687,11 @@ export type RpcLogResponse = Omit<
 };
 
 /** Raw native transfer row returned over JSON-RPC. */
-export type RpcTransferResponse = {
-  /** Hash of block containing this trace. */
-  blockHash: Hash;
-  /** Number of block containing this trace. */
-  blockNumber: Hex;
-  /** Hash of transaction containing this trace. */
-  transactionHash: Hash;
-  /** Index of transaction containing this trace. */
-  transactionIndex: Hex;
-  /** Path through nested call tree of this trace. */
-  traceAddress: number[];
-  /** The address initiating the transfer. */
-  from: Address;
-  /** The target address receiving the transfer. */
-  to?: Address;
-  /** Amount of ETH transferred. */
+export type RpcTransferResponse = Omit<RpcCallTraceResponse, "to" | "value"> & {
+  /** The target address receiving the call. */
+  to: Address;
+  /** Amount of ETH transfer. */
   value: Hex;
-  /** Receipt-style status: `0x1` for success and `0x0` for reverted. */
-  status: Status;
 };
 
 export type BlockResponse<quantity = bigint> = Omit<
@@ -737,8 +721,6 @@ export type CallTraceResponse<
   transactionIndex: index;
   /** Path through nested call tree. */
   traceAddress: number[];
-  /** Number of sub-calls. */
-  subcalls: index;
   /**
    * `reverted` if this trace was reverted or `success` otherwise.
    *
@@ -757,27 +739,9 @@ export type TransferResponse<
   quantity = bigint,
   index = number,
   status = "success" | "reverted",
-> = {
-  /** Hash of block containing this trace. */
-  blockHash: Hash;
-  /** Number of block containing this trace. */
-  blockNumber: quantity;
-  /** Hash of transaction containing this trace. */
-  transactionHash: Hash;
-  /** Index of transaction containing this trace. */
-  transactionIndex: index;
-  /** Path through nested call tree of this trace. */
-  traceAddress: number[];
-  /** The address initiating the transfer. */
-  from: Address;
-  /** The target address receiving the transfer. */
-  to?: Address;
+> = Omit<CallTraceResponse<quantity, index, status>, "to" | "value"> & {
+  /** The target address receiving the call. */
+  to: Address;
   /** Amount of ETH transfer. */
   value: quantity;
-  /**
-   * `reverted` if this trace was reverted or `success` otherwise.
-   *
-   * Note: A trace can have no `error` but still be `reverted` if a parent trace is `reverted`.
-   */
-  status: status;
 };

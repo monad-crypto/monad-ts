@@ -291,6 +291,9 @@ test("field inventories are exhaustive for raw response rows", () => {
     Exclude<keyof RpcLogResponse, (typeof logFields)[number]>
   >().toEqualTypeOf<never>();
   expectTypeOf<
+    Exclude<(typeof transferFields)[number], keyof RpcTransferResponse>
+  >().toEqualTypeOf<never>();
+  expectTypeOf<
     Exclude<keyof RpcTransferResponse, (typeof transferFields)[number]>
   >().toEqualTypeOf<never>();
 });

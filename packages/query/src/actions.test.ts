@@ -1877,7 +1877,6 @@ function traceRow(
     input,
     output,
     status,
-    subcalls: "0x0",
     to: recipient,
     traceAddress: [],
     transactionHash: hash,

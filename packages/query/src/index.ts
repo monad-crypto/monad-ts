@@ -243,9 +243,6 @@ export function formatQueryTracesResponse(
           ...(t.transactionIndex !== undefined && {
             transactionIndex: hexToNumber(t.transactionIndex),
           }),
-          ...(t.subcalls !== undefined && {
-            subcalls: hexToNumber(t.subcalls),
-          }),
           ...(t.gas !== undefined && { gas: hexToBigInt(t.gas) }),
           ...(t.gasUsed !== undefined && { gasUsed: hexToBigInt(t.gasUsed) }),
           ...(t.value !== undefined && { value: hexToBigInt(t.value) }),
@@ -378,7 +375,6 @@ export const callTraceFields = [
   "output",
   "revertReason",
   "status",
-  "subcalls",
   "to",
   "traceAddress",
   "transactionHash",
@@ -405,12 +401,19 @@ export const logFields = [
 export const transferFields = [
   "blockHash",
   "blockNumber",
+  "error",
   "from",
+  "gas",
+  "gasUsed",
+  "input",
+  "output",
+  "revertReason",
   "status",
   "to",
   "traceAddress",
   "transactionHash",
   "transactionIndex",
+  "type",
   "value",
 ] as const satisfies (keyof RpcTransferResponse)[];
 

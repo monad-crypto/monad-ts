@@ -67,7 +67,7 @@ type CallLogFrame = {
   topics: LogTopic[];
   /** The data of the log. */
   data: Hex;
-  /** The position of the log relative to subcalls within the same trace. */
+  /** The position of the log relative to nested calls within the same trace. */
   position: number;
   /** The index of the log in the trace. */
   index: number;

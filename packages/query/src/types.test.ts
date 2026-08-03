@@ -145,6 +145,19 @@ test("trace and transfer wire statuses match transaction receipts", () => {
   expectTypeOf<RpcTransferResponse["status"]>().toEqualTypeOf<"0x0" | "0x1">();
 });
 
+test("trace identity uses traceAddress", () => {
+  expectTypeOf<RpcCallTraceResponse>().toHaveProperty("traceAddress");
+  expectTypeOf<RpcCallTraceResponse>().not.toHaveProperty("subcalls");
+  expectTypeOf<RpcCallTraceResponse>().not.toHaveProperty("traceIndex");
+  expectTypeOf<RpcCallTraceResponse>().not.toHaveProperty("parentTraceIndex");
+  expectTypeOf<RpcCallTraceResponse>().not.toHaveProperty("depth");
+  expectTypeOf<CallTraceResponse>().toHaveProperty("traceAddress");
+  expectTypeOf<CallTraceResponse>().not.toHaveProperty("subcalls");
+  expectTypeOf<CallTraceResponse>().not.toHaveProperty("traceIndex");
+  expectTypeOf<CallTraceResponse>().not.toHaveProperty("parentTraceIndex");
+  expectTypeOf<CallTraceResponse>().not.toHaveProperty("depth");
+});
+
 test("historical log identity fields are non-null", () => {
   expectTypeOf<RpcLogResponse["blockHash"]>().toEqualTypeOf<Hash>();
   expectTypeOf<RpcLogResponse["blockNumber"]>().toEqualTypeOf<Hex>();
@@ -307,6 +320,20 @@ test("CallTraceResponse quantity fields use the quantity generic", () => {
   expectTypeOf<CallTraceResponse<Hex, Hex>["value"]>().toEqualTypeOf<
     Hex | undefined
   >();
+});
+
+test("TransferResponse extends CallTraceResponse with required recipient and value", () => {
+  expectTypeOf<TransferResponse>().toExtend<CallTraceResponse>();
+  expectTypeOf<TransferResponse["gas"]>().toEqualTypeOf<bigint>();
+  expectTypeOf<TransferResponse["status"]>().toEqualTypeOf<
+    "success" | "reverted"
+  >();
+  expectTypeOf<TransferResponse["to"]>().toEqualTypeOf<`0x${string}`>();
+  expectTypeOf<TransferResponse["value"]>().toEqualTypeOf<bigint>();
+  expectTypeOf<
+    TransferResponse<Hex, Hex>["to"]
+  >().toEqualTypeOf<`0x${string}`>();
+  expectTypeOf<TransferResponse<Hex, Hex>["value"]>().toEqualTypeOf<Hex>();
 });
 
 test("ABI log responses infer decoded event names and arguments", () => {
