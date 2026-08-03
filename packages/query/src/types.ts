@@ -642,7 +642,7 @@ export type QueryTransfersResponse<
 /** Raw block row returned over JSON-RPC. */
 export type RpcBlockResponse = Omit<
   RpcBlock<Exclude<BlockTag, "pending">, false>,
-  "transactions"
+  "transactions" | "sealFields" | "uncles" | "withdrawals"
 >;
 
 /** Raw transaction and receipt row returned over JSON-RPC. */
@@ -696,7 +696,7 @@ export type RpcTransferResponse = Omit<RpcCallTraceResponse, "to" | "value"> & {
 
 export type BlockResponse<quantity = bigint> = Omit<
   Block<quantity, false, Exclude<BlockTag, "pending">>,
-  "transactions"
+  "transactions" | "sealFields" | "uncles" | "withdrawals"
 >;
 
 export type TransactionResponse<

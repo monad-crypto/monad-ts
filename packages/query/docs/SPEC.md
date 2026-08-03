@@ -235,7 +235,6 @@ The `fields` object accepts the following keys. The value is an array of field n
 | `excessBlobGas` | `QUANTITY` | Excess blob gas. | Fork-dependent |
 | `withdrawalsRoot` | `DATA` | Withdrawals root. | Fork-dependent |
 | `parentBeaconBlockRoot` | `DATA` | Parent Beacon block root. | Fork-dependent |
-| `withdrawals` | `object[]` | Validator withdrawals. | Fork-dependent |
 
 ### eth_queryTransactions
 

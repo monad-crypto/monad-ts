@@ -45,17 +45,6 @@ const authorizationList = z
   )
   .optional();
 
-const withdrawals = z.array(
-  z
-    .strictObject({
-      address,
-      amount: quantity,
-      index: quantity,
-      validatorIndex: quantity,
-    })
-    .loose(),
-);
-
 const blockShape = {
   baseFeePerGas: quantity,
   blobGasUsed: quantity,
@@ -73,15 +62,12 @@ const blockShape = {
   parentBeaconBlockRoot: hash,
   parentHash: hash,
   receiptsRoot: hash,
-  sealFields: z.array(data),
   sha3Uncles: hash,
   size: quantity,
   stateRoot: hash,
   timestamp: quantity,
   totalDifficulty: quantity,
   transactionsRoot: hash,
-  uncles: z.array(hash),
-  withdrawals,
   withdrawalsRoot: hash,
 } as const satisfies Record<(typeof blockFields)[number], z.ZodType>;
 

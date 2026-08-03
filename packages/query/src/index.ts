@@ -313,15 +313,12 @@ export const blockFields = [
   "parentBeaconBlockRoot",
   "parentHash",
   "receiptsRoot",
-  "sealFields",
   "sha3Uncles",
   "size",
   "stateRoot",
   "timestamp",
   "totalDifficulty",
   "transactionsRoot",
-  "uncles",
-  "withdrawals",
   "withdrawalsRoot",
 ] as const satisfies (keyof RpcBlockResponse)[];
 
