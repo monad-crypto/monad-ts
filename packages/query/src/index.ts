@@ -148,7 +148,6 @@ function formatTransactions(
       "logsBloom",
       "root",
       "status",
-      "transactionHash",
     ] as const;
     const receipt = formatTransactionReceipt(t);
     const formatted = {
@@ -352,7 +351,6 @@ export const transactionFields = [
   "s",
   "status",
   "to",
-  "transactionHash",
   "transactionIndex",
   "type",
   "v",

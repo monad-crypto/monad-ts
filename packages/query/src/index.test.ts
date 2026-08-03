@@ -113,8 +113,6 @@ test("formatters preserve projected row fields", () => {
 });
 
 test("formatQueryTransactionsResponse formats receipt and EIP-7702 fields", () => {
-  const transactionHash =
-    "0x2222222222222222222222222222222222222222222222222222222222222222";
   const address = "0x3333333333333333333333333333333333333333";
   const transactions = formatQueryTransactionsResponse(
     rpcFixture<Parameters<typeof formatQueryTransactionsResponse>[0]>({
@@ -144,7 +142,6 @@ test("formatQueryTransactionsResponse formats receipt and EIP-7702 fields", () =
             logsBloom: "0x00",
             root: block.hash,
             status: "0x1",
-            transactionHash,
             transactionIndex: "0x0",
             type: "0x4",
             value: "0x2",
@@ -178,7 +175,6 @@ test("formatQueryTransactionsResponse formats receipt and EIP-7702 fields", () =
       logsBloom: "0x00",
       root: block.hash,
       status: "success",
-      transactionHash,
       transactionIndex: 0,
       type: "eip7702",
       typeHex: "0x4",

@@ -900,20 +900,12 @@ test("queryTransactions returns Viem transaction and receipt fields", async () =
       from: "0xc777cfb3bccc2f1d3049845d62639c769dff243d",
     },
     fields: {
-      transactions: [
-        "hash",
-        "transactionHash",
-        "type",
-        "status",
-        "gasUsed",
-        "blockTimestamp",
-      ],
+      transactions: ["hash", "type", "status", "gasUsed", "blockTimestamp"],
     },
   });
   const transaction = response.data.transactions[0];
 
   expect(transaction).toBeDefined();
-  expect(transaction.transactionHash).toBe(transaction.hash);
   expect(transaction.typeHex).toMatch(/^0x/);
   expect(["success", "reverted"]).toContain(transaction.status);
   expect(typeof transaction.gasUsed).toBe("bigint");

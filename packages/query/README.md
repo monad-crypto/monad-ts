@@ -351,7 +351,7 @@ const response = await client.queryTransactions({
 | Constant | Fields |
 | --- | --- |
 | `blockFields` | `number`, `hash`, `timestamp`, `gasUsed`, `gasLimit`, `miner`, `size`, ... (22 total) |
-| `transactionFields` | `hash`, `from`, `to`, `value`, `gas`, `gasPrice`, `input`, `nonce`, ... (33 total) |
+| `transactionFields` | `hash`, `from`, `to`, `value`, `gas`, `gasPrice`, `input`, `nonce`, ... (32 total) |
 | `callTraceFields` | `from`, `to`, `value`, `gas`, `gasUsed`, `input`, `output`, `type`, ... (17 total) |
 | `logFields` | `address`, `data`, `topics`, `blockNumber`, `transactionHash`, ... (8 total) |
 | `transferFields` | `from`, `to`, `value`, `blockNumber`, `transactionHash`, ... (9 total) |

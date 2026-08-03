@@ -647,7 +647,7 @@ export type RpcBlockResponse = Omit<
 
 /** Raw transaction and receipt row returned over JSON-RPC. */
 export type RpcTransactionResponse = RpcTransaction<false> &
-  Omit<RpcTransactionReceipt, "logs">;
+  Omit<RpcTransactionReceipt, "logs" | "transactionHash">;
 
 /** Raw call trace row returned over JSON-RPC. */
 export type RpcCallTraceResponse = Omit<CallFrame<Hex>, "calls" | "logs"> & {
@@ -704,7 +704,7 @@ export type TransactionResponse<
   index = number,
   status = "success" | "reverted",
 > = Transaction<quantity, index, false> &
-  Omit<TransactionReceipt<quantity, index, status>, "logs">;
+  Omit<TransactionReceipt<quantity, index, status>, "logs" | "transactionHash">;
 
 export type CallTraceResponse<
   quantity = bigint,

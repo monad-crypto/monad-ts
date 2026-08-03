@@ -76,6 +76,7 @@ test("raw and formatted transaction responses use Viem representations", () => {
     "0x0" | "0x1" | "0x2" | "0x3" | "0x4"
   >();
   expectTypeOf<RpcTransactionResponse>().not.toHaveProperty("typeHex");
+  expectTypeOf<RpcTransactionResponse>().not.toHaveProperty("transactionHash");
   expectTypeOf<RpcTransactionResponse["status"]>().toEqualTypeOf<
     "0x0" | "0x1"
   >();
@@ -84,6 +85,7 @@ test("raw and formatted transaction responses use Viem representations", () => {
     "legacy" | "eip2930" | "eip1559" | "eip4844" | "eip7702"
   >();
   expectTypeOf<TransactionResponse["typeHex"]>().toEqualTypeOf<Hex | null>();
+  expectTypeOf<TransactionResponse>().not.toHaveProperty("transactionHash");
   expectTypeOf<TransactionResponse["status"]>().toEqualTypeOf<
     "success" | "reverted"
   >();

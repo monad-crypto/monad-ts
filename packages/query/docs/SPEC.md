@@ -300,7 +300,6 @@ projection can still omit any field that is not selected in `fields`.
 | `yParity` | `QUANTITY` | ECDSA signature parity for typed transactions. | Type-dependent |
 | `r` | `DATA` | ECDSA signature r value. | Required |
 | `s` | `DATA` | ECDSA signature s value. | Required |
-| `transactionHash` | `DATA` | Transaction hash from the receipt. | Required |
 | `blockTimestamp` | `QUANTITY` | Timestamp of the containing block. | Optional |
 | `contractAddress` | `DATA \| null` | Created contract address, or `null`. | Required |
 | `cumulativeGasUsed` | `QUANTITY` | Cumulative gas used in the block. | Required |

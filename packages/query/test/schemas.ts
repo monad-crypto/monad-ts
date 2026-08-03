@@ -100,7 +100,6 @@ const transactionShape = {
   s: data,
   status,
   to: address.nullable(),
-  transactionHash: hash,
   transactionIndex: quantity,
   type: z.union([
     z.literal("0x0"),
