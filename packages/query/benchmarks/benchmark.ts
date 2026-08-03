@@ -139,7 +139,17 @@ const benchmarks = [
       table: "blocks",
       fromBlock: toHex(DENSE_START),
       toBlock: toHex(DENSE_START + 10000),
-      limit: toHex(10000),
+      limit: toHex(100),
+    },
+  },
+  {
+    name: "blocks — selected columns",
+    params: {
+      table: "blocks",
+      fromBlock: "latest",
+      order: "desc",
+      limit: toHex(100),
+      fields: { blocks: ["number", "hash", "timestamp", "gasUsed"] },
     },
   },
   {
@@ -148,7 +158,7 @@ const benchmarks = [
       table: "transactions",
       fromBlock: toHex(DENSE_START),
       toBlock: toHex(DENSE_START + RANGE),
-      limit: toHex(10000),
+      limit: toHex(100),
     },
   },
   {
@@ -157,9 +167,34 @@ const benchmarks = [
       table: "transactions",
       fromBlock: toHex(1),
       toBlock: toHex(10_000_000),
-      limit: toHex(10000),
+      limit: toHex(100),
       filter: {
         from: ["0xf12cea359512b8ccd5e7b33b3d308a174837250c"],
+      },
+    },
+  },
+  {
+    name: "transactions — selected columns",
+    params: {
+      table: "transactions",
+      fromBlock: "latest",
+      order: "desc",
+      limit: toHex(100),
+      fields: {
+        transactions: ["hash", "from", "to", "value"],
+      },
+    },
+  },
+  {
+    name: "transactions — selected columns + blocks relation",
+    params: {
+      table: "transactions",
+      fromBlock: "latest",
+      order: "desc",
+      limit: toHex(100),
+      fields: {
+        transactions: ["hash", "from", "to", "value"],
+        blocks: ["number", "timestamp"],
       },
     },
   },
@@ -170,7 +205,7 @@ const benchmarks = [
       fromBlock: toHex(DENSE_START),
       toBlock: toHex(DENSE_START + 10000),
       filter: { from: ["0x6f49a8f621353f12378d0046e7d7e4b9b249dc9e"] },
-      limit: toHex(1000),
+      limit: toHex(100),
     },
   },
   {
@@ -179,8 +214,11 @@ const benchmarks = [
       table: "transactions",
       fromBlock: toHex(DENSE_START),
       toBlock: toHex(DENSE_START + RANGE),
-      limit: toHex(10000),
-      fields: { blocks: true },
+      limit: toHex(100),
+      fields: {
+        transactions: ["hash", "from", "to", "value"],
+        blocks: ["number", "timestamp"],
+      },
     },
   },
   {
@@ -189,7 +227,7 @@ const benchmarks = [
       table: "logs",
       fromBlock: toHex(DENSE_START),
       toBlock: toHex(DENSE_START + RANGE),
-      limit: toHex(10000),
+      limit: toHex(100),
     },
   },
   {
@@ -199,7 +237,7 @@ const benchmarks = [
       fromBlock: toHex(DENSE_START),
       toBlock: toHex(DENSE_START + 10000),
       filter: { address: ["0x3bd359c1119da7da1d913d1c4d2b7c461115433a"] },
-      limit: toHex(1000),
+      limit: toHex(100),
     },
   },
   {
@@ -215,7 +253,25 @@ const benchmarks = [
           ],
         ],
       },
-      limit: toHex(10000),
+      limit: toHex(100),
+    },
+  },
+  {
+    name: "logs — selected columns + transaction and block relations",
+    params: {
+      table: "logs",
+      fromBlock: "latest",
+      order: "desc",
+      filter: {
+        address: ["0x3bd359c1119da7da1d913d1c4d2b7c461115433a"],
+        topics: [[TRANSFER_SIG]],
+      },
+      limit: toHex(100),
+      fields: {
+        logs: ["address", "topics", "data", "blockNumber"],
+        transactions: ["hash", "input"],
+        blocks: ["number", "timestamp"],
+      },
     },
   },
   {
@@ -267,8 +323,12 @@ const benchmarks = [
       table: "logs",
       fromBlock: toHex(DENSE_START),
       toBlock: toHex(DENSE_START + RANGE),
-      limit: toHex(10000),
-      fields: { transactions: true, blocks: true },
+      limit: toHex(100),
+      fields: {
+        logs: ["address", "topics", "data", "blockNumber"],
+        transactions: ["hash", "input"],
+        blocks: ["number", "timestamp"],
+      },
     },
   },
   {
@@ -277,7 +337,7 @@ const benchmarks = [
       table: "traces",
       fromBlock: toHex(DENSE_START),
       toBlock: toHex(DENSE_START + RANGE),
-      limit: toHex(10000),
+      limit: toHex(100),
     },
   },
   {
@@ -287,7 +347,7 @@ const benchmarks = [
       fromBlock: toHex(DENSE_START),
       toBlock: toHex(DENSE_START + RANGE),
       filter: { isTopLevel: true },
-      limit: toHex(10000),
+      limit: toHex(100),
     },
   },
   {
@@ -306,8 +366,12 @@ const benchmarks = [
       table: "traces",
       fromBlock: toHex(DENSE_START),
       toBlock: toHex(DENSE_START + RANGE),
-      limit: toHex(10000),
-      fields: { transactions: true, blocks: true },
+      limit: toHex(100),
+      fields: {
+        traces: ["from", "to", "value", "status", "traceAddress", "input"],
+        transactions: ["hash"],
+        blocks: ["number"],
+      },
     },
   },
   {
@@ -316,7 +380,7 @@ const benchmarks = [
       table: "transfers",
       fromBlock: toHex(DENSE_START),
       toBlock: toHex(DENSE_START + RANGE),
-      limit: toHex(10000),
+      limit: toHex(100),
     },
   },
   {
@@ -335,8 +399,12 @@ const benchmarks = [
       table: "transfers",
       fromBlock: toHex(DENSE_START),
       toBlock: toHex(DENSE_START + RANGE),
-      limit: toHex(10000),
-      fields: { transactions: true, blocks: true },
+      limit: toHex(100),
+      fields: {
+        transfers: ["from", "to", "value", "blockNumber"],
+        transactions: ["hash"],
+        blocks: ["number"],
+      },
     },
   },
   {
@@ -349,7 +417,7 @@ const benchmarks = [
         address: ["0x754704bc059f8c67012fed69bc8a327a5aafb603"],
         topics: [[TRANSFER_SIG]],
       },
-      limit: toHex(50),
+      limit: toHex(100),
     },
   },
   {
@@ -362,7 +430,7 @@ const benchmarks = [
         address: ["0x3bd359c1119da7da1d913d1c4d2b7c461115433a"],
         topics: [[TRANSFER_SIG]],
       },
-      limit: toHex(50),
+      limit: toHex(100),
     },
   },
   {
@@ -375,7 +443,7 @@ const benchmarks = [
         address: ["0x754704bc059f8c67012fed69bc8a327a5aafb603"],
         topics: [[APPROVAL_SIG]],
       },
-      limit: toHex(50),
+      limit: toHex(100),
     },
   },
   {
@@ -387,7 +455,7 @@ const benchmarks = [
       filter: {
         to: ["0x754704bc059f8c67012fed69bc8a327a5aafb603"],
       },
-      limit: toHex(50),
+      limit: toHex(100),
     },
   },
   {
@@ -400,7 +468,7 @@ const benchmarks = [
         to: ["0x3bd359c1119da7da1d913d1c4d2b7c461115433a"],
         traceType: ["call"],
       },
-      limit: toHex(50),
+      limit: toHex(100),
     },
   },
   {
@@ -409,7 +477,7 @@ const benchmarks = [
       table: "blocks",
       fromBlock: "latest",
       order: "desc",
-      limit: toHex(50),
+      limit: toHex(100),
     },
   },
 ] satisfies { name: string; params: BenchmarkParams }[];
