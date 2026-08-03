@@ -15,6 +15,11 @@ import type {
   Log,
   ParseEventLogsReturnType,
   Prettify,
+  RpcBlock,
+  RpcLog,
+  RpcTransaction,
+  RpcTransactionReceipt,
+  Status,
   Transaction,
   TransactionReceipt,
 } from "viem";
@@ -31,27 +36,27 @@ export type QueryRpcSchema = [
   {
     Method: "eth_queryBlocks";
     Parameters: [QueryBlocksRequest<Hex, Hex>];
-    ReturnType: QueryBlocksResponse<QueryBlocksRequest, Hex>;
+    ReturnType: RpcQueryBlocksResponse;
   },
   {
     Method: "eth_queryTransactions";
     Parameters: [QueryTransactionsRequest<Hex, Hex>];
-    ReturnType: QueryTransactionsResponse<QueryTransactionsRequest, Hex, Hex>;
+    ReturnType: RpcQueryTransactionsResponse;
   },
   {
     Method: "eth_queryLogs";
     Parameters: [QueryLogsRequest<Hex, Hex>];
-    ReturnType: QueryLogsResponse<QueryLogsRequest, Hex, Hex>;
+    ReturnType: RpcQueryLogsResponse;
   },
   {
     Method: "eth_queryTraces";
     Parameters: [QueryTracesRequest<Hex, Hex>];
-    ReturnType: QueryTracesResponse<QueryTracesRequest, Hex, Hex>;
+    ReturnType: RpcQueryTracesResponse;
   },
   {
     Method: "eth_queryTransfers";
     Parameters: [QueryTransfersRequest<Hex, Hex>];
-    ReturnType: QueryTransfersResponse<QueryTransfersRequest, Hex, Hex>;
+    ReturnType: RpcQueryTransfersResponse;
   },
 ];
 
@@ -105,11 +110,13 @@ export type TableName =
   | "transfers";
 export type Order = "asc" | "desc";
 
-type BlockFieldNames = readonly `${keyof BlockResponse}`[] | true;
-type TransactionFieldNames = readonly `${keyof TransactionResponse}`[] | true;
-type CallTraceFieldNames = readonly `${keyof CallTraceResponse}`[] | true;
-type LogFieldNames = readonly `${keyof LogResponse}`[] | true;
-type TransferFieldNames = readonly `${keyof TransferResponse}`[] | true;
+type BlockFieldNames = readonly `${keyof RpcBlockResponse}`[] | true;
+type TransactionFieldNames =
+  | readonly `${keyof RpcTransactionResponse}`[]
+  | true;
+type CallTraceFieldNames = readonly `${keyof RpcCallTraceResponse}`[] | true;
+type LogFieldNames = readonly `${keyof RpcLogResponse}`[] | true;
+type TransferFieldNames = readonly `${keyof RpcTransferResponse}`[] | true;
 
 export type QueryBlocksFields = {
   blocks?: BlockFieldNames;
@@ -255,6 +262,63 @@ type ResolveInclude<TResponse, TInclude> = [TInclude] extends [true]
 
 type EmptyObject = Record<never, never>;
 
+type ResolveTransactionSelect<TSelect, quantity, index> = [TSelect] extends [
+  readonly (keyof RpcTransactionResponse)[],
+]
+  ? Prettify<
+      Pick<
+        TransactionResponse<quantity, index>,
+        | (TSelect & readonly (keyof RpcTransactionResponse)[])[number]
+        | ("type" extends (TSelect &
+            readonly (keyof RpcTransactionResponse)[])[number]
+            ? "typeHex"
+            : never)
+      >
+    >
+  : TransactionResponse<quantity, index>;
+
+type ResolveTransactionInclude<TInclude, quantity, index> = [TInclude] extends [
+  true,
+]
+  ? TransactionResponse<quantity, index>
+  : ResolveTransactionSelect<TInclude, quantity, index>;
+
+type RpcBlockRelation<TRequest> = [ExtractField<TRequest, "blocks">] extends [
+  undefined,
+]
+  ? EmptyObject
+  : undefined extends ExtractField<TRequest, "blocks">
+    ? {
+        blocks?: ResolveInclude<
+          RpcBlockResponse,
+          ExtractField<TRequest, "blocks">
+        >[];
+      }
+    : {
+        blocks: ResolveInclude<
+          RpcBlockResponse,
+          ExtractField<TRequest, "blocks">
+        >[];
+      };
+
+type RpcTransactionRelation<TRequest> = [
+  ExtractField<TRequest, "transactions">,
+] extends [undefined]
+  ? EmptyObject
+  : undefined extends ExtractField<TRequest, "transactions">
+    ? {
+        transactions?: ResolveInclude<
+          RpcTransactionResponse,
+          ExtractField<TRequest, "transactions">
+        >[];
+      }
+    : {
+        transactions: ResolveInclude<
+          RpcTransactionResponse,
+          ExtractField<TRequest, "transactions">
+        >[];
+      };
+
 type BlockRelation<TRequest, quantity> = [
   ExtractField<TRequest, "blocks">,
 ] extends [undefined]
@@ -279,17 +343,92 @@ type TransactionRelation<TRequest, quantity, index> = [
   ? EmptyObject
   : undefined extends ExtractField<TRequest, "transactions">
     ? {
-        transactions?: ResolveInclude<
-          TransactionResponse<quantity, index>,
-          ExtractField<TRequest, "transactions">
+        transactions?: ResolveTransactionInclude<
+          ExtractField<TRequest, "transactions">,
+          quantity,
+          index
         >[];
       }
     : {
-        transactions: ResolveInclude<
-          TransactionResponse<quantity, index>,
-          ExtractField<TRequest, "transactions">
+        transactions: ResolveTransactionInclude<
+          ExtractField<TRequest, "transactions">,
+          quantity,
+          index
         >[];
       };
+
+export type RpcQueryBlocksResponse<
+  request extends QueryBlocksRequest<Hex, Hex> = QueryBlocksRequest<Hex, Hex>,
+> = {
+  fromBlock: LightBlock<Hex>;
+  toBlock: LightBlock<Hex>;
+  cursorBlock: LightBlock<Hex>;
+  data: {
+    blocks: ResolveSelect<RpcBlockResponse, ExtractField<request, "blocks">>[];
+  };
+};
+
+export type RpcQueryTransactionsResponse<
+  request extends QueryTransactionsRequest<Hex, Hex> = QueryTransactionsRequest<
+    Hex,
+    Hex
+  >,
+> = {
+  fromBlock: LightBlock<Hex>;
+  toBlock: LightBlock<Hex>;
+  cursorBlock: LightBlock<Hex>;
+  data: {
+    transactions: ResolveSelect<
+      RpcTransactionResponse,
+      ExtractField<request, "transactions">
+    >[];
+  } & RpcBlockRelation<request>;
+};
+
+export type RpcQueryLogsResponse<
+  request extends QueryLogsRequest<Hex, Hex> = QueryLogsRequest<Hex, Hex>,
+> = {
+  fromBlock: LightBlock<Hex>;
+  toBlock: LightBlock<Hex>;
+  cursorBlock: LightBlock<Hex>;
+  data: {
+    logs: ResolveSelect<RpcLogResponse, ExtractField<request, "logs">>[];
+  } & RpcTransactionRelation<request> &
+    RpcBlockRelation<request>;
+};
+
+export type RpcQueryTracesResponse<
+  request extends QueryTracesRequest<Hex, Hex> = QueryTracesRequest<Hex, Hex>,
+> = {
+  fromBlock: LightBlock<Hex>;
+  toBlock: LightBlock<Hex>;
+  cursorBlock: LightBlock<Hex>;
+  data: {
+    traces: ResolveSelect<
+      RpcCallTraceResponse,
+      ExtractField<request, "traces">
+    >[];
+  } & RpcTransactionRelation<request> &
+    RpcBlockRelation<request>;
+};
+
+export type RpcQueryTransfersResponse<
+  request extends QueryTransfersRequest<Hex, Hex> = QueryTransfersRequest<
+    Hex,
+    Hex
+  >,
+> = {
+  fromBlock: LightBlock<Hex>;
+  toBlock: LightBlock<Hex>;
+  cursorBlock: LightBlock<Hex>;
+  data: {
+    transfers: ResolveSelect<
+      RpcTransferResponse,
+      ExtractField<request, "transfers">
+    >[];
+  } & RpcTransactionRelation<request> &
+    RpcBlockRelation<request>;
+};
 
 export type QueryBlocksResponse<
   request extends QueryBlocksRequest = QueryBlocksRequest,
@@ -315,9 +454,10 @@ export type QueryTransactionsResponse<
   toBlock: LightBlock<quantity>;
   cursorBlock: LightBlock<quantity>;
   data: {
-    transactions: ResolveSelect<
-      TransactionResponse<quantity, index>,
-      ExtractField<request, "transactions">
+    transactions: ResolveTransactionSelect<
+      ExtractField<request, "transactions">,
+      quantity,
+      index
     >[];
   } & BlockRelation<request, quantity>;
 };
@@ -497,6 +637,59 @@ export type QueryTransfersResponse<
     >[];
   } & TransactionRelation<request, quantity, index> &
     BlockRelation<request, quantity>;
+};
+
+/** Raw block row returned over JSON-RPC. */
+export type RpcBlockResponse = Omit<
+  RpcBlock<Exclude<BlockTag, "pending">, false>,
+  "transactions"
+>;
+
+/** Raw transaction and receipt row returned over JSON-RPC. */
+export type RpcTransactionResponse = RpcTransaction<false> &
+  Omit<RpcTransactionReceipt, "logs">;
+
+/** Raw call trace row returned over JSON-RPC. */
+export type RpcCallTraceResponse = Omit<CallFrame<Hex>, "calls" | "logs"> & {
+  /** Hash of block containing this trace. */
+  blockHash: Hash;
+  /** Number of block containing this trace. */
+  blockNumber: Hex;
+  /** Hash of transaction containing this trace. */
+  transactionHash: Hash;
+  /** Index of transaction containing this trace. */
+  transactionIndex: Hex;
+  /** Path through nested call tree. */
+  traceAddress: number[];
+  /** Number of sub-calls. */
+  subcalls: Hex;
+  /** Receipt-style status: `0x1` for success and `0x0` for reverted. */
+  status: Status;
+};
+
+/** Raw log row returned over JSON-RPC. */
+export type RpcLogResponse = RpcLog;
+
+/** Raw native transfer row returned over JSON-RPC. */
+export type RpcTransferResponse = {
+  /** Hash of block containing this trace. */
+  blockHash: Hash;
+  /** Number of block containing this trace. */
+  blockNumber: Hex;
+  /** Hash of transaction containing this trace. */
+  transactionHash: Hash;
+  /** Index of transaction containing this trace. */
+  transactionIndex: Hex;
+  /** Path through nested call tree of this trace. */
+  traceAddress: number[];
+  /** The address initiating the transfer. */
+  from: Address;
+  /** The target address receiving the transfer. */
+  to?: Address;
+  /** Amount of ETH transferred. */
+  value: Hex;
+  /** Receipt-style status: `0x1` for success and `0x0` for reverted. */
+  status: Status;
 };
 
 export type BlockResponse<quantity = bigint> = Omit<

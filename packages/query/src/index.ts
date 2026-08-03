@@ -2,9 +2,11 @@ import {
   formatBlock,
   formatLog,
   formatTransaction,
+  formatTransactionReceipt,
   type Hex,
   hexToBigInt,
   hexToNumber,
+  type Status,
 } from "viem";
 
 import type {
@@ -13,16 +15,21 @@ import type {
   LightBlock,
   LogResponse,
   MethodName,
-  QueryBlocksRequest,
   QueryBlocksResponse,
-  QueryLogsRequest,
   QueryLogsResponse,
-  QueryTracesRequest,
   QueryTracesResponse,
-  QueryTransactionsRequest,
   QueryTransactionsResponse,
-  QueryTransfersRequest,
   QueryTransfersResponse,
+  RpcBlockResponse,
+  RpcCallTraceResponse,
+  RpcLogResponse,
+  RpcQueryBlocksResponse,
+  RpcQueryLogsResponse,
+  RpcQueryTracesResponse,
+  RpcQueryTransactionsResponse,
+  RpcQueryTransfersResponse,
+  RpcTransactionResponse,
+  RpcTransferResponse,
   TableName,
   TransactionResponse,
   TransferResponse,
@@ -77,6 +84,16 @@ export type {
   QueryTransfersFields,
   QueryTransfersRequest,
   QueryTransfersResponse,
+  RpcBlockResponse,
+  RpcCallTraceResponse,
+  RpcLogResponse,
+  RpcQueryBlocksResponse,
+  RpcQueryLogsResponse,
+  RpcQueryTracesResponse,
+  RpcQueryTransactionsResponse,
+  RpcQueryTransfersResponse,
+  RpcTransactionResponse,
+  RpcTransferResponse,
   TableName,
   TracesFilter,
   TransactionResponse,
@@ -93,10 +110,10 @@ function formatLightBlock(block: LightBlock<Hex>): LightBlock {
   };
 }
 
-function normalizeStatus(status: string, kind: "receipt" | "trace") {
-  if (status === "success" || status === "reverted") return status;
-  if (kind === "trace") return status === "0x0" ? "success" : "reverted";
-  return status === "0x1" ? "success" : "reverted";
+function normalizeStatus(status: Status) {
+  if (status === "0x1") return "success";
+  if (status === "0x0") return "reverted";
+  throw new Error(`Invalid RPC status: ${status}`);
 }
 
 function filterProperties<T extends object, K extends keyof T>(
@@ -106,7 +123,7 @@ function filterProperties<T extends object, K extends keyof T>(
   return Object.fromEntries(keys.map((key) => [key, obj[key]])) as Pick<T, K>;
 }
 
-function formatBlocks(blocks: BlockResponse<Hex>[]): BlockResponse[] {
+function formatBlocks(blocks: RpcBlockResponse[]): BlockResponse[] {
   return blocks.map(
     (b) =>
       filterProperties(
@@ -117,43 +134,41 @@ function formatBlocks(blocks: BlockResponse<Hex>[]): BlockResponse[] {
 }
 
 function formatTransactions(
-  transactions: (TransactionResponse | TransactionResponse<Hex, Hex>)[],
+  transactions: RpcTransactionResponse[],
 ): TransactionResponse[] {
   return transactions.map((t) => {
-    // TransactionResponse combines transaction and receipt fields. Viem's
-    // formatTransaction handles the transaction fields, so normalize receipt
-    // fields here before delegating to it.
-    const transaction: Parameters<typeof formatTransaction>[0] =
-      Object.fromEntries(
-        Object.entries(t).map(([key, value]) => {
-          if (value == null) return [key, value];
-          if (
-            [
-              "blobGasPrice",
-              "blobGasUsed",
-              "cumulativeGasUsed",
-              "effectiveGasPrice",
-              "gasUsed",
-            ].includes(key) &&
-            typeof value === "string"
-          ) {
-            return [key, hexToBigInt(value as Hex)];
-          }
-          if (key === "status" && typeof value === "string") {
-            return [key, normalizeStatus(value, "receipt")];
-          }
-          return [key, value];
-        }),
-      );
-
-    return filterProperties(
-      formatTransaction(transaction) as TransactionResponse,
-      Object.keys(t) as (keyof TransactionResponse)[],
-    ) as TransactionResponse;
+    const receiptFields = [
+      "blobGasPrice",
+      "blobGasUsed",
+      "blockTimestamp",
+      "contractAddress",
+      "cumulativeGasUsed",
+      "effectiveGasPrice",
+      "gasUsed",
+      "logsBloom",
+      "root",
+      "status",
+      "transactionHash",
+    ] as const;
+    const receipt = formatTransactionReceipt(t);
+    const formatted = {
+      ...formatTransaction(t),
+      ...Object.fromEntries(
+        receiptFields.flatMap((key) => (key in t ? [[key, receipt[key]]] : [])),
+      ),
+      ...(t.blockTimestamp !== undefined && {
+        blockTimestamp: hexToBigInt(t.blockTimestamp),
+      }),
+    } as TransactionResponse;
+    const keys = [
+      ...Object.keys(t),
+      ...(t.type !== undefined ? ["typeHex"] : []),
+    ] as (keyof TransactionResponse)[];
+    return filterProperties(formatted, keys) as TransactionResponse;
   });
 }
 
-function formatLogs(logs: LogResponse<Hex, Hex>[]): LogResponse[] {
+function formatLogs(logs: RpcLogResponse[]): LogResponse[] {
   return logs.map(
     (l) =>
       filterProperties(
@@ -164,7 +179,7 @@ function formatLogs(logs: LogResponse<Hex, Hex>[]): LogResponse[] {
 }
 
 export function formatQueryBlocksResponse(
-  raw: QueryBlocksResponse<QueryBlocksRequest, Hex>,
+  raw: RpcQueryBlocksResponse,
 ): QueryBlocksResponse {
   const result: QueryBlocksResponse = {
     fromBlock: formatLightBlock(raw.fromBlock),
@@ -178,7 +193,7 @@ export function formatQueryBlocksResponse(
 }
 
 export function formatQueryTransactionsResponse(
-  raw: QueryTransactionsResponse<QueryTransactionsRequest, Hex, Hex>,
+  raw: RpcQueryTransactionsResponse,
 ): QueryTransactionsResponse {
   const result: QueryTransactionsResponse = {
     fromBlock: formatLightBlock(raw.fromBlock),
@@ -193,7 +208,7 @@ export function formatQueryTransactionsResponse(
 }
 
 export function formatQueryLogsResponse(
-  raw: QueryLogsResponse<QueryLogsRequest, Hex, Hex>,
+  raw: RpcQueryLogsResponse,
 ): QueryLogsResponse {
   const result: QueryLogsResponse = {
     fromBlock: formatLightBlock(raw.fromBlock),
@@ -211,7 +226,7 @@ export function formatQueryLogsResponse(
 }
 
 export function formatQueryTracesResponse(
-  raw: QueryTracesResponse<QueryTracesRequest, Hex, Hex>,
+  raw: RpcQueryTracesResponse,
 ): QueryTracesResponse {
   const result: QueryTracesResponse = {
     fromBlock: formatLightBlock(raw.fromBlock),
@@ -219,7 +234,7 @@ export function formatQueryTracesResponse(
     cursorBlock: formatLightBlock(raw.cursorBlock),
     data: {
       traces: raw.data.traces.map((rawTrace) => {
-        const t = rawTrace as Partial<CallTraceResponse<Hex, Hex>>;
+        const t = rawTrace as Partial<RpcCallTraceResponse>;
         const trace: unknown = {
           ...t,
           ...(t.blockNumber !== undefined && {
@@ -235,7 +250,7 @@ export function formatQueryTracesResponse(
           ...(t.gasUsed !== undefined && { gasUsed: hexToBigInt(t.gasUsed) }),
           ...(t.value !== undefined && { value: hexToBigInt(t.value) }),
           ...(t.status !== undefined && {
-            status: normalizeStatus(t.status, "trace"),
+            status: normalizeStatus(t.status),
           }),
         };
         return trace as CallTraceResponse;
@@ -250,7 +265,7 @@ export function formatQueryTracesResponse(
 }
 
 export function formatQueryTransfersResponse(
-  raw: QueryTransfersResponse<QueryTransfersRequest, Hex, Hex>,
+  raw: RpcQueryTransfersResponse,
 ): QueryTransfersResponse {
   const result: QueryTransfersResponse = {
     fromBlock: formatLightBlock(raw.fromBlock),
@@ -258,7 +273,7 @@ export function formatQueryTransfersResponse(
     cursorBlock: formatLightBlock(raw.cursorBlock),
     data: {
       transfers: raw.data.transfers.map((rawTransfer) => {
-        const t = rawTransfer as Partial<TransferResponse<Hex, Hex>>;
+        const t = rawTransfer as Partial<RpcTransferResponse>;
         const transfer: unknown = {
           ...t,
           ...(t.blockNumber !== undefined && {
@@ -269,7 +284,7 @@ export function formatQueryTransfersResponse(
           }),
           ...(t.value !== undefined && { value: hexToBigInt(t.value) }),
           ...(t.status !== undefined && {
-            status: normalizeStatus(t.status, "trace"),
+            status: normalizeStatus(t.status),
           }),
         };
         return transfer as TransferResponse;
@@ -308,9 +323,10 @@ export const blockFields = [
   "timestamp",
   "totalDifficulty",
   "transactionsRoot",
+  "uncles",
   "withdrawals",
   "withdrawalsRoot",
-] as const satisfies (keyof BlockResponse)[];
+] as const satisfies (keyof RpcBlockResponse)[];
 
 /** TransactionResponse fields */
 export const transactionFields = [
@@ -321,6 +337,7 @@ export const transactionFields = [
   "blobGasUsed",
   "blockHash",
   "blockNumber",
+  "blockTimestamp",
   "chainId",
   "contractAddress",
   "cumulativeGasUsed",
@@ -347,7 +364,7 @@ export const transactionFields = [
   "v",
   "value",
   "yParity",
-] as const satisfies (keyof TransactionResponse)[];
+] as const satisfies (keyof RpcTransactionResponse)[];
 
 /** CallTraceResponse fields (used for the "traces" table) */
 export const callTraceFields = [
@@ -368,19 +385,21 @@ export const callTraceFields = [
   "transactionIndex",
   "type",
   "value",
-] as const satisfies (keyof CallTraceResponse)[];
+] as const satisfies (keyof RpcCallTraceResponse)[];
 
 /** LogResponse fields */
 export const logFields = [
   "address",
   "blockHash",
   "blockNumber",
+  "blockTimestamp",
   "data",
   "logIndex",
+  "removed",
   "topics",
   "transactionHash",
   "transactionIndex",
-] as const satisfies (keyof LogResponse)[];
+] as const satisfies (keyof RpcLogResponse)[];
 
 /** TransferResponse fields */
 export const transferFields = [
@@ -393,7 +412,7 @@ export const transferFields = [
   "transactionHash",
   "transactionIndex",
   "value",
-] as const satisfies (keyof TransferResponse)[];
+] as const satisfies (keyof RpcTransferResponse)[];
 
 const FIELDS = {
   blocks: blockFields,
@@ -424,11 +443,11 @@ export function getFieldsForRequest(
   method: MethodName,
   fields?: Record<string, readonly string[] | true | undefined>,
 ): {
-  blocks: (keyof BlockResponse)[];
-  transactions: (keyof TransactionResponse)[];
-  traces: (keyof CallTraceResponse)[];
-  logs: (keyof LogResponse)[];
-  transfers: (keyof TransferResponse)[];
+  blocks: (keyof RpcBlockResponse)[];
+  transactions: (keyof RpcTransactionResponse)[];
+  traces: (keyof RpcCallTraceResponse)[];
+  logs: (keyof RpcLogResponse)[];
+  transfers: (keyof RpcTransferResponse)[];
 } {
   const primaryTable = METHOD_TO_TABLE[method];
 
@@ -444,11 +463,11 @@ export function getFieldsForRequest(
   };
 
   return {
-    blocks: resolve("blocks") as (keyof BlockResponse)[],
-    transactions: resolve("transactions") as (keyof TransactionResponse)[],
-    traces: resolve("traces") as (keyof CallTraceResponse)[],
-    logs: resolve("logs") as (keyof LogResponse)[],
-    transfers: resolve("transfers") as (keyof TransferResponse)[],
+    blocks: resolve("blocks") as (keyof RpcBlockResponse)[],
+    transactions: resolve("transactions") as (keyof RpcTransactionResponse)[],
+    traces: resolve("traces") as (keyof RpcCallTraceResponse)[],
+    logs: resolve("logs") as (keyof RpcLogResponse)[],
+    transfers: resolve("transfers") as (keyof RpcTransferResponse)[],
   };
 }
 

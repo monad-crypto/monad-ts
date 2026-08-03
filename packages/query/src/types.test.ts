@@ -15,9 +15,19 @@ import type {
   LogResponse,
   QueryBlocksResponse,
   QueryLogsResponse,
+  QueryRpcSchema,
   QueryTracesResponse,
+  QueryTransactionsFields,
   QueryTransactionsResponse,
   QueryTransfersResponse,
+  RpcCallTraceResponse,
+  RpcQueryBlocksResponse,
+  RpcQueryLogsResponse,
+  RpcQueryTracesResponse,
+  RpcQueryTransactionsResponse,
+  RpcQueryTransfersResponse,
+  RpcTransactionResponse,
+  RpcTransferResponse,
   TransactionResponse,
   TransferResponse,
 } from "./types.js";
@@ -58,6 +68,80 @@ test("default QueryTransactionsResponse has full types and optional relations", 
   expectTypeOf<Response["data"]["blocks"]>().toEqualTypeOf<
     BlockResponse[] | undefined
   >();
+});
+
+test("raw and formatted transaction responses use Viem representations", () => {
+  expectTypeOf<RpcTransactionResponse["type"]>().toEqualTypeOf<
+    "0x0" | "0x1" | "0x2" | "0x3" | "0x4"
+  >();
+  expectTypeOf<RpcTransactionResponse>().not.toHaveProperty("typeHex");
+  expectTypeOf<RpcTransactionResponse["status"]>().toEqualTypeOf<
+    "0x0" | "0x1"
+  >();
+
+  expectTypeOf<TransactionResponse["type"]>().toEqualTypeOf<
+    "legacy" | "eip2930" | "eip1559" | "eip4844" | "eip7702"
+  >();
+  expectTypeOf<TransactionResponse["typeHex"]>().toEqualTypeOf<Hex | null>();
+  expectTypeOf<TransactionResponse["status"]>().toEqualTypeOf<
+    "success" | "reverted"
+  >();
+});
+
+test("transaction type projection derives formatted typeHex", () => {
+  type Request = { fields: { transactions: readonly ["type"] } };
+  type RpcResponse = RpcQueryTransactionsResponse<Request>;
+  type Response = QueryTransactionsResponse<Request>;
+
+  expectTypeOf<RpcResponse["data"]["transactions"]>().toEqualTypeOf<
+    Pick<RpcTransactionResponse, "type">[]
+  >();
+  expectTypeOf<Response["data"]["transactions"]>().toEqualTypeOf<
+    Prettify<Pick<TransactionResponse, "type" | "typeHex">>[]
+  >();
+});
+
+test("QueryRpcSchema exposes raw responses", () => {
+  type ReturnType<method extends QueryRpcSchema[number]["Method"]> = Extract<
+    QueryRpcSchema[number],
+    { Method: method }
+  >["ReturnType"];
+
+  expectTypeOf<
+    ReturnType<"eth_queryBlocks">
+  >().toEqualTypeOf<RpcQueryBlocksResponse>();
+  expectTypeOf<
+    ReturnType<"eth_queryTransactions">
+  >().toEqualTypeOf<RpcQueryTransactionsResponse>();
+  expectTypeOf<
+    ReturnType<"eth_queryLogs">
+  >().toEqualTypeOf<RpcQueryLogsResponse>();
+  expectTypeOf<
+    ReturnType<"eth_queryTraces">
+  >().toEqualTypeOf<RpcQueryTracesResponse>();
+  expectTypeOf<
+    ReturnType<"eth_queryTransfers">
+  >().toEqualTypeOf<RpcQueryTransfersResponse>();
+});
+
+test("formatted-only typeHex is not a wire field selector", () => {
+  type Fields = Exclude<
+    QueryTransactionsFields["transactions"],
+    true | undefined
+  >[number];
+
+  expectTypeOf<"typeHex">().not.toMatchTypeOf<Fields>();
+});
+
+test("trace and transfer wire statuses match transaction receipts", () => {
+  expectTypeOf<RpcCallTraceResponse["status"]>().toEqualTypeOf<"0x0" | "0x1">();
+  expectTypeOf<RpcCallTraceResponse["error"]>().toEqualTypeOf<
+    string | undefined
+  >();
+  expectTypeOf<RpcCallTraceResponse["revertReason"]>().toEqualTypeOf<
+    string | undefined
+  >();
+  expectTypeOf<RpcTransferResponse["status"]>().toEqualTypeOf<"0x0" | "0x1">();
 });
 
 test("default QueryLogsResponse has full types and optional relations", () => {

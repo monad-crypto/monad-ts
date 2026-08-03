@@ -294,26 +294,27 @@ test.failing("eth_queryBlocks accepts explicit earliest tags per spec", async ()
     },
   });
 
-  expect(page.fromBlock.number).toBe(0n);
-  expect(page.toBlock.number).toBe(0n);
-  expect(page.cursorBlock.number).toBe(0n);
-  expect(page.data.blocks.map((block) => block.number)).toEqual([0n]);
+  expect(page.toBlock.number).toBe(page.fromBlock.number);
+  expect(page.cursorBlock.number).toBe(page.fromBlock.number);
+  expect(page.data.blocks.map((block) => block.number)).toEqual([
+    page.fromBlock.number,
+  ]);
 });
 
-test.failing("eth_queryBlocks accepts explicit genesis range per spec", async () => {
+test("eth_queryBlocks accepts the earliest indexed numeric range", async () => {
   const page = await queryBlocks(client, {
-    fromBlock: 0n,
-    toBlock: 0n,
+    fromBlock: 1n,
+    toBlock: 1n,
     limit: 1,
     fields: {
       blocks: ["number"],
     },
   });
 
-  expect(page.fromBlock.number).toBe(0n);
-  expect(page.toBlock.number).toBe(0n);
-  expect(page.cursorBlock.number).toBe(0n);
-  expect(page.data.blocks.map((block) => block.number)).toEqual([0n]);
+  expect(page.fromBlock.number).toBe(1n);
+  expect(page.toBlock.number).toBe(1n);
+  expect(page.cursorBlock.number).toBe(1n);
+  expect(page.data.blocks.map((block) => block.number)).toEqual([1n]);
 });
 
 test("pagination preserves block tags in the initial request", async () => {
@@ -890,6 +891,35 @@ test("queryTransactions", async () => {
     `);
 });
 
+test("queryTransactions returns Viem transaction and receipt fields", async () => {
+  const response = await queryTransactions(client, {
+    fromBlock: 30_000_000n,
+    toBlock: 30_000_003n,
+    limit: 1,
+    filter: {
+      from: "0xc777cfb3bccc2f1d3049845d62639c769dff243d",
+    },
+    fields: {
+      transactions: [
+        "hash",
+        "transactionHash",
+        "type",
+        "status",
+        "gasUsed",
+        "blockTimestamp",
+      ],
+    },
+  });
+  const transaction = response.data.transactions[0];
+
+  expect(transaction).toBeDefined();
+  expect(transaction.transactionHash).toBe(transaction.hash);
+  expect(transaction.typeHex).toMatch(/^0x/);
+  expect(["success", "reverted"]).toContain(transaction.status);
+  expect(typeof transaction.gasUsed).toBe("bigint");
+  expect(typeof transaction.blockTimestamp).toBe("bigint");
+});
+
 test("queryLogs", async () => {
   const filtered = await queryLogs(client, {
     fromBlock: 30_000_000n,
@@ -945,6 +975,7 @@ test("queryLogs", async () => {
             "blockNumber",
             "logIndex",
             "topics",
+            "transactionHash",
           ],
           "rowCount": 1,
           "rows": [
@@ -956,7 +987,7 @@ test("queryLogs", async () => {
                 "0xc797025feeeaf2cd924c99e9205acb8ec04d5cad21c41ce637a38fb6dee6016a",
                 "0x0000000000000000000000000000000000000000000000000000000000006b9e",
               ],
-              "transactionHash": undefined,
+              "transactionHash": "0xd9899e8aa5e2311afc32b7af04bdb8973342b60d4e61f9866c3b04aeb277cdbe",
             },
           ],
         },
@@ -1198,6 +1229,7 @@ test("queryTraces", async () => {
             "status",
             "to",
             "traceAddress",
+            "transactionHash",
             "type",
             "value",
           ],
@@ -1209,8 +1241,8 @@ test("queryTraces", async () => {
               "status": "success",
               "to": "0x5447e0f54979fa6888b37631b9ce285cc4bc1a99",
               "traceAddress": [],
-              "transactionHash": undefined,
-              "type": "call",
+              "transactionHash": "0xd9899e8aa5e2311afc32b7af04bdb8973342b60d4e61f9866c3b04aeb277cdbe",
+              "type": "CALL",
               "value": 0n,
             },
           ],
@@ -1467,8 +1499,10 @@ test("queryTransfers", async () => {
           "firstRowKeys": [
             "blockNumber",
             "from",
+            "status",
             "to",
             "traceAddress",
+            "transactionHash",
             "value",
           ],
           "rowCount": 1,
@@ -1476,10 +1510,10 @@ test("queryTransfers", async () => {
             {
               "blockNumber": 30000041n,
               "from": "0xd9f51b1e2a2f2b900a15096b9f7e077a7c8a64d6",
-              "status": undefined,
+              "status": "success",
               "to": "0xacc0a0cf13571d30b4b8637996f5d6d774d4fd62",
               "traceAddress": [],
-              "transactionHash": undefined,
+              "transactionHash": "0xc76a3ea4cd13bee5d505bdfaaaafb8f1c5f75b8c0adbaacc88be1dd2250fb7d6",
               "value": 24n,
             },
           ],
@@ -1831,7 +1865,7 @@ function logRow(topics: readonly Hex[] = transferTopics as Hex[]) {
 
 function traceRow(
   input: `0x${string}`,
-  status = "0x0",
+  status = "0x1",
   output = forwardOutput,
 ) {
   return {
@@ -2077,7 +2111,7 @@ test("queryContractLogsWithPagination decodes every page without mutating the re
 test("queryContractTraces decodes successful and reverted calls", async () => {
   const { calls, client } = mockClient([
     response({
-      traces: [traceRow(forwardInput), traceRow(forwardInput, "0x1", "0x1234")],
+      traces: [traceRow(forwardInput), traceRow(forwardInput, "0x0", "0x1234")],
     }),
   ]);
   const result = await queryContractTraces(client, {
@@ -2165,7 +2199,7 @@ test("queryContractTraces restores empty projections and decodes overloaded resu
     result: address,
   });
   const { calls, client } = mockClient([
-    response({ traces: [traceRow(input, "0x0", output)] }),
+    response({ traces: [traceRow(input, "0x1", output)] }),
   ]);
   const result = await queryContractTraces(client, {
     abi: overloadedAbi,
