@@ -668,7 +668,25 @@ export type RpcCallTraceResponse = Omit<CallFrame<Hex>, "calls" | "logs"> & {
 };
 
 /** Raw log row returned over JSON-RPC. */
-export type RpcLogResponse = RpcLog;
+export type RpcLogResponse = Omit<
+  RpcLog,
+  | "blockHash"
+  | "blockNumber"
+  | "transactionHash"
+  | "transactionIndex"
+  | "logIndex"
+> & {
+  /** Hash of block containing this log. */
+  blockHash: Hash;
+  /** Number of block containing this log. */
+  blockNumber: Hex;
+  /** Hash of transaction containing this log. */
+  transactionHash: Hash;
+  /** Index of transaction containing this log. */
+  transactionIndex: Hex;
+  /** Index of this log in the transaction receipt. */
+  logIndex: Hex;
+};
 
 /** Raw native transfer row returned over JSON-RPC. */
 export type RpcTransferResponse = {

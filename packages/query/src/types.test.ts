@@ -6,7 +6,7 @@
  */
 
 import { expectTypeOf, test } from "bun:test";
-import type { Hex, Prettify } from "viem";
+import type { Hash, Hex, Prettify } from "viem";
 import type {
   BlockResponse,
   CallTraceResponse,
@@ -21,6 +21,7 @@ import type {
   QueryTransactionsResponse,
   QueryTransfersResponse,
   RpcCallTraceResponse,
+  RpcLogResponse,
   RpcQueryBlocksResponse,
   RpcQueryLogsResponse,
   RpcQueryTracesResponse,
@@ -142,6 +143,14 @@ test("trace and transfer wire statuses match transaction receipts", () => {
     string | undefined
   >();
   expectTypeOf<RpcTransferResponse["status"]>().toEqualTypeOf<"0x0" | "0x1">();
+});
+
+test("historical log identity fields are non-null", () => {
+  expectTypeOf<RpcLogResponse["blockHash"]>().toEqualTypeOf<Hash>();
+  expectTypeOf<RpcLogResponse["blockNumber"]>().toEqualTypeOf<Hex>();
+  expectTypeOf<RpcLogResponse["transactionHash"]>().toEqualTypeOf<Hash>();
+  expectTypeOf<RpcLogResponse["transactionIndex"]>().toEqualTypeOf<Hex>();
+  expectTypeOf<RpcLogResponse["logIndex"]>().toEqualTypeOf<Hex>();
 });
 
 test("default QueryLogsResponse has full types and optional relations", () => {
