@@ -134,7 +134,7 @@ const APPROVAL_SIG =
 
 const benchmarks = [
   {
-    name: "blocks — 10k rows, 10k range",
+    name: "blocks — 100-row limit, 10k-block range",
     params: {
       table: "blocks",
       fromBlock: toHex(DENSE_START),
@@ -143,7 +143,7 @@ const benchmarks = [
     },
   },
   {
-    name: "blocks — selected columns",
+    name: "blocks — latest 100 rows, selected columns",
     params: {
       table: "blocks",
       fromBlock: "latest",
@@ -153,7 +153,7 @@ const benchmarks = [
     },
   },
   {
-    name: "transactions — 10k rows, dense range",
+    name: "transactions — 100-row limit, dense 1k-block range",
     params: {
       table: "transactions",
       fromBlock: toHex(DENSE_START),
@@ -162,7 +162,7 @@ const benchmarks = [
     },
   },
   {
-    name: "transactions — large range, sparse data (projection)",
+    name: "transactions — large range, sparse data, filtered by sender",
     params: {
       table: "transactions",
       fromBlock: toHex(1),
@@ -174,7 +174,7 @@ const benchmarks = [
     },
   },
   {
-    name: "transactions — selected columns",
+    name: "transactions — latest 100 rows, selected columns",
     params: {
       table: "transactions",
       fromBlock: "latest",
@@ -186,7 +186,7 @@ const benchmarks = [
     },
   },
   {
-    name: "transactions — selected columns + blocks relation",
+    name: "transactions — latest 100 rows, selected columns + blocks relation",
     params: {
       table: "transactions",
       fromBlock: "latest",
@@ -199,7 +199,7 @@ const benchmarks = [
     },
   },
   {
-    name: "transactions — filter by from_address",
+    name: "transactions — 10k-block range, filtered by sender",
     params: {
       table: "transactions",
       fromBlock: toHex(DENSE_START),
@@ -209,7 +209,7 @@ const benchmarks = [
     },
   },
   {
-    name: "transactions — with blocks join",
+    name: "transactions — dense range, selected columns + blocks relation",
     params: {
       table: "transactions",
       fromBlock: toHex(DENSE_START),
@@ -222,7 +222,7 @@ const benchmarks = [
     },
   },
   {
-    name: "logs — 10k rows, dense range",
+    name: "logs — 100-row limit, dense 1k-block range",
     params: {
       table: "logs",
       fromBlock: toHex(DENSE_START),
@@ -231,7 +231,7 @@ const benchmarks = [
     },
   },
   {
-    name: "logs — filter by address",
+    name: "logs — 10k-block range, filtered by address",
     params: {
       table: "logs",
       fromBlock: toHex(DENSE_START),
@@ -241,7 +241,7 @@ const benchmarks = [
     },
   },
   {
-    name: "logs — filter by topic0 (Transfer)",
+    name: "logs — dense range, filtered by Transfer topic",
     params: {
       table: "logs",
       fromBlock: toHex(DENSE_START),
@@ -275,7 +275,7 @@ const benchmarks = [
     },
   },
   {
-    name: "logs — large range, filter by address (projection)",
+    name: "logs — large range, filtered by address",
     params: {
       table: "logs",
       fromBlock: toHex(1),
@@ -285,7 +285,7 @@ const benchmarks = [
     },
   },
   {
-    name: "logs — large range, filter by topic0 (projection)",
+    name: "logs — large range, filtered by Transfer topic",
     params: {
       table: "logs",
       fromBlock: toHex(1),
@@ -301,7 +301,7 @@ const benchmarks = [
     },
   },
   {
-    name: "logs — large range, filter by address + topic0 (projection)",
+    name: "logs — large range, filtered by address + Transfer topic",
     params: {
       table: "logs",
       fromBlock: toHex(1),
@@ -318,7 +318,7 @@ const benchmarks = [
     },
   },
   {
-    name: "logs — with transactions + blocks join",
+    name: "logs — dense range, selected columns + transactions + blocks relations",
     params: {
       table: "logs",
       fromBlock: toHex(DENSE_START),
@@ -332,7 +332,7 @@ const benchmarks = [
     },
   },
   {
-    name: "traces — 10k rows, dense range",
+    name: "traces — 100-row limit, dense 1k-block range",
     params: {
       table: "traces",
       fromBlock: toHex(DENSE_START),
@@ -341,7 +341,7 @@ const benchmarks = [
     },
   },
   {
-    name: "traces — filter by isTopLevel",
+    name: "traces — dense range, filtered to top-level traces",
     params: {
       table: "traces",
       fromBlock: toHex(DENSE_START),
@@ -351,7 +351,7 @@ const benchmarks = [
     },
   },
   {
-    name: "traces — large range, filter by from_address (projection)",
+    name: "traces — large range, filtered by sender",
     params: {
       table: "traces",
       fromBlock: toHex(1),
@@ -361,7 +361,7 @@ const benchmarks = [
     },
   },
   {
-    name: "traces — with transactions + blocks join",
+    name: "traces — dense range, selected columns + transactions + blocks relations",
     params: {
       table: "traces",
       fromBlock: toHex(DENSE_START),
@@ -375,7 +375,7 @@ const benchmarks = [
     },
   },
   {
-    name: "transfers — 10k rows, dense range",
+    name: "transfers — 100-row limit, dense 1k-block range",
     params: {
       table: "transfers",
       fromBlock: toHex(DENSE_START),
@@ -384,7 +384,7 @@ const benchmarks = [
     },
   },
   {
-    name: "transfers — large range, filter by from_address (projection)",
+    name: "transfers — large range, filtered by sender",
     params: {
       table: "transfers",
       fromBlock: toHex(1),
@@ -394,7 +394,7 @@ const benchmarks = [
     },
   },
   {
-    name: "transfers — with transactions + blocks join",
+    name: "transfers — dense range, selected columns + transactions + blocks relations",
     params: {
       table: "transfers",
       fromBlock: toHex(DENSE_START),
@@ -447,7 +447,7 @@ const benchmarks = [
     },
   },
   {
-    name: "examples - Txs from USDC",
+    name: "examples - Transactions to USDC",
     params: {
       table: "transactions",
       fromBlock: "latest",
@@ -459,7 +459,7 @@ const benchmarks = [
     },
   },
   {
-    name: "examples - Native transfers to WMON",
+    name: "examples - Calls to WMON",
     params: {
       table: "traces",
       fromBlock: "latest",
