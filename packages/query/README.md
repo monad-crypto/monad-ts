@@ -167,6 +167,29 @@ for await (const page of client.queryTransactionsWithPagination({
 
 Pagination is block-cursor based. A page is final when `cursorBlock.number === toBlock.number`; otherwise the helper resumes from `cursorBlock + 1n` for ascending queries or `cursorBlock - 1n` for descending queries. The `limit` is a target number of primary-table rows, and the server may return more rows to avoid splitting a block across pages.
 
+For callers that use their own RPC wrapper, the pagination state can be updated
+without a Viem client:
+
+```ts
+import {
+  isLastPage,
+  pinRequestRange,
+  updateRequestPagination,
+} from "@monad-crypto/query";
+
+pinRequestRange(request, response);
+updateRequestPagination(request, response);
+
+if (!isLastPage(response)) {
+  // Submit the mutated request with your own RPC wrapper.
+}
+```
+
+`pinRequestRange` and `updateRequestPagination` mutate the request in place.
+They support bigint or serialized hex responses and pin the response's
+resolved `fromBlock` and `toBlock`. `isLastPage(response)` checks whether the
+cursor has reached the resolved end block.
+
 ## Examples
 
 Each action calls the corresponding Monad query method and returns a formatted Viem-style response. `bigint` block numbers and numeric limits are serialized before transport.

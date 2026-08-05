@@ -14,7 +14,6 @@ import {
   decodeFunctionData,
   decodeFunctionResult,
   encodeEventTopics,
-  hexToBigInt,
   numberToHex,
   parseEventLogs,
   toEventSelector,
@@ -27,6 +26,11 @@ import {
   formatQueryTransactionsResponse,
   formatQueryTransfersResponse,
 } from "./index.js";
+import {
+  isLastPage,
+  pinRequestRange,
+  updateRequestPagination,
+} from "./pagination.js";
 import type {
   CallTraceResponse,
   CommonRequestFields,
@@ -50,10 +54,13 @@ import type {
 } from "./types.js";
 
 function serializeRequest<
-  T extends Pick<CommonRequestFields, "fromBlock" | "toBlock" | "limit">,
+  T extends Pick<
+    CommonRequestFields<bigint | Hex>,
+    "fromBlock" | "toBlock" | "limit"
+  >,
 >(
   request: T,
-): Omit<CommonRequestFields, "fromBlock" | "toBlock" | "limit"> &
+): Omit<CommonRequestFields<bigint | Hex>, "fromBlock" | "toBlock" | "limit"> &
   Pick<CommonRequestFields<Hex, Hex>, "fromBlock" | "toBlock" | "limit"> {
   const { fromBlock, toBlock, limit, ...rest } = request;
   return {
@@ -66,7 +73,10 @@ function serializeRequest<
       toBlock: typeof toBlock === "bigint" ? numberToHex(toBlock) : toBlock,
     }),
     ...(limit != null && { limit: numberToHex(limit) }),
-  } as Omit<CommonRequestFields, "fromBlock" | "toBlock" | "limit"> &
+  } as Omit<
+    CommonRequestFields<bigint | Hex>,
+    "fromBlock" | "toBlock" | "limit"
+  > &
     Pick<CommonRequestFields<Hex, Hex>, "fromBlock" | "toBlock" | "limit">;
 }
 
@@ -79,44 +89,6 @@ type QueryClient<
 type AbiEvent = Extract<Abi[number], { type: "event" }>;
 type AbiFunction = Extract<Abi[number], { type: "function" }>;
 type EventTopic = Hex | Hex[] | null;
-
-function advancePagination(
-  request: CommonRequestFields,
-  response: {
-    fromBlock: { number: Hex };
-    toBlock: { number: Hex };
-    cursorBlock: { number: Hex };
-  },
-): boolean {
-  const fromBlock = hexToBigInt(response.fromBlock.number);
-  const toBlock = hexToBigInt(response.toBlock.number);
-  const cursorBlock = hexToBigInt(response.cursorBlock.number);
-
-  if (
-    typeof request.fromBlock === "bigint" &&
-    fromBlock !== request.fromBlock
-  ) {
-    throw new Error("Pagination response fromBlock does not match request");
-  }
-
-  if (request.order === "desc") {
-    if (cursorBlock > fromBlock || cursorBlock < toBlock) {
-      throw new Error("Pagination cursorBlock is outside the requested range");
-    }
-    request.toBlock = toBlock;
-    if (cursorBlock === toBlock) return false;
-    request.fromBlock = cursorBlock - 1n;
-    return true;
-  }
-
-  if (cursorBlock < fromBlock || cursorBlock > toBlock) {
-    throw new Error("Pagination cursorBlock is outside the requested range");
-  }
-  request.toBlock = toBlock;
-  if (cursorBlock === toBlock) return false;
-  request.fromBlock = cursorBlock + 1n;
-  return true;
-}
 
 export async function queryBlocks<const request extends QueryBlocksRequest>(
   client: QueryClient,
@@ -520,9 +492,13 @@ export async function* queryBlocksWithPagination<
       method: "eth_queryBlocks",
       params: [serializeRequest(request)],
     });
-    const hasNextPage = advancePagination(request, raw);
-    yield formatQueryBlocksResponse(raw) as QueryBlocksResponse<request>;
-    if (!hasNextPage) break;
+    const response = formatQueryBlocksResponse(
+      raw,
+    ) as QueryBlocksResponse<request>;
+    pinRequestRange(request, response);
+    updateRequestPagination(request, response);
+    yield response;
+    if (isLastPage(response)) break;
   }
 }
 
@@ -545,11 +521,13 @@ export async function* queryTransactionsWithPagination<
       method: "eth_queryTransactions",
       params: [serializeRequest(request)],
     });
-    const hasNextPage = advancePagination(request, raw);
-    yield formatQueryTransactionsResponse(
+    const response = formatQueryTransactionsResponse(
       raw,
     ) as QueryTransactionsResponse<request>;
-    if (!hasNextPage) break;
+    pinRequestRange(request, response);
+    updateRequestPagination(request, response);
+    yield response;
+    if (isLastPage(response)) break;
   }
 }
 
@@ -572,9 +550,11 @@ export async function* queryLogsWithPagination<
       method: "eth_queryLogs",
       params: [serializeRequest(request)],
     });
-    const hasNextPage = advancePagination(request, raw);
-    yield formatQueryLogsResponse(raw) as QueryLogsResponse<request>;
-    if (!hasNextPage) break;
+    const response = formatQueryLogsResponse(raw) as QueryLogsResponse<request>;
+    pinRequestRange(request, response);
+    updateRequestPagination(request, response);
+    yield response;
+    if (isLastPage(response)) break;
   }
 }
 
@@ -597,9 +577,13 @@ export async function* queryTracesWithPagination<
       method: "eth_queryTraces",
       params: [serializeRequest(request)],
     });
-    const hasNextPage = advancePagination(request, raw);
-    yield formatQueryTracesResponse(raw) as QueryTracesResponse<request>;
-    if (!hasNextPage) break;
+    const response = formatQueryTracesResponse(
+      raw,
+    ) as QueryTracesResponse<request>;
+    pinRequestRange(request, response);
+    updateRequestPagination(request, response);
+    yield response;
+    if (isLastPage(response)) break;
   }
 }
 
@@ -622,9 +606,13 @@ export async function* queryTransfersWithPagination<
       method: "eth_queryTransfers",
       params: [serializeRequest(request)],
     });
-    const hasNextPage = advancePagination(request, raw);
-    yield formatQueryTransfersResponse(raw) as QueryTransfersResponse<request>;
-    if (!hasNextPage) break;
+    const response = formatQueryTransfersResponse(
+      raw,
+    ) as QueryTransfersResponse<request>;
+    pinRequestRange(request, response);
+    updateRequestPagination(request, response);
+    yield response;
+    if (isLastPage(response)) break;
   }
 }
 

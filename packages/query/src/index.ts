@@ -53,6 +53,15 @@ export {
   queryTransfersWithPagination,
 } from "./actions.js";
 export type {
+  PaginationRequest,
+  PaginationResponse,
+} from "./pagination.js";
+export {
+  isLastPage,
+  pinRequestRange,
+  updateRequestPagination,
+} from "./pagination.js";
+export type {
   BlockResponse,
   CallTraceResponse,
   ContractLogDecoded,
@@ -467,17 +476,4 @@ export function getFieldsForRequest(
     logs: resolve("logs") as (keyof RpcLogResponse)[],
     transfers: resolve("transfers") as (keyof RpcTransferResponse)[],
   };
-}
-
-/**
- * Returns `true` if there are no more pages to fetch.
- *
- * Pagination is complete when `cursorBlock.number == toBlock.number`,
- * meaning the server has scanned through the entire requested range.
- */
-export function isLastPage(response: {
-  cursorBlock: { number: Hex };
-  toBlock: { number: Hex };
-}): boolean {
-  return response.cursorBlock.number === response.toBlock.number;
 }
