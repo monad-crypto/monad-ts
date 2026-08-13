@@ -70,7 +70,7 @@ const mppx = Mppx.create({
 |-----------|------|---------|-------------|
 | `recipient` | `string` | &mdash; | Address that receives payments |
 | `currency` | `string` | USDC | ERC-20 token contract address |
-| `decimals` | `number` | `6` | Token decimals |
+| `decimals` | `number` | Known token | Token decimals. Defaults to the decimals of a known token (USDC, USDT0); required for any other `currency` |
 | `amount` | `string` | &mdash; | Default payment amount (human-readable, e.g. "1.50") |
 | `description` | `string` | &mdash; | Human-readable description |
 | `externalId` | `string` | &mdash; | External identifier to echo back in receipt |

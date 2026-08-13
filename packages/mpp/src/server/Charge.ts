@@ -36,12 +36,12 @@ export function charge(parameters: charge.Parameters = {}): Method.AnyServer {
   const {
     amount,
     currency = defaults.resolveCurrency(parameters),
-    decimals = defaults.decimals,
     description,
     externalId,
     recipient,
     waitForConfirmation = true,
   } = parameters;
+  const decimals = parameters.decimals ?? defaults.resolveDecimals(currency);
   const store = (parameters.store ??
     Store.memory()) as Store.Store<charge.StoreItemMap>;
 
@@ -285,7 +285,12 @@ export declare namespace charge {
     amount?: string | undefined;
     /** ERC-20 token contract address. */
     currency?: string | undefined;
-    /** Token decimals. @default 6 */
+    /**
+     * Token decimals.
+     *
+     * Defaults to the decimals of a known token (USDC, USDT0). Required for
+     * any other `currency`.
+     */
     decimals?: number | undefined;
     /** Human-readable description. */
     description?: string | undefined;

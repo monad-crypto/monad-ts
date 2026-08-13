@@ -6,6 +6,7 @@ export const chainId = {
 export type ChainId = (typeof chainId)[keyof typeof chainId];
 
 const USDC = "0x754704Bc059F8C67012fEd69BC8A327a5aafb603";
+const USDT0 = "0xe7cd86e13AC4309349F30B3435a9d337750fC82D";
 
 /** Chain ID → default currency. */
 export const currency: Partial<Record<ChainId, string>> = {
@@ -14,6 +15,12 @@ export const currency: Partial<Record<ChainId, string>> = {
 
 /** Default token decimals for USDC. */
 export const decimals = 6;
+
+/** Known token decimals, keyed by lowercase address. */
+export const tokenDecimals: Record<string, number> = {
+  [USDC.toLowerCase()]: decimals,
+  [USDT0.toLowerCase()]: decimals,
+};
 
 /** Default RPC URLs per chain. */
 export const rpcUrl: Record<number, string> = {
@@ -83,7 +90,7 @@ export const erc3009Tokens: Record<string, { name: string; version: string }> =
       name: "USDC",
       version: "2",
     },
-    ["0xe7cd86e13AC4309349F30B3435a9d337750fC82D".toLowerCase()]: {
+    [USDT0.toLowerCase()]: {
       name: "USDT0",
       version: "1",
     },
@@ -100,5 +107,21 @@ export function resolveCurrency(parameters: {
   const resolved = currency[id as ChainId];
   if (!resolved)
     throw new Error(`No default currency configured for chainId ${id}.`);
+  return resolved;
+}
+
+/**
+ * Resolves the decimals for a known token.
+ *
+ * Throws for any other token so the caller passes `decimals` explicitly.
+ * ERC-20 transfers carry no decimals field for the chain to check, so guessing
+ * here would settle a silently wrong amount.
+ */
+export function resolveDecimals(currency: string): number {
+  const resolved = tokenDecimals[currency.toLowerCase()];
+  if (resolved === undefined)
+    throw new Error(
+      `No known decimals for currency ${currency}. Pass \`decimals\` explicitly.`,
+    );
   return resolved;
 }
