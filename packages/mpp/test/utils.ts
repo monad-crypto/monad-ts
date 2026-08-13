@@ -19,6 +19,9 @@ export const usdt0Token: Address = "0xe7cd86e13AC4309349F30B3435a9d337750fC82D";
 export const NON_ERC3009_TOKEN: Address =
   "0x0000000000000000000000000000000000000001";
 
+/** WMON, a real Monad token with 18 decimals (not 6). */
+export const WMON: Address = "0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A";
+
 /** USDC whale on Monad mainnet at the fork block. */
 export const WHALE: Address = "0xfc08DB693D20F8F5dE32aC93816fA0ec2d6a221D";
 

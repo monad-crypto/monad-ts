@@ -14,6 +14,7 @@ import {
   testChainId,
   token,
   usdt0Token,
+  WMON,
 } from "../../test/utils.js";
 import { charge as clientCharge } from "../client/Charge.js";
 import * as defaults from "../defaults.js";
@@ -44,9 +45,45 @@ test("server charge allows non-ERC-3009 token without account", () => {
   const method = charge({
     recipient: accounts.recipient.address,
     currency: NON_ERC3009_TOKEN,
+    decimals: 6,
     getClient: () => client,
   });
   expect(method).toBeDefined();
+});
+
+test("server charge rejects an unknown currency when decimals is omitted", () => {
+  const client = createTestClient();
+  expect(() =>
+    charge({
+      recipient: accounts.recipient.address,
+      currency: WMON,
+      getClient: () => client,
+    }),
+  ).toThrow("No known decimals");
+});
+
+test("server charge accepts an unknown currency when decimals is given", () => {
+  const client = createTestClient();
+  const method = charge({
+    recipient: accounts.recipient.address,
+    currency: WMON,
+    decimals: 18,
+    getClient: () => client,
+  });
+  expect(method).toBeDefined();
+});
+
+test("server charge defaults decimals for known tokens", () => {
+  const client = createTestClient();
+  for (const known of [token, usdt0Token]) {
+    const method = charge({
+      recipient: accounts.recipient.address,
+      currency: known,
+      account: accounts.recipient,
+      getClient: () => client,
+    });
+    expect(method).toBeDefined();
+  }
 });
 
 test("server charge rejects expired challenge", async () => {
@@ -78,6 +115,7 @@ test("server charge rejects authorization without server account", async () => {
   const method = charge({
     recipient: accounts.recipient.address,
     currency: NON_ERC3009_TOKEN,
+    decimals: 6,
     getClient: () => client,
   });
 
