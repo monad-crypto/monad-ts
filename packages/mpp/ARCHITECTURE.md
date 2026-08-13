@@ -93,11 +93,12 @@ All constants are defined in `src/defaults.ts`.
 | `chainId.mainnet` | `143` | Monad mainnet chain ID |
 | `chainId.testnet` | `10143` | Monad testnet chain ID |
 | `tokens.usdc` | `0x754704Bc059F8C67012fEd69BC8A327a5aafb603` | USDC on Monad mainnet |
-| `tokenDecimals` | `6` | USDC decimals |
+| `decimals` | `6` | USDC decimals |
+| `tokenDecimals` | `{ USDC: 6, USDT0: 6 }` | Known token decimals. Any other `currency` requires an explicit `decimals` |
 | `rpc[143]` | `https://rpc.monad.xyz` | Mainnet RPC |
 | `rpc[10143]` | `https://testnet-rpc.monad.xyz` | Testnet RPC |
 
-**ERC-3009 Token Registry** (`erc3009Tokens`): Maps lowercase token addresses to `{ name, version }` for EIP-712 domain construction. Currently contains USDC (`name: "USDC"`, `version: "2"`).
+**ERC-3009 Token Registry** (`erc3009Tokens`): Maps lowercase token addresses to `{ name, version }` for EIP-712 domain construction. Currently contains USDC (`name: "USDC"`, `version: "2"`) and USDT0 (`name: "USDT0"`, `version: "1"`).
 
 **ERC-3009 ABI** (`erc3009Abi`): Contains `transferWithAuthorization`, `receiveWithAuthorization`, `name()`, and `version()` function definitions.
 
@@ -106,7 +107,7 @@ All constants are defined in `src/defaults.ts`.
 | # | Module | File | Purpose |
 |---|--------|------|---------|
 | 1 | Base Method | `src/Methods.ts` | Defines the mppx charge method schema (request, credential, transform) |
-| 2 | Defaults | `src/defaults.ts` | Chain IDs, tokens, RPC URLs, ABIs, `resolveCurrency()` |
+| 2 | Defaults | `src/defaults.ts` | Chain IDs, tokens, RPC URLs, ABIs, `resolveCurrency()`, `resolveDecimals()` |
 | 3 | Client Charge | `src/client/Charge.ts` | `createCredential()` — signs or broadcasts payments |
 | 4 | Client Methods | `src/client/Methods.ts` | Wraps client Charge into mppx method |
 | 5 | Server Charge | `src/server/Charge.ts` | `verify()` — validates credentials on-chain |
@@ -123,6 +124,7 @@ All constants are defined in `src/defaults.ts`.
 
 - **Server always verifies on-chain**: Push mode checks Transfer event logs. Pull mode passes amount/recipient to the contract call.
 - **Pull mode recipient binding**: The EIP-712 signature locks the `to` address. Funds cannot be redirected to a different recipient because the signature would be invalid.
+- **Decimals are never guessed**: `amount` is converted to base units with the token's decimals, and ERC-20 transfers carry no decimals field for the chain to check. `charge()` therefore resolves decimals only for known tokens and throws for any other `currency`, so a wrong value cannot silently settle the wrong amount.
 
 ### Expiration
 
