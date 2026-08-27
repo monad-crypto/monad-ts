@@ -10,6 +10,7 @@ concurrency: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
 
 jobs:
   release:
+    if: github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -42,3 +43,30 @@ jobs:
           publish: bun run changeset publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  snapshot:
+    if: github.event_name == 'workflow_dispatch'
+    name: Release query snapshot version
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.8
+          registry-url: "https://registry.npmjs.org"
+
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run --cwd packages/query build
+
+      - name: Publish query snapshot
+        working-directory: packages/query
+        run: |
+          base_version=$(node -p "require('./package.json').version.split('-')[0]")
+          snapshot_version="${base_version}-snapshot.${GITHUB_RUN_NUMBER}"
+          npm pkg set "version=${snapshot_version}"
+          npm publish --tag snapshot --provenance --access public
