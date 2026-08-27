@@ -57,13 +57,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24.8
+          npm-version: 11.6
           registry-url: 'https://registry.npmjs.org'
 
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
-      - run: bun run --cwd packages/query build
+      - run: bun run build
 
-      - name: Publish query snapshot
+      - name: Publish snapshot
         continue-on-error: true
         run: |
           snapshot=$(printf '%s' "$GITHUB_REF_NAME" | tr -cs '[:alnum:]-' '-' | tr '[:upper:]' '[:lower:]' | sed 's/-$//')
