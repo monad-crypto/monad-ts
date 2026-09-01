@@ -1,0 +1,45 @@
+{
+  "name": "@monad-crypto/mip8-contract-page-trie",
+  "version": "0.0.0",
+  "description": "Minimal in-memory MIP-8 page trie for Monad contract storage",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/monad-crypto/monad-ts.git",
+    "directory": "packages/mip8-contract-page-trie"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "src/**/*.ts",
+    "ARCHITECTURE.md",
+    "LICENSE",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "bun test",
+    "test:coverage": "bun test --coverage",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ethereumjs/mpt": "10.1.2",
+    "@noble/hashes": "2.2.0"
+  }
+}
