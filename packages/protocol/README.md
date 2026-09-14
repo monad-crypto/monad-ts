@@ -1,4 +1,4 @@
-# @monad-crypto/mip8-contract-page-trie
+# @monad-crypto/protocol
 
 A minimal, in-memory implementation of one contract's [MIP-8](https://github.com/monad-crypto/MIPs/blob/6e78a6ac39547882f9905fba86d2c794eb1768ef/MIPs/MIP-8.md) storage page trie.
 
@@ -7,7 +7,7 @@ A minimal, in-memory implementation of one contract's [MIP-8](https://github.com
 ## Install
 
 ```bash
-bun add @monad-crypto/mip8-contract-page-trie
+bun add @monad-crypto/protocol
 ```
 
 Node.js 20.19 or newer is required.
@@ -15,7 +15,7 @@ Node.js 20.19 or newer is required.
 ## Usage
 
 ```ts
-import { createPageTrie } from "@monad-crypto/mip8-contract-page-trie"
+import { createPageTrie } from "@monad-crypto/protocol"
 
 const trie = createPageTrie()
 const slot = new Uint8Array(32)
@@ -46,7 +46,7 @@ import {
   computePageCommitment,
   computePageKey,
   computeSlotOffset,
-} from "@monad-crypto/mip8-contract-page-trie"
+} from "@monad-crypto/protocol"
 ```
 
 - `computePageKey(slot)` computes the 256-bit big-endian `slot >> 7`.

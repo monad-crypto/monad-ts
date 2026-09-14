@@ -1,6 +1,6 @@
 # Architecture — Security Review Guide
 
-This document describes the security and consensus boundaries of `@monad-crypto/mip8-contract-page-trie`. Usage is documented in [README.md](./README.md).
+This document describes the security and consensus boundaries of `@monad-crypto/protocol`. Usage is documented in [README.md](./README.md).
 
 ## 1. Scope
 

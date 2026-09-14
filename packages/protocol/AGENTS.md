@@ -1,16 +1,16 @@
 # AGENTS.md
 
-This file provides guidance to coding agents working on `@monad-crypto/mip8-contract-page-trie`.
+This file provides guidance to coding agents working on `@monad-crypto/protocol`.
 
 ## Commands
 
 Run from the repo root:
 
 ```bash
-bun test --cwd packages/mip8-contract-page-trie               # Run tests
-bun run --cwd packages/mip8-contract-page-trie build          # Build
-bun run --cwd packages/mip8-contract-page-trie typecheck      # Type-check
-bun run --cwd packages/mip8-contract-page-trie test:coverage  # Run tests with coverage
+bun test --cwd packages/protocol               # Run tests
+bun run --cwd packages/protocol build          # Build
+bun run --cwd packages/protocol typecheck      # Type-check
+bun run --cwd packages/protocol test:coverage  # Run tests with coverage
 ```
 
 ## Consensus-sensitive changes

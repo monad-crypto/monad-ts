@@ -1,12 +1,12 @@
 {
-  "name": "@monad-crypto/mip8-contract-page-trie",
+  "name": "@monad-crypto/protocol",
   "version": "0.0.0",
   "description": "Minimal in-memory MIP-8 page trie for Monad contract storage",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/monad-crypto/monad-ts.git",
-    "directory": "packages/mip8-contract-page-trie"
+    "directory": "packages/protocol"
   },
   "publishConfig": {
     "access": "public",
