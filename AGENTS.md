@@ -9,6 +9,7 @@ This is a bun workspaces monorepo. Packages live under `packages/`.
 | Package | Path |
 | --- | --- |
 | `@monad-crypto/viem` | `packages/viem/` |
+| `@monad-crypto/mip8-contract-page-trie` | `packages/mip8-contract-page-trie/` |
 
 ## Commands
 

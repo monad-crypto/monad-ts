@@ -1,0 +1,225 @@
+import { describe, expect, test } from "bun:test";
+import { bytesToHex } from "@noble/hashes/utils.js";
+import {
+  computePageCommitment,
+  computePageKey,
+  computeSlotOffset,
+  PAGE_SIZE,
+  SLOT_SIZE,
+} from "../src/page.js";
+import { uint256 } from "./utils.js";
+
+function setWord(page: Uint8Array, index: number, value: bigint): void {
+  page.set(uint256(value), index * SLOT_SIZE);
+}
+
+function createPage(
+  words: Iterable<readonly [index: number, value: bigint]>,
+): Uint8Array {
+  const page = new Uint8Array(PAGE_SIZE);
+  for (const [index, value] of words) setWord(page, index, value);
+  return page;
+}
+
+function createDeterministicPage(
+  seed: number,
+  indices: readonly number[],
+): Uint8Array {
+  const page = new Uint8Array(PAGE_SIZE);
+  let state = seed >>> 0;
+  const nextByte = (): number => {
+    state ^= state << 13;
+    state ^= state >>> 17;
+    state ^= state << 5;
+    return state & 0xff;
+  };
+  for (const index of indices) {
+    for (let offset = 0; offset < SLOT_SIZE; offset++) {
+      page[index * SLOT_SIZE + offset] = nextByte();
+    }
+  }
+  return page;
+}
+
+function permutedSlots(count: number, multiplier: number): number[] {
+  return Array.from(
+    { length: count },
+    (_, index) => (index * multiplier) % 128,
+  );
+}
+
+describe("page addressing", () => {
+  for (const [slot, page, offset] of [
+    [0n, 0n, 0],
+    [127n, 0n, 127],
+    [128n, 1n, 0],
+    [255n, 1n, 127],
+  ] as const) {
+    test(`maps slot ${slot} to page ${page}, offset ${offset}`, () => {
+      expect(computePageKey(uint256(slot))).toEqual(uint256(page));
+      expect(computeSlotOffset(uint256(slot))).toBe(offset);
+    });
+  }
+
+  test("maps the maximum 256-bit slot", () => {
+    const slot = new Uint8Array(SLOT_SIZE).fill(0xff);
+    const expectedPageKey = new Uint8Array(SLOT_SIZE).fill(0xff);
+    expectedPageKey[0] = 0x01;
+
+    expect(computePageKey(slot)).toEqual(expectedPageKey);
+    expect(computeSlotOffset(slot)).toBe(127);
+  });
+
+  test("returns a defensive page-key copy", () => {
+    const slot = uint256(128n);
+    const pageKey = computePageKey(slot);
+    slot.fill(0xff);
+
+    expect(pageKey).toEqual(uint256(1n));
+  });
+
+  test.each([
+    ["computePageKey", computePageKey],
+    ["computeSlotOffset", computeSlotOffset],
+  ] as const)("%s rejects invalid slot inputs", (_name, compute) => {
+    expect(() => compute([] as unknown as Uint8Array)).toThrow(TypeError);
+    expect(() => compute(new Uint8Array(SLOT_SIZE - 1))).toThrow(RangeError);
+    expect(() => compute(new Uint8Array(SLOT_SIZE + 1))).toThrow(RangeError);
+  });
+});
+
+describe("computePageCommitment", () => {
+  // All fixed-output vectors published by the official client at:
+  // https://github.com/category-labs/monad/blob/68d444b6937592d43db1013161a6c2b7b3f55be5/scripts/page_commit_reference.py
+  // They are also cross-checked by its C++ storage-page test.
+  test.each([
+    [
+      "zero page",
+      new Uint8Array(PAGE_SIZE),
+      "e572dff82304700b856a555ac3a4558d0df3646a3727816500270a93c66aac1e",
+    ],
+    [
+      "slot 0",
+      createPage([[0, 1n]]),
+      "80218c63919cd8c68aa9a5c0117bb8b46eb02099a7ce0b47a36e7b21658cc9f9",
+    ],
+    [
+      "slot 127",
+      createPage([[127, 1n]]),
+      "39a2175f8fac8fbf447383b46ff40e03673b388c05c87e50ed7b3f1a810c98d8",
+    ],
+    [
+      "full page",
+      createPage(
+        Array.from(
+          { length: 128 },
+          (_, index) => [index, BigInt(index + 1)] as const,
+        ),
+      ),
+      "e5a642261a2c2dedebd68ebd42237f2210d1eee94553d677d425dc3a46c7a687",
+    ],
+  ])("matches the official client %s vector", (_name, page, commitment) => {
+    expect(bytesToHex(computePageCommitment(page))).toBe(commitment);
+  });
+
+  test("commits both words of an asymmetric pair", () => {
+    const page = createPage([
+      [0, 1n],
+      [1, 2n],
+    ]);
+
+    expect(bytesToHex(computePageCommitment(page))).toBe(
+      "46906319c63bef972eab21b85ebaadda0b3d1648c8cd333be15f61b7dbc96e4e",
+    );
+
+    const swapped = createPage([
+      [0, 2n],
+      [1, 1n],
+    ]);
+    expect(computePageCommitment(swapped)).not.toEqual(
+      computePageCommitment(page),
+    );
+  });
+
+  test.each([
+    [
+      "alternating low slots",
+      [0, 2, 4, 6, 8, 10, 12, 14],
+      "269df22ad2b88e875e36642ecad514b9f0c9bd23b8a4cef135f3783ecd2a2db3",
+    ],
+    [
+      "boundary-heavy slots",
+      [0, 1, 2, 3, 31, 32, 63, 64, 95, 126, 127],
+      "6471fe6431c1c4c9ce129bf6a2a14328220e8d10f1767b279c3ab55488797268",
+    ],
+    [
+      "irregular sparse slots",
+      [1, 7, 19, 42, 76, 99, 121],
+      "e48df95a4a642d309e3f900b77ef5838a2403069ce981c98ef8734380e1b5a0b",
+    ],
+  ])("matches the reference-derived %s merge schedule", (_name, indices, commitment) => {
+    const page = createPage(indices.map((index) => [index, BigInt(index + 1)]));
+    expect(bytesToHex(computePageCommitment(page))).toBe(commitment);
+  });
+
+  // Generated by the pinned official Python reference using the same xorshift32
+  // byte stream and slot sequences as createDeterministicPage().
+  test.each([
+    [
+      "cross-pair page",
+      0x12345678,
+      [31, 32],
+      "bbca962d7764841d3d581ede56d6778b3ff61f15c84a7092d714bdea42e079d0",
+    ],
+    [
+      "sparse page",
+      0x9abcdef0,
+      [0, 5, 17, 33, 65, 96, 127],
+      "6dd05a3424208904decc7e3a3479ee3b9c08bf8626e7cd1b9d908498f102dc4b",
+    ],
+    [
+      "quarter-full page",
+      0x0badc0de,
+      permutedSlots(32, 37),
+      "beeeda501c90f2864755e91362a43af9fb9ae17c59461e45b076cd911b0dae8e",
+    ],
+    [
+      "three-quarter-full page",
+      0xfeedface,
+      permutedSlots(96, 53),
+      "a3eb3b26b982a08a8b1020a0ee320acd3523f7aa2ae12584015043ebc4704dbc",
+    ],
+    [
+      "full pseudorandom page",
+      0xc001d00d,
+      permutedSlots(128, 73),
+      "c3322bbeb76c5c1fe9d47960af43356b2c649651ddbcdf16caf5bcd93411286f",
+    ],
+  ] as const)("matches the reference-derived %s fixture", (_name, seed, indices, commitment) => {
+    expect(
+      bytesToHex(computePageCommitment(createDeterministicPage(seed, indices))),
+    ).toBe(commitment);
+  });
+
+  test("does not mutate its input", () => {
+    const page = new Uint8Array(PAGE_SIZE);
+    setWord(page, 64, 42n);
+    const before = page.slice();
+
+    computePageCommitment(page);
+
+    expect(page).toEqual(before);
+  });
+
+  test("rejects invalid page inputs", () => {
+    expect(() => computePageCommitment([] as unknown as Uint8Array)).toThrow(
+      TypeError,
+    );
+    expect(() => computePageCommitment(new Uint8Array(PAGE_SIZE - 1))).toThrow(
+      RangeError,
+    );
+    expect(() => computePageCommitment(new Uint8Array(PAGE_SIZE + 1))).toThrow(
+      RangeError,
+    );
+  });
+});
