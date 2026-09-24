@@ -51,6 +51,8 @@ export function updateRequestPagination<quantity extends bigint | Hex = bigint>(
 /**
  * Return whether a query response has scanned through its resolved end block.
  */
-export function isLastPage<quantity extends bigint | Hex = bigint>(response: PaginationResponse<quantity>): boolean {
+export function isLastPage<quantity extends bigint | Hex = bigint>(
+  response: PaginationResponse<quantity>,
+): boolean {
   return response.cursorBlock.number === response.toBlock.number;
 }

@@ -56,13 +56,13 @@ import type {
 function serializeRequest<
   T extends Pick<
     CommonRequestFields<bigint | Hex>,
-    "fromBlock" | "toBlock" | "limit"
+    "fromBlock" | "toBlock" | "target"
   >,
 >(
   request: T,
-): Omit<CommonRequestFields<bigint | Hex>, "fromBlock" | "toBlock" | "limit"> &
-  Pick<CommonRequestFields<Hex, Hex>, "fromBlock" | "toBlock" | "limit"> {
-  const { fromBlock, toBlock, limit, ...rest } = request;
+): Omit<CommonRequestFields<bigint | Hex>, "fromBlock" | "toBlock" | "target"> &
+  Pick<CommonRequestFields<Hex, Hex>, "fromBlock" | "toBlock" | "target"> {
+  const { fromBlock, toBlock, target, ...rest } = request;
   return {
     ...rest,
     ...(fromBlock != null && {
@@ -72,12 +72,12 @@ function serializeRequest<
     ...(toBlock != null && {
       toBlock: typeof toBlock === "bigint" ? numberToHex(toBlock) : toBlock,
     }),
-    ...(limit != null && { limit: numberToHex(limit) }),
+    ...(target != null && { target: numberToHex(target) }),
   } as Omit<
     CommonRequestFields<bigint | Hex>,
-    "fromBlock" | "toBlock" | "limit"
+    "fromBlock" | "toBlock" | "target"
   > &
-    Pick<CommonRequestFields<Hex, Hex>, "fromBlock" | "toBlock" | "limit">;
+    Pick<CommonRequestFields<Hex, Hex>, "fromBlock" | "toBlock" | "target">;
 }
 
 type QueryClient<
@@ -155,13 +155,13 @@ function injectRequiredAbiDecodeFields<
   field extends string,
   table extends string,
 >(
-  fields: Partial<Record<table, readonly field[] | true>> | undefined,
+  fields: Partial<Record<table, readonly field[] | "all">> | undefined,
   table: table,
   required: readonly field[],
 ) {
-  const next: Partial<Record<table, readonly field[] | true>> = { ...fields };
+  const next: Partial<Record<table, readonly field[] | "all">> = { ...fields };
   const current = next[table];
-  if (current === undefined || current === true) next[table] = true;
+  if (current === undefined || current === "all") next[table] = "all";
   else if (Array.isArray(current)) {
     next[table] = [...new Set([...current, ...required])];
   }
@@ -170,9 +170,9 @@ function injectRequiredAbiDecodeFields<
 
 function restoreRequestedFields<row extends object, key extends keyof row>(
   row: row,
-  fields: readonly key[] | true | undefined,
+  fields: readonly key[] | "all" | undefined,
 ): row | Pick<row, key> {
-  if (fields === undefined || fields === true) return row;
+  if (fields === undefined || fields === "all") return row;
   return Object.fromEntries(fields.map((field) => [field, row[field]])) as Pick<
     row,
     key

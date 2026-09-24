@@ -442,13 +442,13 @@ const METHOD_TO_TABLE = {
  * based on the method and any included relations.
  *
  * - If `fields` is omitted, all fields of the primary table are returned.
- * - If `fields[table]` is `true`, all fields of that table are returned.
+ * - If `fields[table]` is `"all"`, all fields of that table are returned.
  * - If `fields[table]` is an array, only those fields are returned.
  * - Related tables present as keys in `fields` contribute their fields too.
  */
 export function getFieldsForRequest(
   method: MethodName,
-  fields?: Record<string, readonly string[] | true | undefined>,
+  fields?: Record<string, readonly string[] | "all" | undefined>,
 ): {
   blocks: (keyof RpcBlockResponse)[];
   transactions: (keyof RpcTransactionResponse)[];
@@ -460,7 +460,7 @@ export function getFieldsForRequest(
 
   const resolve = (key: TableName): string[] => {
     const val = fields?.[key];
-    if (val === true || (val === undefined && key === primaryTable)) {
+    if (val === "all" || (val === undefined && key === primaryTable)) {
       return Array.from(FIELDS[key]);
     }
     if (Array.isArray(val)) {

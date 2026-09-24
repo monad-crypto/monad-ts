@@ -1,6 +1,6 @@
 # @monad-crypto/query
 
-TypeScript client for new RPC methods that query raw chain history: blocks, transactions, traces, logs, and native transfers. The methods support filtering, relations, field selection, ascending and descending ordering, and limit-based pagination.
+TypeScript client for new RPC methods that query raw chain history: blocks, transactions, traces, logs, and native transfers. The methods support filtering, relations, field selection, ascending and descending ordering, and target-based pagination.
 
 > [!WARNING]
 > The `eth_query*` methods and the nodes that serve them are pre-production and experimental. Standard public Monad RPC nodes do not implement these methods. This client works only with selected experimental endpoints where they have been enabled. Availability, behavior, and response formats may change without notice. Do not rely on these endpoints for production workloads.
@@ -81,14 +81,14 @@ response.data.transactions[0].from; // ✓ Address
 response.data.transactions[0].to;   // ✗ Type error — not selected
 ```
 
-Use `true` to include all fields:
+Use `"all"` to include all fields:
 
 ```ts
 const response = await client.queryTransactions({
   fromBlock: 1n,
   toBlock: 256n,
   fields: {
-    transactions: true, // all transaction fields
+    transactions: "all", // all transaction fields
   },
 });
 ```
@@ -156,7 +156,7 @@ Use the `*WithPagination` async generators to automatically paginate through lar
 for await (const page of client.queryTransactionsWithPagination({
   fromBlock: 1n,
   toBlock: 1_000_000n,
-  limit: 100,
+  target: 100,
   fields: {
     transactions: ["hash", "from", "to", "value"],
   },
@@ -165,7 +165,7 @@ for await (const page of client.queryTransactionsWithPagination({
 }
 ```
 
-Pagination is block-cursor based. A page is final when `cursorBlock.number === toBlock.number`; otherwise the helper resumes from `cursorBlock + 1n` for ascending queries or `cursorBlock - 1n` for descending queries. The `limit` is a target number of primary-table rows, and the server may return more rows to avoid splitting a block across pages.
+Pagination is block-cursor based. A page is final when `cursorBlock.number === toBlock.number`; otherwise the helper resumes from `cursorBlock + 1n` for ascending queries or `cursorBlock - 1n` for descending queries. The `target` is the requested number of primary-table rows, and the server may return more rows to avoid splitting a block across pages.
 
 For callers that use their own RPC wrapper, the pagination state can be updated
 without a Viem client:
@@ -192,7 +192,7 @@ cursor has reached the resolved end block.
 
 ## Examples
 
-Each action calls the corresponding Monad query method and returns a formatted Viem-style response. `bigint` block numbers and numeric limits are serialized before transport.
+Each action calls the corresponding Monad query method and returns a formatted Viem-style response. `bigint` block numbers and numeric targets are serialized before transport.
 
 ### Field Selection
 
@@ -202,7 +202,7 @@ Fetch only block number and timestamp without large fields like `logsBloom`:
 const response = await client.queryBlocks({
   fromBlock: 30_000_000n,
   toBlock: 30_000_003n,
-  limit: 2,
+  target: 2,
   fields: {
     blocks: ["number", "hash", "timestamp"],
   },
@@ -220,7 +220,7 @@ Find transactions with a specific 4-byte function selector:
 const response = await client.queryTransactions({
   fromBlock: 30_000_000n,
   toBlock: 30_010_000n,
-  limit: 100,
+  target: 100,
   filter: {
     selector: "0xa9059cbb",
   },
@@ -304,7 +304,7 @@ const response = await client.queryTransactions({
   fromBlock: "latest",
   toBlock: 30_000_000n,
   order: "desc",
-  limit: 25,
+  target: 25,
   fields: {
     transactions: ["hash", "blockNumber", "transactionIndex"],
   },

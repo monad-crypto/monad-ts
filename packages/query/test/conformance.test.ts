@@ -24,7 +24,7 @@ const client = createClient({
 const range = {
   fromBlock: "0x1c9c380",
   toBlock: "0x1c9c383",
-  limit: "0xa",
+  target: "0xa",
 } as const;
 
 test("eth_queryBlocks conforms to the default response shape", async () => {

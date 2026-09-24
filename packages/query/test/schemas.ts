@@ -167,10 +167,11 @@ const lightBlock = z.strictObject({
 
 function projectedShape<T extends Record<string, z.ZodType>>(
   shape: T,
-  fields: true | readonly string[] | undefined,
+  fields: "all" | readonly string[] | undefined,
   allFields: readonly string[],
 ) {
-  const selected = fields === undefined || fields === true ? allFields : fields;
+  const selected =
+    fields === undefined || fields === "all" ? allFields : fields;
   return Object.fromEntries(
     selected.map((field) => {
       const schema = shape[field];
@@ -182,7 +183,7 @@ function projectedShape<T extends Record<string, z.ZodType>>(
 
 function rowSchema<T extends Record<string, z.ZodType>>(
   shape: T,
-  fields: true | readonly string[] | undefined,
+  fields: "all" | readonly string[] | undefined,
   allFields: readonly string[],
 ) {
   return z.strictObject(projectedShape(shape, fields, allFields));
@@ -190,7 +191,7 @@ function rowSchema<T extends Record<string, z.ZodType>>(
 
 function relationSchema<T extends Record<string, z.ZodType>>(
   shape: T,
-  fields: true | readonly string[] | undefined,
+  fields: "all" | readonly string[] | undefined,
   allFields: readonly string[],
 ) {
   return z.array(rowSchema(shape, fields, allFields));
@@ -201,7 +202,7 @@ function responseSchema<T extends Record<string, z.ZodType>>(
   primaryShape: T,
   primaryFields: readonly string[],
   request: {
-    fields?: Record<string, true | readonly string[]>;
+    fields?: Record<string, "all" | readonly string[]>;
   },
   relations: readonly [string, Record<string, z.ZodType>, readonly string[]][],
 ) {

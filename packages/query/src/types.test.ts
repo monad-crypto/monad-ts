@@ -130,7 +130,7 @@ test("QueryRpcSchema exposes raw responses", () => {
 test("formatted-only typeHex is not a wire field selector", () => {
   type Fields = Exclude<
     QueryTransactionsFields["transactions"],
-    true | undefined
+    "all" | undefined
   >[number];
 
   expectTypeOf<"typeHex">().not.toMatchTypeOf<Fields>();
@@ -201,9 +201,9 @@ test("relation is absent when not in fields", () => {
   expectTypeOf<Response["data"]>().not.toHaveProperty("blocks");
 });
 
-test("relation with true is required with full type", () => {
+test('relation with "all" is required with full type', () => {
   type Request = {
-    fields: { transactions: readonly ["hash", "value"]; blocks: true };
+    fields: { transactions: readonly ["hash", "value"]; blocks: "all" };
   };
   type Response = QueryTransactionsResponse<Request>;
 
@@ -243,7 +243,7 @@ test("QueryLogsResponse narrows all tables independently", () => {
     fields: {
       logs: readonly ["address", "data", "topics"];
       transactions: readonly ["hash", "from"];
-      blocks: true;
+      blocks: "all";
     };
   };
   type Response = QueryLogsResponse<Request>;
@@ -287,7 +287,7 @@ test("QueryTransfersResponse narrows transfers with transactions included", () =
   type Request = {
     fields: {
       transfers: readonly ["from", "to", "value"];
-      transactions: true;
+      transactions: "all";
     };
   };
   type Response = QueryTransfersResponse<Request>;

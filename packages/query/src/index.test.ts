@@ -261,7 +261,7 @@ test("getFieldsForRequest resolves primary, relation, and omitted fields", () =>
   expect(
     getFieldsForRequest("eth_queryLogs", {
       logs: ["address", "topics"],
-      transactions: true,
+      transactions: "all",
       blocks: ["number"],
     }),
   ).toEqual({

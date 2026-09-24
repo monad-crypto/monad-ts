@@ -110,13 +110,13 @@ export type TableName =
   | "transfers";
 export type Order = "asc" | "desc";
 
-type BlockFieldNames = readonly `${keyof RpcBlockResponse}`[] | true;
+type BlockFieldNames = readonly `${keyof RpcBlockResponse}`[] | "all";
 type TransactionFieldNames =
   | readonly `${keyof RpcTransactionResponse}`[]
-  | true;
-type CallTraceFieldNames = readonly `${keyof RpcCallTraceResponse}`[] | true;
-type LogFieldNames = readonly `${keyof RpcLogResponse}`[] | true;
-type TransferFieldNames = readonly `${keyof RpcTransferResponse}`[] | true;
+  | "all";
+type CallTraceFieldNames = readonly `${keyof RpcCallTraceResponse}`[] | "all";
+type LogFieldNames = readonly `${keyof RpcLogResponse}`[] | "all";
+type TransferFieldNames = readonly `${keyof RpcTransferResponse}`[] | "all";
 
 export type QueryBlocksFields = {
   blocks?: BlockFieldNames;
@@ -145,7 +145,7 @@ export type QueryTransfersFields = {
   transfers?: TransferFieldNames;
 };
 
-export type CommonRequestFields<quantity = bigint, limit = number> = {
+export type CommonRequestFields<quantity = bigint, target = number> = {
   /** Starting block for the query, in the direction of traversal. Defaults to "earliest" (asc) or "latest" (desc). */
   fromBlock?: quantity | Exclude<BlockTag, "pending">;
   /** Ending block for the query (inclusive). Optional. */
@@ -153,21 +153,21 @@ export type CommonRequestFields<quantity = bigint, limit = number> = {
   /** Traversal direction. @default "asc" */
   order?: Order;
   /** Target number of primary-table rows. @default 100 */
-  limit?: limit;
+  target?: target;
 };
 
 export type QueryBlocksRequest<
   quantity = bigint,
-  limit = number,
-> = CommonRequestFields<quantity, limit> & {
+  target = number,
+> = CommonRequestFields<quantity, target> & {
   /** Field projection and relation selection per table. */
   fields?: QueryBlocksFields;
 };
 
 export type QueryTransactionsRequest<
   quantity = bigint,
-  limit = number,
-> = CommonRequestFields<quantity, limit> & {
+  target = number,
+> = CommonRequestFields<quantity, target> & {
   /** Row filter on transactions. */
   filter?: TransactionsFilter;
   /** Field projection and relation selection per table. */
@@ -176,8 +176,8 @@ export type QueryTransactionsRequest<
 
 export type QueryLogsRequest<
   quantity = bigint,
-  limit = number,
-> = CommonRequestFields<quantity, limit> & {
+  target = number,
+> = CommonRequestFields<quantity, target> & {
   /** Row filter on logs. */
   filter?: LogsFilter;
   /** Field projection and relation selection per table. */
@@ -218,8 +218,8 @@ export type QueryContractTracesRequest<
 
 export type QueryTracesRequest<
   quantity = bigint,
-  limit = number,
-> = CommonRequestFields<quantity, limit> & {
+  target = number,
+> = CommonRequestFields<quantity, target> & {
   /** Row filter on traces. */
   filter?: TracesFilter;
   /** Field projection and relation selection per table. */
@@ -228,8 +228,8 @@ export type QueryTracesRequest<
 
 export type QueryTransfersRequest<
   quantity = bigint,
-  limit = number,
-> = CommonRequestFields<quantity, limit> & {
+  target = number,
+> = CommonRequestFields<quantity, target> & {
   /** Row filter on transfers. */
   filter?: TransfersFilter;
   /** Field projection and relation selection per table. */
@@ -252,7 +252,7 @@ type ResolveSelect<TResponse, TSelect> = [TSelect] extends [
   ? Prettify<Pick<TResponse, (TSelect & readonly (keyof TResponse)[])[number]>>
   : TResponse;
 
-type ResolveInclude<TResponse, TInclude> = [TInclude] extends [true]
+type ResolveInclude<TResponse, TInclude> = [TInclude] extends ["all"]
   ? TResponse
   : [TInclude] extends [readonly (keyof TResponse)[]]
     ? Prettify<
@@ -278,7 +278,7 @@ type ResolveTransactionSelect<TSelect, quantity, index> = [TSelect] extends [
   : TransactionResponse<quantity, index>;
 
 type ResolveTransactionInclude<TInclude, quantity, index> = [TInclude] extends [
-  true,
+  "all",
 ]
   ? TransactionResponse<quantity, index>
   : ResolveTransactionSelect<TInclude, quantity, index>;

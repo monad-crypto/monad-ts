@@ -159,11 +159,11 @@ const APPROVAL_SIG =
 
 const benchmarks = [
   {
-    name: "blocks — 100-row limit, 10k-block range",
+    name: "blocks — 100-row target, 10k-block range",
     params: {
       table: "blocks",
       ...randomizedRange(DENSE_START, DENSE_START + 10000),
-      limit: toHex(100),
+      target: toHex(100),
     },
   },
   {
@@ -172,16 +172,16 @@ const benchmarks = [
       table: "blocks",
       fromBlock: "latest",
       order: "desc",
-      limit: toHex(100),
+      target: toHex(100),
       fields: { blocks: ["number", "hash", "timestamp", "gasUsed"] },
     },
   },
   {
-    name: "transactions — 100-row limit, dense 1k-block range",
+    name: "transactions — 100-row target, dense 1k-block range",
     params: {
       table: "transactions",
       ...randomizedRange(DENSE_START, DENSE_START + RANGE),
-      limit: toHex(100),
+      target: toHex(100),
     },
   },
   {
@@ -189,7 +189,7 @@ const benchmarks = [
     params: {
       table: "transactions",
       ...randomizedRange(1, 10_000_000),
-      limit: toHex(100),
+      target: toHex(100),
       filter: {
         from: ["0xf12cea359512b8ccd5e7b33b3d308a174837250c"],
       },
@@ -201,7 +201,7 @@ const benchmarks = [
       table: "transactions",
       fromBlock: "latest",
       order: "desc",
-      limit: toHex(100),
+      target: toHex(100),
       fields: {
         transactions: ["hash", "from", "to", "value"],
       },
@@ -213,7 +213,7 @@ const benchmarks = [
       table: "transactions",
       fromBlock: "latest",
       order: "desc",
-      limit: toHex(100),
+      target: toHex(100),
       fields: {
         transactions: ["hash", "from", "to", "value"],
         blocks: ["number", "timestamp"],
@@ -226,7 +226,7 @@ const benchmarks = [
       table: "transactions",
       ...randomizedRange(DENSE_START, DENSE_START + 10000),
       filter: { from: ["0x6f49a8f621353f12378d0046e7d7e4b9b249dc9e"] },
-      limit: toHex(100),
+      target: toHex(100),
     },
   },
   {
@@ -234,7 +234,7 @@ const benchmarks = [
     params: {
       table: "transactions",
       ...randomizedRange(DENSE_START, DENSE_START + RANGE),
-      limit: toHex(100),
+      target: toHex(100),
       fields: {
         transactions: ["hash", "from", "to", "value"],
         blocks: ["number", "timestamp"],
@@ -242,11 +242,11 @@ const benchmarks = [
     },
   },
   {
-    name: "logs — 100-row limit, dense 1k-block range",
+    name: "logs — 100-row target, dense 1k-block range",
     params: {
       table: "logs",
       ...randomizedRange(DENSE_START, DENSE_START + RANGE),
-      limit: toHex(100),
+      target: toHex(100),
     },
   },
   {
@@ -255,7 +255,7 @@ const benchmarks = [
       table: "logs",
       ...randomizedRange(DENSE_START, DENSE_START + 10000),
       filter: { address: ["0x3bd359c1119da7da1d913d1c4d2b7c461115433a"] },
-      limit: toHex(100),
+      target: toHex(100),
     },
   },
   {
@@ -270,7 +270,7 @@ const benchmarks = [
           ],
         ],
       },
-      limit: toHex(100),
+      target: toHex(100),
     },
   },
   {
@@ -283,7 +283,7 @@ const benchmarks = [
         address: ["0x3bd359c1119da7da1d913d1c4d2b7c461115433a"],
         topics: [[TRANSFER_SIG]],
       },
-      limit: toHex(100),
+      target: toHex(100),
       fields: {
         logs: ["address", "topics", "data", "blockNumber"],
         transactions: ["hash", "input"],
@@ -297,7 +297,7 @@ const benchmarks = [
       table: "logs",
       ...randomizedRange(1, 40_000_000),
       filter: { address: ["0x3bd359c1119da7da1d913d1c4d2b7c461115433a"] },
-      limit: toHex(100),
+      target: toHex(100),
     },
   },
   {
@@ -312,7 +312,7 @@ const benchmarks = [
           ],
         ],
       },
-      limit: toHex(100),
+      target: toHex(100),
     },
   },
   {
@@ -328,7 +328,7 @@ const benchmarks = [
           ],
         ],
       },
-      limit: toHex(100),
+      target: toHex(100),
     },
   },
   {
@@ -336,7 +336,7 @@ const benchmarks = [
     params: {
       table: "logs",
       ...randomizedRange(DENSE_START, DENSE_START + RANGE),
-      limit: toHex(100),
+      target: toHex(100),
       fields: {
         logs: ["address", "topics", "data", "blockNumber"],
         transactions: ["hash", "input"],
@@ -345,11 +345,11 @@ const benchmarks = [
     },
   },
   {
-    name: "traces — 100-row limit, dense 1k-block range",
+    name: "traces — 100-row target, dense 1k-block range",
     params: {
       table: "traces",
       ...randomizedRange(DENSE_START, DENSE_START + RANGE),
-      limit: toHex(100),
+      target: toHex(100),
     },
   },
   {
@@ -358,7 +358,7 @@ const benchmarks = [
       table: "traces",
       ...randomizedRange(DENSE_START, DENSE_START + RANGE),
       filter: { isTopLevel: true },
-      limit: toHex(100),
+      target: toHex(100),
     },
   },
   {
@@ -367,7 +367,7 @@ const benchmarks = [
       table: "traces",
       ...randomizedRange(1, 40_000_000),
       filter: { from: ["0xf12cea359512b8ccd5e7b33b3d308a174837250c"] },
-      limit: toHex(100),
+      target: toHex(100),
     },
   },
   {
@@ -375,7 +375,7 @@ const benchmarks = [
     params: {
       table: "traces",
       ...randomizedRange(DENSE_START, DENSE_START + RANGE),
-      limit: toHex(100),
+      target: toHex(100),
       fields: {
         traces: ["from", "to", "value", "status", "traceAddress", "input"],
         transactions: ["hash"],
@@ -384,11 +384,11 @@ const benchmarks = [
     },
   },
   {
-    name: "transfers — 100-row limit, dense 1k-block range",
+    name: "transfers — 100-row target, dense 1k-block range",
     params: {
       table: "transfers",
       ...randomizedRange(DENSE_START, DENSE_START + RANGE),
-      limit: toHex(100),
+      target: toHex(100),
     },
   },
   {
@@ -397,7 +397,7 @@ const benchmarks = [
       table: "transfers",
       ...randomizedRange(1, 40_000_000),
       filter: { from: ["0xf12cea359512b8ccd5e7b33b3d308a174837250c"] },
-      limit: toHex(100),
+      target: toHex(100),
     },
   },
   {
@@ -405,7 +405,7 @@ const benchmarks = [
     params: {
       table: "transfers",
       ...randomizedRange(DENSE_START, DENSE_START + RANGE),
-      limit: toHex(100),
+      target: toHex(100),
       fields: {
         transfers: ["from", "to", "value", "blockNumber"],
         transactions: ["hash"],
@@ -423,7 +423,7 @@ const benchmarks = [
         address: ["0x754704bc059f8c67012fed69bc8a327a5aafb603"],
         topics: [[TRANSFER_SIG]],
       },
-      limit: toHex(100),
+      target: toHex(100),
     },
   },
   {
@@ -436,7 +436,7 @@ const benchmarks = [
         address: ["0x3bd359c1119da7da1d913d1c4d2b7c461115433a"],
         topics: [[TRANSFER_SIG]],
       },
-      limit: toHex(100),
+      target: toHex(100),
     },
   },
   {
@@ -449,7 +449,7 @@ const benchmarks = [
         address: ["0x754704bc059f8c67012fed69bc8a327a5aafb603"],
         topics: [[APPROVAL_SIG]],
       },
-      limit: toHex(100),
+      target: toHex(100),
     },
   },
   {
@@ -461,7 +461,7 @@ const benchmarks = [
       filter: {
         to: ["0x754704bc059f8c67012fed69bc8a327a5aafb603"],
       },
-      limit: toHex(100),
+      target: toHex(100),
     },
   },
   {
@@ -473,7 +473,7 @@ const benchmarks = [
       filter: {
         to: ["0x3bd359c1119da7da1d913d1c4d2b7c461115433a"],
       },
-      limit: toHex(100),
+      target: toHex(100),
     },
   },
   {
@@ -482,7 +482,7 @@ const benchmarks = [
       table: "blocks",
       fromBlock: "latest",
       order: "desc",
-      limit: toHex(100),
+      target: toHex(100),
     },
   },
 ] satisfies { name: string; params: BenchmarkParams }[];

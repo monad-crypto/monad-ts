@@ -190,7 +190,7 @@ test("queryBlocksWithPagination handles edge cases", async () => {
     queryBlocksWithPagination(client, {
       fromBlock: 30_000_000n,
       toBlock: 30_000_002n,
-      limit: 1,
+      target: 1,
       fields: {
         blocks: ["number"],
       },
@@ -212,7 +212,7 @@ test("queryBlocksWithPagination handles edge cases", async () => {
     queryBlocksWithPagination(client, {
       fromBlock: 30_000_000n,
       toBlock: 30_000_003n,
-      limit: 2,
+      target: 2,
       fields: {
         blocks: ["number"],
       },
@@ -228,7 +228,7 @@ test("queryBlocksWithPagination handles edge cases", async () => {
       fromBlock: 30_000_003n,
       toBlock: 30_000_000n,
       order: "desc",
-      limit: 2,
+      target: 2,
       fields: {
         blocks: ["number"],
       },
@@ -245,7 +245,7 @@ test("queryBlocksWithPagination handles edge cases", async () => {
       fromBlock: "latest",
       toBlock: latestBlockNumber - 1_000n,
       order: "desc",
-      limit: 1,
+      target: 1,
       fields: {
         blocks: ["number"],
       },
@@ -271,7 +271,7 @@ test("queryTransactionsWithPagination handles an empty final page", async () => 
       filter: {
         from: "0x0000000000000000000000000000000000000000",
       },
-      limit: 1,
+      target: 1,
       fields: {
         transactions: ["hash"],
       },
@@ -288,7 +288,7 @@ test.failing("eth_queryBlocks accepts explicit earliest tags per spec", async ()
   const page = await queryBlocks(client, {
     fromBlock: "earliest",
     toBlock: "earliest",
-    limit: 1,
+    target: 1,
     fields: {
       blocks: ["number"],
     },
@@ -305,7 +305,7 @@ test("eth_queryBlocks accepts the earliest indexed numeric range", async () => {
   const page = await queryBlocks(client, {
     fromBlock: 1n,
     toBlock: 1n,
-    limit: 1,
+    target: 1,
     fields: {
       blocks: ["number"],
     },
@@ -326,7 +326,7 @@ test("pagination preserves block tags in the initial request", async () => {
     queryBlocksWithPagination(mockClient, {
       fromBlock: "earliest",
       toBlock: "latest",
-      limit: 1,
+      target: 1,
       fields: {
         blocks: ["number"],
       },
@@ -341,7 +341,7 @@ test("pagination preserves block tags in the initial request", async () => {
         {
           fields: { blocks: ["number"] },
           fromBlock: "earliest",
-          limit: "0x1",
+          target: "0x1",
           toBlock: "latest",
         },
       ],
@@ -359,7 +359,7 @@ test("pagination pins resolved toBlock after first page", async () => {
     queryBlocksWithPagination(mockClient, {
       fromBlock: 1n,
       toBlock: "latest",
-      limit: 1,
+      target: 1,
       fields: {
         blocks: ["number"],
       },
@@ -374,7 +374,7 @@ test("pagination pins resolved toBlock after first page", async () => {
         {
           fields: { blocks: ["number"] },
           fromBlock: "0x1",
-          limit: "0x1",
+          target: "0x1",
           toBlock: "latest",
         },
       ],
@@ -385,7 +385,7 @@ test("pagination pins resolved toBlock after first page", async () => {
         {
           fields: { blocks: ["number"] },
           fromBlock: "0x2",
-          limit: "0x1",
+          target: "0x1",
           toBlock: "0xa",
         },
       ],
@@ -402,7 +402,7 @@ test("pagination pins omitted toBlock after first page", async () => {
   await collectPages(
     queryBlocksWithPagination(mockClient, {
       fromBlock: 1n,
-      limit: 1,
+      target: 1,
       fields: {
         blocks: ["number"],
       },
@@ -417,7 +417,7 @@ test("pagination pins omitted toBlock after first page", async () => {
         {
           fields: { blocks: ["number"] },
           fromBlock: "0x1",
-          limit: "0x1",
+          target: "0x1",
         },
       ],
     },
@@ -427,7 +427,7 @@ test("pagination pins omitted toBlock after first page", async () => {
         {
           fields: { blocks: ["number"] },
           fromBlock: "0x2",
-          limit: "0x1",
+          target: "0x1",
           toBlock: "0xa",
         },
       ],
@@ -444,7 +444,7 @@ test("descending pagination does not request below block 0", async () => {
       fromBlock: 1n,
       toBlock: 0n,
       order: "desc",
-      limit: 1,
+      target: 1,
       fields: {
         blocks: ["number"],
       },
@@ -461,7 +461,7 @@ test("descending pagination does not request below block 0", async () => {
         {
           fields: { blocks: ["number"] },
           fromBlock: "0x1",
-          limit: "0x1",
+          target: "0x1",
           order: "desc",
           toBlock: "0x0",
         },
@@ -474,7 +474,7 @@ test("queryBlocks", async () => {
   const projected = await queryBlocks(client, {
     fromBlock: 30_000_000n,
     toBlock: 30_000_003n,
-    limit: 2,
+    target: 2,
     fields: {
       blocks: ["number", "hash", "timestamp"],
     },
@@ -510,7 +510,7 @@ test("queryBlocks", async () => {
     queryBlocksWithPagination(client, {
       fromBlock: 30_000_000n,
       toBlock: 30_000_003n,
-      limit: 2,
+      target: 2,
       fields: {
         blocks: ["number", "hash"],
       },
@@ -553,7 +553,7 @@ test("queryBlocks", async () => {
       fromBlock: 30_000_003n,
       toBlock: 30_000_000n,
       order: "desc",
-      limit: 2,
+      target: 2,
       fields: {
         blocks: ["number", "hash"],
       },
@@ -591,20 +591,20 @@ test("queryBlocks", async () => {
         ]
       `);
 
-  const invalidLimit = await captureRpcError(() =>
+  const invalidTarget = await captureRpcError(() =>
     queryBlocks(client, {
       fromBlock: 30_000_000n,
       toBlock: 30_000_003n,
-      limit: 0,
+      target: 0,
       fields: {
         blocks: ["number"],
       },
     }),
   );
-  expect(invalidLimit).toMatchInlineSnapshot(`
+  expect(invalidTarget).toMatchInlineSnapshot(`
       {
         "code": -32602,
-        "details": "limit must be at least 1",
+        "details": "target must be at least 1",
         "name": "InvalidParamsRpcError",
         "shortMessage": 
       "Invalid parameters were provided to the RPC method.
@@ -618,7 +618,7 @@ test("queryTransactions", async () => {
   const filtered = await queryTransactions(client, {
     fromBlock: 30_000_000n,
     toBlock: 30_000_003n,
-    limit: 2,
+    target: 2,
     filter: {
       from: "0xc777cfb3bccc2f1d3049845d62639c769dff243d",
     },
@@ -697,7 +697,7 @@ test("queryTransactions", async () => {
     queryTransactionsWithPagination(client, {
       fromBlock: 30_000_000n,
       toBlock: 30_000_999n,
-      limit: 1,
+      target: 1,
       fields: {
         transactions: ["hash", "blockNumber"],
         blocks: ["number"],
@@ -753,7 +753,7 @@ test("queryTransactions", async () => {
       fromBlock: 30_000_999n,
       toBlock: 30_000_000n,
       order: "desc",
-      limit: 1,
+      target: 1,
       fields: {
         transactions: ["hash", "blockNumber"],
         blocks: ["number"],
@@ -850,7 +850,7 @@ test("queryTransactions returns Viem transaction and receipt fields", async () =
   const response = await queryTransactions(client, {
     fromBlock: 30_000_000n,
     toBlock: 30_000_003n,
-    limit: 1,
+    target: 1,
     filter: {
       from: "0xc777cfb3bccc2f1d3049845d62639c769dff243d",
     },
@@ -958,7 +958,7 @@ test("queryLogs", async () => {
     queryLogsWithPagination(client, {
       fromBlock: 30_000_000n,
       toBlock: 30_000_999n,
-      limit: 1,
+      target: 1,
       fields: {
         logs: ["blockNumber", "logIndex"],
         transactions: ["hash"],
@@ -1015,7 +1015,7 @@ test("queryLogs", async () => {
       fromBlock: 30_000_999n,
       toBlock: 30_000_000n,
       order: "desc",
-      limit: 1,
+      target: 1,
       fields: {
         logs: ["blockNumber", "logIndex"],
         transactions: ["hash"],
@@ -1212,7 +1212,7 @@ test("queryTraces", async () => {
     queryTracesWithPagination(client, {
       fromBlock: 30_000_000n,
       toBlock: 30_000_999n,
-      limit: 1,
+      target: 1,
       fields: {
         traces: ["blockNumber", "traceAddress"],
         transactions: ["hash"],
@@ -1269,7 +1269,7 @@ test("queryTraces", async () => {
       fromBlock: 30_000_999n,
       toBlock: 30_000_000n,
       order: "desc",
-      limit: 1,
+      target: 1,
       fields: {
         traces: ["blockNumber", "traceAddress"],
         transactions: ["hash"],
@@ -1376,7 +1376,7 @@ test("queryTransfers", async () => {
   const filtered = await queryTransfers(client, {
     fromBlock: 30_000_000n,
     toBlock: 30_000_999n,
-    limit: 1,
+    target: 1,
     filter: {
       from: "0xd9f51b1e2a2f2b900a15096b9f7e077a7c8a64d6",
       to: "0xacc0a0cf13571d30b4b8637996f5d6d774d4fd62",
@@ -1472,7 +1472,7 @@ test("queryTransfers", async () => {
     queryTransfersWithPagination(client, {
       fromBlock: 30_000_000n,
       toBlock: 30_000_999n,
-      limit: 1,
+      target: 1,
       fields: {
         transfers: ["blockNumber", "traceAddress"],
         transactions: ["hash"],
@@ -1529,7 +1529,7 @@ test("queryTransfers", async () => {
       fromBlock: 30_000_999n,
       toBlock: 30_000_000n,
       order: "desc",
-      limit: 1,
+      target: 1,
       fields: {
         transfers: ["blockNumber", "traceAddress"],
         transactions: ["hash"],
@@ -1652,7 +1652,7 @@ test("queryActions binds all actions to the provided client", async () => {
     }),
   });
   const actions = queryActions(mockClient);
-  const request = { fromBlock: 1n, toBlock: 1n, limit: 1 };
+  const request = { fromBlock: 1n, toBlock: 1n, target: 1 };
 
   await actions.queryBlocks(request);
   await actions.queryTransactions(request);
@@ -1668,43 +1668,43 @@ test("queryActions binds all actions to the provided client", async () => {
   expect(calls).toEqual([
     {
       method: "eth_queryBlocks",
-      params: [{ fromBlock: "0x1", limit: "0x1", toBlock: "0x1" }],
+      params: [{ fromBlock: "0x1", target: "0x1", toBlock: "0x1" }],
     },
     {
       method: "eth_queryTransactions",
-      params: [{ fromBlock: "0x1", limit: "0x1", toBlock: "0x1" }],
+      params: [{ fromBlock: "0x1", target: "0x1", toBlock: "0x1" }],
     },
     {
       method: "eth_queryLogs",
-      params: [{ fromBlock: "0x1", limit: "0x1", toBlock: "0x1" }],
+      params: [{ fromBlock: "0x1", target: "0x1", toBlock: "0x1" }],
     },
     {
       method: "eth_queryTraces",
-      params: [{ fromBlock: "0x1", limit: "0x1", toBlock: "0x1" }],
+      params: [{ fromBlock: "0x1", target: "0x1", toBlock: "0x1" }],
     },
     {
       method: "eth_queryTransfers",
-      params: [{ fromBlock: "0x1", limit: "0x1", toBlock: "0x1" }],
+      params: [{ fromBlock: "0x1", target: "0x1", toBlock: "0x1" }],
     },
     {
       method: "eth_queryBlocks",
-      params: [{ fromBlock: "0x1", limit: "0x1", toBlock: "0x1" }],
+      params: [{ fromBlock: "0x1", target: "0x1", toBlock: "0x1" }],
     },
     {
       method: "eth_queryTransactions",
-      params: [{ fromBlock: "0x1", limit: "0x1", toBlock: "0x1" }],
+      params: [{ fromBlock: "0x1", target: "0x1", toBlock: "0x1" }],
     },
     {
       method: "eth_queryLogs",
-      params: [{ fromBlock: "0x1", limit: "0x1", toBlock: "0x1" }],
+      params: [{ fromBlock: "0x1", target: "0x1", toBlock: "0x1" }],
     },
     {
       method: "eth_queryTraces",
-      params: [{ fromBlock: "0x1", limit: "0x1", toBlock: "0x1" }],
+      params: [{ fromBlock: "0x1", target: "0x1", toBlock: "0x1" }],
     },
     {
       method: "eth_queryTransfers",
-      params: [{ fromBlock: "0x1", limit: "0x1", toBlock: "0x1" }],
+      params: [{ fromBlock: "0x1", target: "0x1", toBlock: "0x1" }],
     },
   ]);
 });

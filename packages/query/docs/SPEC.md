@@ -37,11 +37,11 @@ These shortcomings impose unnecessary compute, memory, and bandwidth costs on bo
 
 Each of the proposed JSON-RPC methods follow the same request and response shape.
 
-**Request.** Each request specifies a block range with `fromBlock` and `toBlock`, a traversal `order` (`"asc"` for oldest-first, `"desc"` for newest-first), and a `limit` on how many primary objects to return. Within that range, an optional `filter` narrows which objects are returned (for example, filtering logs by contract address and topic, or transactions by sender). An optional `fields` parameter controls which fields are returned for the primary objects and any related objects to join in the same response.
+**Request.** Each request specifies a block range with `fromBlock` and `toBlock`, a traversal `order` (`"asc"` for oldest-first, `"desc"` for newest-first), and a `target` for how many primary objects to return. Within that range, an optional `filter` narrows which objects are returned (for example, filtering logs by contract address and topic, or transactions by sender). An optional `fields` parameter controls which fields are returned for the primary objects and any related objects to join in the same response.
 
 **Response.** The `data` object contains the matched results, keyed by object type (e.g. `"logs"`, `"blocks"`). The response also includes three block references (`fromBlock`, `toBlock`, and `cursorBlock`) which record the exact blocks the server used when executing the query. These are used for pagination and reorg detection.
 
-**Pagination.** Because the server may stop before scanning the entire requested range (due to the `limit` or an internal constraint), `cursorBlock` records the last block scanned. To fetch the next page, submit a follow-up request starting one block past `cursorBlock`. Once `cursorBlock` equals `toBlock`, pagination is complete.
+**Pagination.** Because the server may stop before scanning the entire requested range (due to the `target` or an internal constraint), `cursorBlock` records the last block scanned. To fetch the next page, submit a follow-up request starting one block past `cursorBlock`. Once `cursorBlock` equals `toBlock`, pagination is complete.
 
 ### Example
 
@@ -64,7 +64,7 @@ This request queries for ERC-20 Transfer events emitted by the USDC contract, in
     "order": "asc",
     "fromBlock": "0xF4240",
     "toBlock": "0xF4E20",
-    "limit": "0x1F4"
+    "target": "0x1F4"
   }]
 }
 ```
@@ -145,7 +145,7 @@ All five methods share a common request structure and response envelope. Method-
 | `order` | `string` | No | Traversal direction. `"asc"` (default): scan from `fromBlock` upward, returning results oldest-first; if `toBlock` is omitted, the scan runs to chain tip. `"desc"`: scan from `fromBlock` downward, returning results newest-first; if `toBlock` is omitted, the scan runs to genesis. |
 | `fromBlock` | `QUANTITY \| TAG` | No | Inclusive range start. In `"asc"` mode, the lower bound; in `"desc"` mode, the upper bound. Accepts a hex-encoded block number (e.g. `"0xF4240"`) or a tag: `"latest"`, `"earliest"`, `"safe"`, `"finalized"`. Tags are resolved server-side at query execution time. If omitted, defaults to `"earliest"` in `"asc"` mode or `"latest"` in `"desc"` mode. |
 | `toBlock` | `QUANTITY \| TAG` | No | Inclusive range end. In `"asc"` mode, the upper bound; in `"desc"` mode, the lower bound. Same value types as `fromBlock`. If omitted, defaults to `"latest"` in `"asc"` mode or `"earliest"` in `"desc"` mode. |
-| `limit` | `QUANTITY` | No | Target number of primary objects to return. The server may return fewer if an internal constraint (e.g. response size or execution time) is reached, or more when needed to complete the current block. Related objects do not count toward this limit. If omitted, defaults to `100`. |
+| `target` | `QUANTITY` | No | Target number of primary objects to return. The server may return fewer if an internal constraint (e.g. response size or execution time) is reached, or more when needed to complete the current block. Related objects do not count toward this target. If omitted, defaults to `100`. |
 
 #### Response
 
@@ -163,7 +163,7 @@ The methods use standard JSON-RPC error codes plus the following application-spe
 | Code | Message | Description |
 | --- | --- | --- |
 | `-32602` | Invalid params | Malformed request: unknown `fields` keys, invalid `filter` fields, `fields` references an unrecognized or unsuppoted relation for this method, etc. |
-| `-32005` | Limit exceeded | The requested block range or `limit` exceeds server-imposed maximums. The `data` field of the error object SHOULD contain the server's limits. |
+| `-32005` | Limit exceeded | The requested block range or `target` exceeds server-imposed maximums. The `data` field of the error object SHOULD contain the server's limits. |
 
 Example error response:
 
@@ -175,7 +175,7 @@ Example error response:
     "code": -32005,
     "message": "Limit exceeded",
     "data": {
-      "maxLimit": "0x2710",
+      "maxTarget": "0x2710",
       "maxBlockRange": "0x186A0"
     }
   }
@@ -188,7 +188,7 @@ Query for block headers.
 
 #### Request
 
-`eth_queryBlocks` accepts all [common request parameters](#common-definitions) (`order`, `fromBlock`, `toBlock`, and `limit`) and the following method-specific parameters.
+`eth_queryBlocks` accepts all [common request parameters](#common-definitions) (`order`, `fromBlock`, `toBlock`, and `target`) and the following method-specific parameters.
 
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -201,11 +201,11 @@ Query for block headers.
 
 #### Fields
 
-The `fields` object accepts the following keys. The value is an array of field names to include, or `true` to include all fields.
+The `fields` object accepts the following keys. The value is an array of field names to include, or `"all"` to include all fields.
 
 | Key | Type | Description |
 | --- | --- | --- |
-| `blocks` | `string[] \| true` | Fields to include from the `blocks` schema. |
+| `blocks` | `string[] \| "all"` | Fields to include from the `blocks` schema. |
 
 `eth_queryBlocks` does not support any relations.
 
@@ -242,7 +242,7 @@ Query for transactions included in blocks.
 
 #### Request
 
-`eth_queryTransactions` accepts all [common request parameters](#common-definitions) (`order`, `fromBlock`, `toBlock`, and `limit`) and the following method-specific parameters.
+`eth_queryTransactions` accepts all [common request parameters](#common-definitions) (`order`, `fromBlock`, `toBlock`, and `target`) and the following method-specific parameters.
 
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -261,12 +261,12 @@ All conditions are combined with AND semantics. Each filter field accepts a sing
 
 #### Fields
 
-The `fields` object accepts the following keys. Each value is an array of field names to include from that schema, or `true` to include all fields.
+The `fields` object accepts the following keys. Each value is an array of field names to include from that schema, or `"all"` to include all fields.
 
 | Key | Type | Description |
 | --- | --- | --- |
-| `transactions` | `string[] \| true` | Fields to include from the `transactions` schema. |
-| `blocks` | `string[] \| true` | Fields to include from the `blocks` schema for related objects. |
+| `transactions` | `string[] \| "all"` | Fields to include from the `transactions` schema. |
+| `blocks` | `string[] \| "all"` | Fields to include from the `blocks` schema for related objects. |
 
 #### Response
 
@@ -320,7 +320,7 @@ Query for event logs emitted during transaction execution.
 
 #### Request
 
-`eth_queryLogs` accepts all [common request parameters](#common-definitions) (`order`, `fromBlock`, `toBlock`, and `limit`) and the following method-specific parameters.
+`eth_queryLogs` accepts all [common request parameters](#common-definitions) (`order`, `fromBlock`, `toBlock`, and `target`) and the following method-specific parameters.
 
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -345,13 +345,13 @@ The **`topics`** filter follows the same matching semantics as `eth_getLogs`. Th
 
 #### Fields
 
-The `fields` object accepts the following keys. Each value is an array of field names to include from that schema, or `true` to include all fields.
+The `fields` object accepts the following keys. Each value is an array of field names to include from that schema, or `"all"` to include all fields.
 
 | Key | Type | Description |
 | --- | --- | --- |
-| `logs` | `string[] \| true` | Fields to include from the `logs` schema. |
-| `transactions` | `string[] \| true` | Fields to include from the `transactions` schema for related objects. |
-| `blocks` | `string[] \| true` | Fields to include from the `blocks` schema for related objects. |
+| `logs` | `string[] \| "all"` | Fields to include from the `logs` schema. |
+| `transactions` | `string[] \| "all"` | Fields to include from the `transactions` schema for related objects. |
+| `blocks` | `string[] \| "all"` | Fields to include from the `blocks` schema for related objects. |
 
 #### Response
 
@@ -378,7 +378,7 @@ Query for internal call traces.
 
 #### Request
 
-`eth_queryTraces` accepts all [common request parameters](#common-definitions) (`order`, `fromBlock`, `toBlock`, and `limit`) and the following method-specific parameters.
+`eth_queryTraces` accepts all [common request parameters](#common-definitions) (`order`, `fromBlock`, `toBlock`, and `target`) and the following method-specific parameters.
 
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -398,13 +398,13 @@ All conditions are combined with AND semantics. Each filter field (except `isTop
 
 #### Fields
 
-The `fields` object accepts the following keys. Each value is an array of field names to include from that schema, or `true` to include all fields.
+The `fields` object accepts the following keys. Each value is an array of field names to include from that schema, or `"all"` to include all fields.
 
 | Key | Type | Description |
 | --- | --- | --- |
-| `traces` | `string[] \| true` | Fields to include from the `traces` schema. |
-| `transactions` | `string[] \| true` | Fields to include from the `transactions` schema for related objects. |
-| `blocks` | `string[] \| true` | Fields to include from the `blocks` schema for related objects. |
+| `traces` | `string[] \| "all"` | Fields to include from the `traces` schema. |
+| `transactions` | `string[] \| "all"` | Fields to include from the `transactions` schema for related objects. |
+| `blocks` | `string[] \| "all"` | Fields to include from the `blocks` schema for related objects. |
 
 #### Response
 
@@ -440,7 +440,7 @@ Query for native token transfers.
 
 #### Request
 
-`eth_queryTransfers` accepts all [common request parameters](#common-definitions) (`order`, `fromBlock`, `toBlock`, and `limit`) and the following method-specific parameters.
+`eth_queryTransfers` accepts all [common request parameters](#common-definitions) (`order`, `fromBlock`, `toBlock`, and `target`) and the following method-specific parameters.
 
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -459,13 +459,13 @@ All conditions are combined with AND semantics. Each filter field (except `isTop
 
 #### Fields
 
-The `fields` object accepts the following keys. Each value is an array of field names to include from that schema, or `true` to include all fields.
+The `fields` object accepts the following keys. Each value is an array of field names to include from that schema, or `"all"` to include all fields.
 
 | Key | Type | Description |
 | --- | --- | --- |
-| `transfers` | `string[] \| true` | Fields to include from the `transfers` schema. |
-| `transactions` | `string[] \| true` | Fields to include from the `transactions` schema for related objects. |
-| `blocks` | `string[] \| true` | Fields to include from the `blocks` schema for related objects. |
+| `transfers` | `string[] \| "all"` | Fields to include from the `transfers` schema. |
+| `transactions` | `string[] \| "all"` | Fields to include from the `transactions` schema for related objects. |
+| `blocks` | `string[] \| "all"` | Fields to include from the `blocks` schema for related objects. |
 
 #### Response
 
@@ -516,11 +516,11 @@ TODO: More specific treatment of reorg detection approach using `parentHash` etc
 
 **Block-aligned responses.** Splitting the objects from a single block across two pages would create ambiguity: a client receiving a partial block cannot tell whether it has seen all matching objects for that block. Always completing the current block before stopping eliminates this edge case and makes pagination deterministic.
 
-**Flexible limit.** Treating `limit` as a target rather than a hard upper bound allows the server to satisfy block alignment (which may require returning slightly more objects than requested) while still bounding response sizes. Servers may also return fewer objects than requested if an internal constraint such as a response size or time limit is reached.
+**Flexible target.** Treating `target` as a goal rather than a hard upper bound allows the server to satisfy block alignment (which may require returning slightly more objects than requested) while still bounding response sizes. Servers may also return fewer objects than requested if an internal constraint such as a response size or time limit is reached.
 
-**Only many-to-one joins.** Allowing one-to-many joins (e.g. including all transactions for a block) would make response sizes unpredictable — a single block could contain thousands of transactions. Restricting joins to many-to-one relations (e.g. including the parent block for each log) guarantees that the number of related objects is bounded by the number of primary objects, which keeps response sizes proportional to `limit`.
+**Only many-to-one joins.** Allowing one-to-many joins (e.g. including all transactions for a block) would make response sizes unpredictable — a single block could contain thousands of transactions. Restricting joins to many-to-one relations (e.g. including the parent block for each log) guarantees that the number of related objects is bounded by the number of primary objects, which keeps response sizes proportional to `target`.
 
-**Limit applies only to primary objects.** Counting related objects toward the limit would create confusing interactions between `limit`, `fields`, and the actual number of primary objects returned. Applying the limit only to the primary array makes behavior predictable regardless of which relations are requested.
+**Target applies only to primary objects.** Counting related objects toward the target would create confusing interactions between `target`, `fields`, and the actual number of primary objects returned. Applying the target only to the primary array makes behavior predictable regardless of which relations are requested.
 
 **Normalized vs. denormalized responses.** Results are returned in normalized form: primary objects and related objects in separate arrays, with shared objects (e.g. a block referenced by multiple logs) deduplicated. This avoids redundant data in the response payload and matches how clients typically store and index the data.
 
