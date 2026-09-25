@@ -127,7 +127,7 @@ test("eth_queryTraces conforms with field selection and relations", async () => 
   const request: QueryTracesRequest<Hex, Hex> = {
     ...range,
     fields: {
-      traces: ["from", "to", "value", "gas", "status", "traceAddress"],
+      traces: ["from", "to", "value", "gas", "reverted", "traceAddress"],
       transactions: ["hash", "from"],
       blocks: ["number", "hash"],
     },
@@ -144,7 +144,7 @@ test("eth_queryTransfers conforms with field selection and relations", async () 
   const request: QueryTransfersRequest<Hex, Hex> = {
     ...range,
     fields: {
-      transfers: ["from", "to", "value", "blockNumber", "status"],
+      transfers: ["from", "to", "value", "blockNumber", "reverted"],
       transactions: ["hash", "from"],
       blocks: ["number", "timestamp"],
     },

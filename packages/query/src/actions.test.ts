@@ -1116,7 +1116,6 @@ test("queryTraces", async () => {
     filter: {
       from: "0xc777cfb3bccc2f1d3049845d62639c769dff243d",
       to: "0x5447e0f54979fa6888b37631b9ce285cc4bc1a99",
-      isTopLevel: true,
     },
     fields: {
       traces: [
@@ -1126,7 +1125,7 @@ test("queryTraces", async () => {
         "blockNumber",
         "transactionHash",
         "traceAddress",
-        "status",
+        "reverted",
         "type",
       ],
       transactions: ["hash"],
@@ -1146,7 +1145,7 @@ test("queryTraces", async () => {
       "blockNumber",
       "transactionHash",
       "traceAddress",
-      "status",
+      "reverted",
       "type",
     ]),
     transactions: summarizeRows(filtered.data.transactions, ["hash"]),
@@ -1173,7 +1172,7 @@ test("queryTraces", async () => {
           "firstRowKeys": [
             "blockNumber",
             "from",
-            "status",
+            "reverted",
             "to",
             "traceAddress",
             "transactionHash",
@@ -1185,7 +1184,7 @@ test("queryTraces", async () => {
             {
               "blockNumber": 30000000n,
               "from": "0xc777cfb3bccc2f1d3049845d62639c769dff243d",
-              "status": "success",
+              "reverted": false,
               "to": "0x5447e0f54979fa6888b37631b9ce285cc4bc1a99",
               "traceAddress": [],
               "transactionHash": "0xd9899e8aa5e2311afc32b7af04bdb8973342b60d4e61f9866c3b04aeb277cdbe",
@@ -1380,7 +1379,6 @@ test("queryTransfers", async () => {
     filter: {
       from: "0xd9f51b1e2a2f2b900a15096b9f7e077a7c8a64d6",
       to: "0xacc0a0cf13571d30b4b8637996f5d6d774d4fd62",
-      isTopLevel: true,
     },
     fields: {
       transfers: [
@@ -1390,7 +1388,7 @@ test("queryTransfers", async () => {
         "blockNumber",
         "transactionHash",
         "traceAddress",
-        "status",
+        "reverted",
       ],
       transactions: ["hash"],
       blocks: ["number"],
@@ -1409,7 +1407,7 @@ test("queryTransfers", async () => {
       "blockNumber",
       "transactionHash",
       "traceAddress",
-      "status",
+      "reverted",
     ]),
     transactions: summarizeRows(filtered.data.transactions, ["hash"]),
     blocks: summarizeRows(filtered.data.blocks, ["number"]),
@@ -1446,7 +1444,7 @@ test("queryTransfers", async () => {
           "firstRowKeys": [
             "blockNumber",
             "from",
-            "status",
+            "reverted",
             "to",
             "traceAddress",
             "transactionHash",
@@ -1457,7 +1455,7 @@ test("queryTransfers", async () => {
             {
               "blockNumber": 30000041n,
               "from": "0xd9f51b1e2a2f2b900a15096b9f7e077a7c8a64d6",
-              "status": "success",
+              "reverted": false,
               "to": "0xacc0a0cf13571d30b4b8637996f5d6d774d4fd62",
               "traceAddress": [],
               "transactionHash": "0xc76a3ea4cd13bee5d505bdfaaaafb8f1c5f75b8c0adbaacc88be1dd2250fb7d6",
@@ -1812,18 +1810,20 @@ function logRow(topics: readonly Hex[] = transferTopics as Hex[]) {
 
 function traceRow(
   input: `0x${string}`,
-  status = "0x1",
+  reverted = false,
   output = forwardOutput,
+  error?: string,
 ) {
   return {
     blockHash: hash,
     blockNumber: "0x1",
+    ...(error !== undefined && { error }),
     from: address,
     gas: "0x10",
     gasUsed: "0x8",
     input,
     output,
-    status,
+    reverted,
     to: recipient,
     traceAddress: [],
     transactionHash: hash,
@@ -2054,10 +2054,14 @@ test("queryContractLogsWithPagination decodes every page without mutating the re
   expect((calls[1].params as [{ fromBlock: string }])[0].fromBlock).toBe("0x2");
 });
 
-test("queryContractTraces decodes successful and reverted calls", async () => {
+test("queryContractTraces decodes results unless the call itself failed", async () => {
   const { calls, client } = mockClient([
     response({
-      traces: [traceRow(forwardInput), traceRow(forwardInput, "0x0", "0x1234")],
+      traces: [
+        traceRow(forwardInput),
+        traceRow(forwardInput, true),
+        traceRow(forwardInput, true, "0x1234", "execution reverted"),
+      ],
     }),
   ]);
   const result = await queryContractTraces(client, {
@@ -2065,10 +2069,10 @@ test("queryContractTraces decodes successful and reverted calls", async () => {
     address: recipient,
     from: address,
     functionName: "forward",
-    isTopLevel: true,
+    includeReverted: true,
     fromBlock: 1n,
     toBlock: 1n,
-    fields: { traces: ["to", "status"] },
+    fields: { traces: ["to", "reverted"] },
   });
 
   expect(calls[0]).toEqual({
@@ -2078,10 +2082,10 @@ test("queryContractTraces decodes successful and reverted calls", async () => {
         filter: {
           to: recipient,
           from: address,
-          isTopLevel: true,
+          includeReverted: true,
           selector: `0x${forwardInput.slice(2, 10)}`,
         },
-        fields: { traces: ["to", "status", "input", "output"] },
+        fields: { traces: ["to", "reverted", "error", "input", "output"] },
         fromBlock: "0x1",
         toBlock: "0x1",
       },
@@ -2090,14 +2094,22 @@ test("queryContractTraces decodes successful and reverted calls", async () => {
   expect(result.data.traces).toEqual([
     {
       to: recipient,
-      status: "success",
+      reverted: false,
+      functionName: "forward",
+      args: [recipient, "0x1234"],
+      result: true,
+    },
+    // Returned normally, but a parent reverted: output is still valid.
+    {
+      to: recipient,
+      reverted: true,
       functionName: "forward",
       args: [recipient, "0x1234"],
       result: true,
     },
     {
       to: recipient,
-      status: "reverted",
+      reverted: true,
       functionName: "forward",
       args: [recipient, "0x1234"],
     },
@@ -2145,7 +2157,7 @@ test("queryContractTraces restores empty projections and decodes overloaded resu
     result: address,
   });
   const { calls, client } = mockClient([
-    response({ traces: [traceRow(input, "0x1", output)] }),
+    response({ traces: [traceRow(input, false, output)] }),
   ]);
   const result = await queryContractTraces(client, {
     abi: overloadedAbi,
@@ -2156,7 +2168,7 @@ test("queryContractTraces restores empty projections and decodes overloaded resu
   });
   expect(
     (calls[0].params as [{ fields: { traces: unknown } }])[0].fields.traces,
-  ).toEqual(["input", "output", "status"]);
+  ).toEqual(["error", "input", "output"]);
   expect(result.data.traces as unknown).toEqual([
     {
       functionName: "read",

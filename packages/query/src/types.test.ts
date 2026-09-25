@@ -136,15 +136,17 @@ test("formatted-only typeHex is not a wire field selector", () => {
   expectTypeOf<"typeHex">().not.toMatchTypeOf<Fields>();
 });
 
-test("trace and transfer wire statuses match transaction receipts", () => {
-  expectTypeOf<RpcCallTraceResponse["status"]>().toEqualTypeOf<"0x0" | "0x1">();
+test("trace and transfer rows expose reverted as a boolean", () => {
+  expectTypeOf<RpcCallTraceResponse["reverted"]>().toEqualTypeOf<boolean>();
   expectTypeOf<RpcCallTraceResponse["error"]>().toEqualTypeOf<
     string | undefined
   >();
-  expectTypeOf<RpcCallTraceResponse["revertReason"]>().toEqualTypeOf<
-    string | undefined
+  expectTypeOf<"revertReason">().not.toMatchTypeOf<
+    keyof RpcCallTraceResponse
   >();
-  expectTypeOf<RpcTransferResponse["status"]>().toEqualTypeOf<"0x0" | "0x1">();
+  expectTypeOf<"status">().not.toMatchTypeOf<keyof RpcCallTraceResponse>();
+  expectTypeOf<RpcTransferResponse["reverted"]>().toEqualTypeOf<boolean>();
+  expectTypeOf<CallTraceResponse["reverted"]>().toEqualTypeOf<boolean>();
 });
 
 test("trace identity uses traceAddress", () => {
@@ -327,9 +329,7 @@ test("CallTraceResponse quantity fields use the quantity generic", () => {
 test("TransferResponse extends CallTraceResponse with required recipient and value", () => {
   expectTypeOf<TransferResponse>().toExtend<CallTraceResponse>();
   expectTypeOf<TransferResponse["gas"]>().toEqualTypeOf<bigint>();
-  expectTypeOf<TransferResponse["status"]>().toEqualTypeOf<
-    "success" | "reverted"
-  >();
+  expectTypeOf<TransferResponse["reverted"]>().toEqualTypeOf<boolean>();
   expectTypeOf<TransferResponse["to"]>().toEqualTypeOf<`0x${string}`>();
   expectTypeOf<TransferResponse["value"]>().toEqualTypeOf<bigint>();
   expectTypeOf<

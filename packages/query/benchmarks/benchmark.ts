@@ -353,15 +353,6 @@ const benchmarks = [
     },
   },
   {
-    name: "traces — dense range, filtered to top-level traces",
-    params: {
-      table: "traces",
-      ...randomizedRange(DENSE_START, DENSE_START + RANGE),
-      filter: { isTopLevel: true },
-      target: toHex(100),
-    },
-  },
-  {
     name: "traces — large range, filtered by sender",
     params: {
       table: "traces",
@@ -377,7 +368,7 @@ const benchmarks = [
       ...randomizedRange(DENSE_START, DENSE_START + RANGE),
       target: toHex(100),
       fields: {
-        traces: ["from", "to", "value", "status", "traceAddress", "input"],
+        traces: ["from", "to", "value", "reverted", "traceAddress", "input"],
         transactions: ["hash"],
         blocks: ["number"],
       },

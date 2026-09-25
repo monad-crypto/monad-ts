@@ -320,7 +320,7 @@ function prepareContractTracesRequest<
   const abi extends Abi | readonly unknown[],
   functionName extends ContractFunctionName<abi> | undefined,
 >(request: QueryContractTracesRequest<abi, functionName>): QueryTracesRequest {
-  const { abi, functionName, address, from, isTopLevel, fields, ...rest } =
+  const { abi, functionName, address, from, includeReverted, fields, ...rest } =
     request;
   const functions = Array.from(abi).filter(
     (item): item is AbiFunction =>
@@ -338,7 +338,7 @@ function prepareContractTracesRequest<
   const filter = {
     ...(address !== undefined && { to: address }),
     ...(from !== undefined && { from }),
-    ...(isTopLevel !== undefined && { isTopLevel }),
+    ...(includeReverted !== undefined && { includeReverted }),
     ...(selectors.length > 0 && {
       selector: selectors.length === 1 ? selectors[0] : selectors,
     }),
@@ -348,7 +348,7 @@ function prepareContractTracesRequest<
     fields: injectRequiredAbiDecodeFields<keyof CallTraceResponse, "traces">(
       fields,
       "traces",
-      ["input", "output", "status"],
+      ["error", "input", "output"],
     ),
     ...(Object.keys(filter).length > 0 && { filter }),
   };
@@ -365,7 +365,7 @@ function decodeContractTrace<
     abi: request.abi,
     data: row.input,
   });
-  if (row.status === "success" && row.output !== undefined) {
+  if (row.error === undefined && row.output !== undefined) {
     const abiFunction = request.abi.find(
       (item): item is AbiFunction =>
         isAbiFunction(item) &&

@@ -60,7 +60,7 @@ response.cursorBlock; // { number: bigint; hash: Hex; parentHash: Hex }
 response.data; // primary rows and any requested relation tables
 ```
 
-The client formats successful responses into Viem-style JavaScript values. Block numbers, gas values, and transfer values are returned as `bigint`; transaction, log, trace, and transfer indexes are returned as `number`; statuses are normalized to `"success"` or `"reverted"`.
+The client formats successful responses into Viem-style JavaScript values. Block numbers, gas values, and transfer values are returned as `bigint`; transaction, log, trace, and transfer indexes are returned as `number`; transaction statuses are normalized to `"success"` or `"reverted"`. Traces and transfers have a boolean `reverted` field that is `true` when the state changes of the call were discarded because the call itself reverted or when one of its parent calls reverted.  
 
 ## Field Selection
 
@@ -259,7 +259,7 @@ response.data.blocks;
 
 ### Traces
 
-Get top-level traces for a contract call target:
+Get traces for a contract call target:
 
 ```ts
 const response = await client.queryTraces({
@@ -267,18 +267,19 @@ const response = await client.queryTraces({
   toBlock: 30_000_999n,
   filter: {
     to: "0x5447e0f54979fa6888b37631b9ce285cc4bc1a99",
-    isTopLevel: true,
   },
   fields: {
-    traces: ["from", "to", "value", "status", "traceAddress"],
+    traces: ["from", "to", "value", "traceAddress"],
     transactions: ["hash"],
   },
 });
 ```
 
+Reverted traces and transfers are excluded by default. Set `includeReverted: true` in the filter to include them. The `reverted` field is `true` when the call or one of its parent calls reverted.
+
 ### Native Transfers
 
-Query native token transfers, including only top-level transfers:
+Query native token transfers to an address:
 
 ```ts
 const response = await client.queryTransfers({
@@ -286,10 +287,9 @@ const response = await client.queryTransfers({
   toBlock: 30_000_999n,
   filter: {
     to: "0xacc0a0cf13571d30b4b8637996f5d6d774d4fd62",
-    isTopLevel: true,
   },
   fields: {
-    transfers: ["from", "to", "value", "blockNumber", "status"],
+    transfers: ["from", "to", "value", "blockNumber"],
     blocks: ["number"],
   },
 });

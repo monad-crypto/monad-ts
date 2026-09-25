@@ -6,7 +6,6 @@ import {
   type Hex,
   hexToBigInt,
   hexToNumber,
-  type Status,
 } from "viem";
 
 import type {
@@ -117,12 +116,6 @@ function formatLightBlock(block: LightBlock<Hex>): LightBlock {
     hash: block.hash,
     parentHash: block.parentHash,
   };
-}
-
-function normalizeStatus(status: Status) {
-  if (status === "0x1") return "success";
-  if (status === "0x0") return "reverted";
-  throw new Error(`Invalid RPC status: ${status}`);
 }
 
 function filterProperties<T extends object, K extends keyof T>(
@@ -254,9 +247,6 @@ export function formatQueryTracesResponse(
           ...(t.gas !== undefined && { gas: hexToBigInt(t.gas) }),
           ...(t.gasUsed !== undefined && { gasUsed: hexToBigInt(t.gasUsed) }),
           ...(t.value !== undefined && { value: hexToBigInt(t.value) }),
-          ...(t.status !== undefined && {
-            status: normalizeStatus(t.status),
-          }),
         };
         return trace as CallTraceResponse;
       }),
@@ -288,9 +278,6 @@ export function formatQueryTransfersResponse(
             transactionIndex: hexToNumber(t.transactionIndex),
           }),
           ...(t.value !== undefined && { value: hexToBigInt(t.value) }),
-          ...(t.status !== undefined && {
-            status: normalizeStatus(t.status),
-          }),
         };
         return transfer as TransferResponse;
       }),
@@ -377,8 +364,7 @@ export const callTraceFields = [
   "gasUsed",
   "input",
   "output",
-  "revertReason",
-  "status",
+  "reverted",
   "to",
   "traceAddress",
   "transactionHash",
@@ -411,8 +397,7 @@ export const transferFields = [
   "gasUsed",
   "input",
   "output",
-  "revertReason",
-  "status",
+  "reverted",
   "to",
   "traceAddress",
   "transactionHash",

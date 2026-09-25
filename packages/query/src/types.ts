@@ -19,7 +19,6 @@ import type {
   RpcLog,
   RpcTransaction,
   RpcTransactionReceipt,
-  Status,
   Transaction,
   TransactionReceipt,
 } from "viem";
@@ -89,8 +88,8 @@ export type TracesFilter = {
   to?: Address | Address[];
   /** 4-byte function selector. Scalar or array (OR within field). */
   selector?: Hex | Hex[];
-  /** If true, only top-level traces (those with an empty traceAddress) are returned. */
-  isTopLevel?: boolean;
+  /** If true, reverted traces are also returned. Defaults to `false`. */
+  includeReverted?: boolean;
 };
 
 export type TransfersFilter = {
@@ -98,8 +97,8 @@ export type TransfersFilter = {
   from?: Address | Address[];
   /** Recipient address. Scalar or array (OR within field). */
   to?: Address | Address[];
-  /** If true, only top-level transfers (those initiated directly by a transaction) are returned. */
-  isTopLevel?: boolean;
+  /** If true, reverted transfers are also returned. Defaults to `false`. */
+  includeReverted?: boolean;
 };
 
 export type TableName =
@@ -213,7 +212,8 @@ export type QueryContractTracesRequest<
   address?: Address | Address[];
   from?: Address | Address[];
   functionName?: functionName;
-  isTopLevel?: boolean;
+  /** If true, reverted traces are also returned. Defaults to `false`. */
+  includeReverted?: boolean;
 };
 
 export type QueryTracesRequest<
@@ -650,7 +650,10 @@ export type RpcTransactionResponse = RpcTransaction<false> &
   Omit<RpcTransactionReceipt, "logs" | "transactionHash">;
 
 /** Raw call trace row returned over JSON-RPC. */
-export type RpcCallTraceResponse = Omit<CallFrame<Hex>, "calls" | "logs"> & {
+export type RpcCallTraceResponse = Omit<
+  CallFrame<Hex>,
+  "calls" | "logs" | "revertReason"
+> & {
   /** Hash of block containing this trace. */
   blockHash: Hash;
   /** Number of block containing this trace. */
@@ -661,8 +664,14 @@ export type RpcCallTraceResponse = Omit<CallFrame<Hex>, "calls" | "logs"> & {
   transactionIndex: Hex;
   /** Path through nested call tree. */
   traceAddress: number[];
-  /** Receipt-style status: `0x1` for success and `0x0` for reverted. */
-  status: Status;
+  /**
+   * `true` if the state changes of this call were discarded. This happens when
+   * the call itself reverted or when one of its parent calls reverted.
+   *
+   * A reverted call can have no `error` and a valid `output`. This happens when
+   * the call returned normally but a parent call reverted after it.
+   */
+  reverted: boolean;
 };
 
 /** Raw log row returned over JSON-RPC. */
@@ -706,11 +715,10 @@ export type TransactionResponse<
 > = Transaction<quantity, index, false> &
   Omit<TransactionReceipt<quantity, index, status>, "logs" | "transactionHash">;
 
-export type CallTraceResponse<
-  quantity = bigint,
-  index = number,
-  status = "success" | "reverted",
-> = Omit<CallFrame<quantity>, "calls" | "logs"> & {
+export type CallTraceResponse<quantity = bigint, index = number> = Omit<
+  CallFrame<quantity>,
+  "calls" | "logs" | "revertReason"
+> & {
   /** Hash of block containing this trace. */
   blockHash: Hash;
   /** Number of block containing this trace. */
@@ -722,11 +730,13 @@ export type CallTraceResponse<
   /** Path through nested call tree. */
   traceAddress: number[];
   /**
-   * `reverted` if this trace was reverted or `success` otherwise.
+   * `true` if the state changes of this call were discarded. This happens when
+   * the call itself reverted or when one of its parent calls reverted.
    *
-   * Note: A trace can have no `error` but still be `reverted` if a parent trace is `reverted`.
+   * A reverted call can have no `error` and a valid `output`. This happens when
+   * the call returned normally but a parent call reverted after it.
    */
-  status: status;
+  reverted: boolean;
 };
 
 export type LogResponse<quantity = bigint, index = number> = Log<
@@ -735,11 +745,10 @@ export type LogResponse<quantity = bigint, index = number> = Log<
   false
 >;
 
-export type TransferResponse<
-  quantity = bigint,
-  index = number,
-  status = "success" | "reverted",
-> = Omit<CallTraceResponse<quantity, index, status>, "to" | "value"> & {
+export type TransferResponse<quantity = bigint, index = number> = Omit<
+  CallTraceResponse<quantity, index>,
+  "to" | "value"
+> & {
   /** The target address receiving the call. */
   to: Address;
   /** Amount of ETH transfer. */

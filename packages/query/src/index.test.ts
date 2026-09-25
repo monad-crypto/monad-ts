@@ -183,7 +183,7 @@ test("formatQueryTransactionsResponse formats receipt and EIP-7702 fields", () =
   ]);
 });
 
-test("formatQueryTracesResponse normalizes status", () => {
+test("formatQueryTracesResponse passes reverted through", () => {
   const traces = formatQueryTracesResponse(
     rpcFixture<Parameters<typeof formatQueryTracesResponse>[0]>({
       ...envelope,
@@ -191,13 +191,12 @@ test("formatQueryTracesResponse normalizes status", () => {
         traces: [
           {
             blockNumber: "0x1",
-            status: "0x1",
+            reverted: false,
           },
           {
             blockNumber: "0x2",
             error: "execution reverted",
-            revertReason: "NotAllowed()",
-            status: "0x0",
+            reverted: true,
           },
         ],
       },
@@ -207,18 +206,17 @@ test("formatQueryTracesResponse normalizes status", () => {
   expect(traces.data.traces as unknown).toEqual([
     {
       blockNumber: 1n,
-      status: "success",
+      reverted: false,
     },
     {
       blockNumber: 2n,
       error: "execution reverted",
-      revertReason: "NotAllowed()",
-      status: "reverted",
+      reverted: true,
     },
   ]);
 });
 
-test("formatQueryTransfersResponse normalizes status", () => {
+test("formatQueryTransfersResponse passes reverted through", () => {
   const transfers = formatQueryTransfersResponse(
     rpcFixture<Parameters<typeof formatQueryTransfersResponse>[0]>({
       ...envelope,
@@ -226,11 +224,11 @@ test("formatQueryTransfersResponse normalizes status", () => {
         transfers: [
           {
             blockNumber: "0x1",
-            status: "0x1",
+            reverted: false,
           },
           {
             blockNumber: "0x2",
-            status: "0x0",
+            reverted: true,
           },
         ],
       },
@@ -240,11 +238,11 @@ test("formatQueryTransfersResponse normalizes status", () => {
   expect(transfers.data.transfers as unknown).toEqual([
     {
       blockNumber: 1n,
-      status: "success",
+      reverted: false,
     },
     {
       blockNumber: 2n,
-      status: "reverted",
+      reverted: true,
     },
   ]);
 });
