@@ -42,7 +42,6 @@
     }
   },
   "devDependencies": {
-    "viem": "2.47.0",
-    "zod": "4.3.6"
+    "viem": "2.47.0"
   }
 }
