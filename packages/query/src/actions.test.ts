@@ -1812,12 +1812,12 @@ function traceRow(
   input: `0x${string}`,
   reverted = false,
   output = forwardOutput,
-  error?: string,
+  error: string | null = null,
 ) {
   return {
     blockHash: hash,
     blockNumber: "0x1",
-    ...(error !== undefined && { error }),
+    error,
     from: address,
     gas: "0x10",
     gasUsed: "0x8",
@@ -1828,7 +1828,7 @@ function traceRow(
     traceAddress: [],
     transactionHash: hash,
     transactionIndex: "0x0",
-    type: "call",
+    type: "CALL",
     value: "0x0",
   };
 }

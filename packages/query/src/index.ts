@@ -62,7 +62,9 @@ export {
 } from "./pagination.js";
 export type {
   BlockResponse,
+  BlocksFilter,
   CallTraceResponse,
+  CallType,
   ContractLogDecoded,
   ContractLogResponse,
   ContractTraceDecoded,
@@ -106,6 +108,7 @@ export type {
   TracesFilter,
   TransactionResponse,
   TransactionsFilter,
+  TransferCallType,
   TransferResponse,
   TransfersFilter,
 } from "./types.js";
@@ -126,12 +129,11 @@ function filterProperties<T extends object, K extends keyof T>(
 }
 
 function formatBlocks(blocks: RpcBlockResponse[]): BlockResponse[] {
-  return blocks.map(
-    (b) =>
-      filterProperties(
-        formatBlock(b),
-        Object.keys(b) as (keyof BlockResponse)[],
-      ) as BlockResponse,
+  return blocks.map((b) =>
+    filterProperties(
+      formatBlock(b) as BlockResponse,
+      Object.keys(b) as (keyof BlockResponse)[],
+    ),
   );
 }
 
@@ -140,15 +142,12 @@ function formatTransactions(
 ): TransactionResponse[] {
   return transactions.map((t) => {
     const receiptFields = [
-      "blobGasPrice",
-      "blobGasUsed",
       "blockTimestamp",
       "contractAddress",
       "cumulativeGasUsed",
       "effectiveGasPrice",
       "gasUsed",
       "logsBloom",
-      "root",
       "status",
     ] as const;
     const receipt = formatTransactionReceipt(t);
@@ -177,6 +176,27 @@ function formatLogs(logs: RpcLogResponse[]): LogResponse[] {
         Object.keys(l) as (keyof LogResponse)[],
       ) as LogResponse,
   );
+}
+
+function formatTraces<
+  rpcTrace extends Partial<RpcCallTraceResponse | RpcTransferResponse>,
+>(
+  traces: rpcTrace[],
+): rpcTrace extends RpcTransferResponse
+  ? TransferResponse[]
+  : CallTraceResponse[] {
+  return traces.map((t) => ({
+    ...t,
+    ...(t.blockNumber !== undefined && {
+      blockNumber: hexToBigInt(t.blockNumber),
+    }),
+    ...(t.transactionIndex !== undefined && {
+      transactionIndex: hexToNumber(t.transactionIndex),
+    }),
+    ...(t.gas !== undefined && { gas: hexToBigInt(t.gas) }),
+    ...(t.gasUsed !== undefined && { gasUsed: hexToBigInt(t.gasUsed) }),
+    ...(t.value !== undefined && { value: hexToBigInt(t.value) }),
+  })) as never;
 }
 
 export function formatQueryBlocksResponse(
@@ -234,22 +254,7 @@ export function formatQueryTracesResponse(
     toBlock: formatLightBlock(raw.toBlock),
     cursorBlock: formatLightBlock(raw.cursorBlock),
     data: {
-      traces: raw.data.traces.map((rawTrace) => {
-        const t = rawTrace as Partial<RpcCallTraceResponse>;
-        const trace: unknown = {
-          ...t,
-          ...(t.blockNumber !== undefined && {
-            blockNumber: hexToBigInt(t.blockNumber),
-          }),
-          ...(t.transactionIndex !== undefined && {
-            transactionIndex: hexToNumber(t.transactionIndex),
-          }),
-          ...(t.gas !== undefined && { gas: hexToBigInt(t.gas) }),
-          ...(t.gasUsed !== undefined && { gasUsed: hexToBigInt(t.gasUsed) }),
-          ...(t.value !== undefined && { value: hexToBigInt(t.value) }),
-        };
-        return trace as CallTraceResponse;
-      }),
+      traces: formatTraces(raw.data.traces),
     },
   };
   if (raw.data.transactions) {
@@ -267,20 +272,7 @@ export function formatQueryTransfersResponse(
     toBlock: formatLightBlock(raw.toBlock),
     cursorBlock: formatLightBlock(raw.cursorBlock),
     data: {
-      transfers: raw.data.transfers.map((rawTransfer) => {
-        const t = rawTransfer as Partial<RpcTransferResponse>;
-        const transfer: unknown = {
-          ...t,
-          ...(t.blockNumber !== undefined && {
-            blockNumber: hexToBigInt(t.blockNumber),
-          }),
-          ...(t.transactionIndex !== undefined && {
-            transactionIndex: hexToNumber(t.transactionIndex),
-          }),
-          ...(t.value !== undefined && { value: hexToBigInt(t.value) }),
-        };
-        return transfer as TransferResponse;
-      }),
+      transfers: formatTraces(raw.data.transfers),
     },
   };
   if (raw.data.transactions) {
@@ -308,6 +300,7 @@ export const blockFields = [
   "parentBeaconBlockRoot",
   "parentHash",
   "receiptsRoot",
+  "requestsHash",
   "sha3Uncles",
   "size",
   "stateRoot",
@@ -321,9 +314,6 @@ export const blockFields = [
 export const transactionFields = [
   "accessList",
   "authorizationList",
-  "blobVersionedHashes",
-  "blobGasPrice",
-  "blobGasUsed",
   "blockHash",
   "blockNumber",
   "blockTimestamp",
@@ -338,12 +328,10 @@ export const transactionFields = [
   "hash",
   "input",
   "logsBloom",
-  "maxFeePerBlobGas",
   "maxFeePerGas",
   "maxPriorityFeePerGas",
   "nonce",
   "r",
-  "root",
   "s",
   "status",
   "to",

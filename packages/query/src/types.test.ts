@@ -13,6 +13,7 @@ import type {
   ContractLogResponse,
   ContractTraceResponse,
   LogResponse,
+  QueryBlocksFields,
   QueryBlocksResponse,
   QueryLogsResponse,
   QueryRpcSchema,
@@ -73,7 +74,7 @@ test("default QueryTransactionsResponse has full types and optional relations", 
 
 test("raw and formatted transaction responses use Viem representations", () => {
   expectTypeOf<RpcTransactionResponse["type"]>().toEqualTypeOf<
-    "0x0" | "0x1" | "0x2" | "0x3" | "0x4"
+    "0x0" | "0x1" | "0x2" | "0x4"
   >();
   expectTypeOf<RpcTransactionResponse>().not.toHaveProperty("typeHex");
   expectTypeOf<RpcTransactionResponse>().not.toHaveProperty("transactionHash");
@@ -82,7 +83,7 @@ test("raw and formatted transaction responses use Viem representations", () => {
   >();
 
   expectTypeOf<TransactionResponse["type"]>().toEqualTypeOf<
-    "legacy" | "eip2930" | "eip1559" | "eip4844" | "eip7702"
+    "legacy" | "eip2930" | "eip1559" | "eip7702"
   >();
   expectTypeOf<TransactionResponse["typeHex"]>().toEqualTypeOf<Hex | null>();
   expectTypeOf<TransactionResponse>().not.toHaveProperty("transactionHash");
@@ -138,15 +139,35 @@ test("formatted-only typeHex is not a wire field selector", () => {
 
 test("trace and transfer rows expose reverted as a boolean", () => {
   expectTypeOf<RpcCallTraceResponse["reverted"]>().toEqualTypeOf<boolean>();
-  expectTypeOf<RpcCallTraceResponse["error"]>().toEqualTypeOf<
-    string | undefined
-  >();
+  expectTypeOf<RpcCallTraceResponse["error"]>().toEqualTypeOf<string | null>();
   expectTypeOf<"revertReason">().not.toMatchTypeOf<
     keyof RpcCallTraceResponse
   >();
   expectTypeOf<"status">().not.toMatchTypeOf<keyof RpcCallTraceResponse>();
   expectTypeOf<RpcTransferResponse["reverted"]>().toEqualTypeOf<boolean>();
   expectTypeOf<CallTraceResponse["reverted"]>().toEqualTypeOf<boolean>();
+});
+
+test("field selectors accept only fields that Monad returns", () => {
+  type BlockFields = Exclude<
+    QueryBlocksFields["blocks"],
+    "all" | undefined
+  >[number];
+  type TransactionFields = Exclude<
+    QueryTransactionsFields["transactions"],
+    "all" | undefined
+  >[number];
+
+  expectTypeOf<"requestsHash">().toMatchTypeOf<BlockFields>();
+  expectTypeOf<"transactions">().not.toMatchTypeOf<BlockFields>();
+  expectTypeOf<"withdrawals">().not.toMatchTypeOf<BlockFields>();
+  expectTypeOf<"authorizationList">().toMatchTypeOf<TransactionFields>();
+  expectTypeOf<"blobVersionedHashes">().not.toMatchTypeOf<TransactionFields>();
+  expectTypeOf<"maxFeePerBlobGas">().not.toMatchTypeOf<TransactionFields>();
+  expectTypeOf<"blobGasPrice">().not.toMatchTypeOf<TransactionFields>();
+  expectTypeOf<"blobGasUsed">().not.toMatchTypeOf<TransactionFields>();
+  expectTypeOf<"root">().not.toMatchTypeOf<TransactionFields>();
+  expectTypeOf<LogResponse["blockTimestamp"]>().toEqualTypeOf<bigint>();
 });
 
 test("trace identity uses traceAddress", () => {
@@ -315,26 +336,25 @@ test("envelope LightBlock fields always use the quantity generic", () => {
 test("CallTraceResponse quantity fields use the quantity generic", () => {
   expectTypeOf<CallTraceResponse["gas"]>().toEqualTypeOf<bigint>();
   expectTypeOf<CallTraceResponse["gasUsed"]>().toEqualTypeOf<bigint>();
-  expectTypeOf<CallTraceResponse["value"]>().toEqualTypeOf<
-    bigint | undefined
-  >();
+  expectTypeOf<CallTraceResponse["value"]>().toEqualTypeOf<bigint>();
 
   expectTypeOf<CallTraceResponse<Hex, Hex>["gas"]>().toEqualTypeOf<Hex>();
   expectTypeOf<CallTraceResponse<Hex, Hex>["gasUsed"]>().toEqualTypeOf<Hex>();
-  expectTypeOf<CallTraceResponse<Hex, Hex>["value"]>().toEqualTypeOf<
-    Hex | undefined
-  >();
+  expectTypeOf<CallTraceResponse<Hex, Hex>["value"]>().toEqualTypeOf<Hex>();
 });
 
-test("TransferResponse extends CallTraceResponse with required recipient and value", () => {
+test("TransferResponse has the same fields as CallTraceResponse", () => {
   expectTypeOf<TransferResponse>().toExtend<CallTraceResponse>();
   expectTypeOf<TransferResponse["gas"]>().toEqualTypeOf<bigint>();
   expectTypeOf<TransferResponse["reverted"]>().toEqualTypeOf<boolean>();
-  expectTypeOf<TransferResponse["to"]>().toEqualTypeOf<`0x${string}`>();
+  expectTypeOf<TransferResponse["to"]>().toEqualTypeOf<`0x${string}` | null>();
   expectTypeOf<TransferResponse["value"]>().toEqualTypeOf<bigint>();
-  expectTypeOf<
-    TransferResponse<Hex, Hex>["to"]
-  >().toEqualTypeOf<`0x${string}`>();
+  expectTypeOf<TransferResponse["type"]>().toEqualTypeOf<
+    "CALL" | "STATICCALL" | "CREATE" | "CREATE2" | "SELFDESTRUCT"
+  >();
+  expectTypeOf<TransferResponse<Hex, Hex>["to"]>().toEqualTypeOf<
+    `0x${string}` | null
+  >();
   expectTypeOf<TransferResponse<Hex, Hex>["value"]>().toEqualTypeOf<Hex>();
 });
 
@@ -376,7 +396,7 @@ test("ABI trace responses infer function arguments and optional results", () => 
   type Row = ContractTraceResponse<Request>["data"]["traces"][number];
 
   expectTypeOf<Row["functionName"]>().toEqualTypeOf<"forward">();
-  expectTypeOf<Row["to"]>().toEqualTypeOf<`0x${string}` | undefined>();
+  expectTypeOf<Row["to"]>().toEqualTypeOf<`0x${string}` | null>();
   expectTypeOf<Row["args"]>().toEqualTypeOf<readonly [`0x${string}`]>();
   expectTypeOf<Row["result"]>().toEqualTypeOf<boolean | undefined>();
 });

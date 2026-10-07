@@ -21,8 +21,8 @@ import type {
   RpcTransactionReceipt,
   Transaction,
   TransactionReceipt,
+  UnionOmit,
 } from "viem";
-import type { CallFrame } from "./debug.js";
 
 export type MethodName =
   | "eth_queryBlocks"
@@ -63,6 +63,11 @@ export type LightBlock<quantity = bigint> = {
   number: quantity;
   hash: Hash;
   parentHash: Hash;
+};
+
+export type BlocksFilter = {
+  /** Block miner / coinbase address. Scalar or array (OR within field). */
+  miner?: Address | Address[];
 };
 
 export type TransactionsFilter = {
@@ -159,6 +164,8 @@ export type QueryBlocksRequest<
   quantity = bigint,
   target = number,
 > = CommonRequestFields<quantity, target> & {
+  /** Row filter on blocks. */
+  filter?: BlocksFilter;
   /** Field projection and relation selection per table. */
   fields?: QueryBlocksFields;
 };
@@ -639,86 +646,94 @@ export type QueryTransfersResponse<
     BlockRelation<request, quantity>;
 };
 
+/**
+ * Block fields that Monad does not return. `requestsHash` is added separately
+ * because Viem does not define it.
+ */
+type UnsupportedBlockFields =
+  | "transactions"
+  | "sealFields"
+  | "uncles"
+  | "withdrawals";
+
+/** Transaction and receipt fields that Monad does not return. */
+type UnsupportedTransactionFields = "blobVersionedHashes" | "maxFeePerBlobGas";
+type UnsupportedReceiptFields =
+  | "logs"
+  | "transactionHash"
+  | "blobGasPrice"
+  | "blobGasUsed"
+  | "root";
+
 /** Raw block row returned over JSON-RPC. */
 export type RpcBlockResponse = Omit<
   RpcBlock<Exclude<BlockTag, "pending">, false>,
-  "transactions" | "sealFields" | "uncles" | "withdrawals"
->;
-
-/** Raw transaction and receipt row returned over JSON-RPC. */
-export type RpcTransactionResponse = RpcTransaction<false> &
-  Omit<RpcTransactionReceipt, "logs" | "transactionHash">;
-
-/** Raw call trace row returned over JSON-RPC. */
-export type RpcCallTraceResponse = Omit<
-  CallFrame<Hex>,
-  "calls" | "logs" | "revertReason"
+  UnsupportedBlockFields
 > & {
-  /** Hash of block containing this trace. */
-  blockHash: Hash;
-  /** Number of block containing this trace. */
-  blockNumber: Hex;
-  /** Hash of transaction containing this trace. */
-  transactionHash: Hash;
-  /** Index of transaction containing this trace. */
-  transactionIndex: Hex;
-  /** Path through nested call tree. */
-  traceAddress: number[];
+  /** EIP-7685 requests hash. Present only in blocks from `MONAD_FOUR`. */
+  requestsHash?: Hash | undefined;
+};
+
+/**
+ * Raw transaction and receipt row returned over JSON-RPC. Monad does not
+ * accept type `0x3` (EIP-4844) transactions.
+ */
+export type RpcTransactionResponse = UnionOmit<
+  Exclude<RpcTransaction<false>, { type: "0x3" }>,
+  UnsupportedTransactionFields
+> &
+  Omit<RpcTransactionReceipt, UnsupportedReceiptFields>;
+
+/** Call frame type of a trace. */
+export type CallType =
+  | "CALL"
+  | "CALLCODE"
+  | "DELEGATECALL"
+  | "STATICCALL"
+  | "CREATE"
+  | "CREATE2"
+  | "SELFDESTRUCT";
+
+/** Call frame type of a transfer. `DELEGATECALL` and `CALLCODE` do not move value. */
+export type TransferCallType = Exclude<CallType, "DELEGATECALL" | "CALLCODE">;
+
+type TraceRow<quantity, index, type extends CallType> = {
+  /** The type of the call. */
+  type: type;
+  /** The address initiating the call. */
+  from: Address;
+  /**
+   * The target address of the call. For `CREATE` and `CREATE2`, the address
+   * of the created contract. For `SELFDESTRUCT`, the beneficiary address.
+   * `null` if a `CREATE` or `CREATE2` frame failed.
+   */
+  to: Address | null;
+  /** Amount of native token sent with the call. */
+  value: quantity;
+  /** Gas provided for the call. */
+  gas: quantity;
+  /** Gas used during the call. */
+  gasUsed: quantity;
+  /** Call data. For `CREATE` and `CREATE2`, the init code. */
+  input: Hex;
+  /**
+   * Return data. For a successful `CREATE` or `CREATE2`, the deployed code.
+   * `0x` if the frame returned no data.
+   */
+  output: Hex;
+  /**
+   * Failure of this call frame itself, such as a revert, out of gas, or an
+   * invalid opcode. `null` if this frame returned normally.
+   */
+  error: string | null;
   /**
    * `true` if the state changes of this call were discarded. This happens when
-   * the call itself reverted or when one of its parent calls reverted.
+   * the call itself failed or when one of its parent calls failed.
    *
-   * A reverted call can have no `error` and a valid `output`. This happens when
-   * the call returned normally but a parent call reverted after it.
+   * A reverted call can have a `null` `error` and a valid `output`. This
+   * happens when the call returned normally but a parent call failed after it.
    */
   reverted: boolean;
-};
-
-/** Raw log row returned over JSON-RPC. */
-export type RpcLogResponse = Omit<
-  RpcLog,
-  | "blockHash"
-  | "blockNumber"
-  | "transactionHash"
-  | "transactionIndex"
-  | "logIndex"
-> & {
-  /** Hash of block containing this log. */
-  blockHash: Hash;
-  /** Number of block containing this log. */
-  blockNumber: Hex;
-  /** Hash of transaction containing this log. */
-  transactionHash: Hash;
-  /** Index of transaction containing this log. */
-  transactionIndex: Hex;
-  /** Index of this log in the transaction receipt. */
-  logIndex: Hex;
-};
-
-/** Raw native transfer row returned over JSON-RPC. */
-export type RpcTransferResponse = Omit<RpcCallTraceResponse, "to" | "value"> & {
-  /** The target address receiving the call. */
-  to: Address;
-  /** Amount of ETH transfer. */
-  value: Hex;
-};
-
-export type BlockResponse<quantity = bigint> = Omit<
-  Block<quantity, false, Exclude<BlockTag, "pending">>,
-  "transactions" | "sealFields" | "uncles" | "withdrawals"
->;
-
-export type TransactionResponse<
-  quantity = bigint,
-  index = number,
-  status = "success" | "reverted",
-> = Transaction<quantity, index, false> &
-  Omit<TransactionReceipt<quantity, index, status>, "logs" | "transactionHash">;
-
-export type CallTraceResponse<quantity = bigint, index = number> = Omit<
-  CallFrame<quantity>,
-  "calls" | "logs" | "revertReason"
-> & {
   /** Hash of block containing this trace. */
   blockHash: Hash;
   /** Number of block containing this trace. */
@@ -729,28 +744,72 @@ export type CallTraceResponse<quantity = bigint, index = number> = Omit<
   transactionIndex: index;
   /** Path through nested call tree. */
   traceAddress: number[];
-  /**
-   * `true` if the state changes of this call were discarded. This happens when
-   * the call itself reverted or when one of its parent calls reverted.
-   *
-   * A reverted call can have no `error` and a valid `output`. This happens when
-   * the call returned normally but a parent call reverted after it.
-   */
-  reverted: boolean;
 };
 
-export type LogResponse<quantity = bigint, index = number> = Log<
+/** Raw call trace row returned over JSON-RPC. */
+export type RpcCallTraceResponse = TraceRow<Hex, Hex, CallType>;
+
+/** Raw log row returned over JSON-RPC. */
+export type RpcLogResponse = Omit<
+  RpcLog,
+  | "blockHash"
+  | "blockNumber"
+  | "blockTimestamp"
+  | "transactionHash"
+  | "transactionIndex"
+  | "logIndex"
+> & {
+  /** Hash of block containing this log. */
+  blockHash: Hash;
+  /** Number of block containing this log. */
+  blockNumber: Hex;
+  /** Timestamp of block containing this log. */
+  blockTimestamp: Hex;
+  /** Hash of transaction containing this log. */
+  transactionHash: Hash;
+  /** Index of transaction containing this log. */
+  transactionIndex: Hex;
+  /** Index of this log in the block. */
+  logIndex: Hex;
+};
+
+/** Raw native transfer row returned over JSON-RPC. */
+export type RpcTransferResponse = TraceRow<Hex, Hex, TransferCallType>;
+
+export type BlockResponse<quantity = bigint> = Omit<
+  Block<quantity, false, Exclude<BlockTag, "pending">>,
+  UnsupportedBlockFields
+> & {
+  /** EIP-7685 requests hash. Present only in blocks from `MONAD_FOUR`. */
+  requestsHash?: Hash | undefined;
+};
+
+export type TransactionResponse<
+  quantity = bigint,
+  index = number,
+  status = "success" | "reverted",
+> = UnionOmit<
+  Exclude<Transaction<quantity, index, false>, { type: "eip4844" }>,
+  UnsupportedTransactionFields
+> &
+  Omit<TransactionReceipt<quantity, index, status>, UnsupportedReceiptFields>;
+
+export type CallTraceResponse<quantity = bigint, index = number> = TraceRow<
   quantity,
   index,
-  false
+  CallType
 >;
 
-export type TransferResponse<quantity = bigint, index = number> = Omit<
-  CallTraceResponse<quantity, index>,
-  "to" | "value"
+export type LogResponse<quantity = bigint, index = number> = Omit<
+  Log<quantity, index, false>,
+  "blockTimestamp"
 > & {
-  /** The target address receiving the call. */
-  to: Address;
-  /** Amount of ETH transfer. */
-  value: quantity;
+  /** Timestamp of block containing this log. */
+  blockTimestamp: quantity;
 };
+
+export type TransferResponse<quantity = bigint, index = number> = TraceRow<
+  quantity,
+  index,
+  TransferCallType
+>;

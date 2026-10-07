@@ -275,9 +275,11 @@ const response = await client.queryTraces({
 });
 ```
 
-Reverted traces and transfers are excluded by default. Set `includeReverted: true` in the filter to include them. The `reverted` field is `true` when the call or one of its parent calls reverted.
+Reverted traces and transfers are excluded by default. Set `includeReverted: true` in the filter to include them. The `reverted` field is `true` when the call or one of its parent calls failed. The `error` field is `null` when the frame returned normally.
 
 ### Native Transfers
+
+A transfer is a call frame with a `value` greater than zero. `DELEGATECALL` and `CALLCODE` frames do not move value, so they are never transfers.
 
 Query native token transfers to an address:
 
@@ -317,7 +319,7 @@ const response = await client.queryTransactions({
 
 | Action | Description |
 | --- | --- |
-| `client.queryBlocks` | Query blocks by range |
+| `client.queryBlocks` | Query blocks with optional filters |
 | `client.queryTransactions` | Query transactions with optional filters |
 | `client.queryLogs` | Query event logs with optional filters |
 | `client.queryTraces` | Query call traces with optional filters |
@@ -367,16 +369,18 @@ const response = await client.queryTransactions({
 | `QueryContractLogsRequest`, `QueryContractLogsResponse` | ABI event-log request and decoded response types |
 | `QueryContractTracesRequest`, `QueryContractTracesResponse` | ABI contract-call request and decoded response types |
 | `QueryTransfersRequest`, `QueryTransfersResponse` | Transfer query request and response types |
-| `TransactionsFilter`, `LogsFilter`, `TracesFilter`, `TransfersFilter` | Table-specific filter types |
+| `BlocksFilter`, `TransactionsFilter`, `LogsFilter`, `TracesFilter`, `TransfersFilter` | Table-specific filter types |
 
 ### Field Constants
 
 | Constant | Fields |
 | --- | --- |
-| `blockFields` | `number`, `hash`, `timestamp`, `gasUsed`, `gasLimit`, `miner`, `size`, ... (22 total) |
-| `transactionFields` | `hash`, `from`, `to`, `value`, `gas`, `gasPrice`, `input`, `nonce`, ... (32 total) |
-| `callTraceFields` | `from`, `to`, `value`, `gas`, `gasUsed`, `input`, `output`, `type`, ... (17 total) |
-| `logFields` | `address`, `data`, `topics`, `blockNumber`, `transactionHash`, ... (8 total) |
-| `transferFields` | `from`, `to`, `value`, `blockNumber`, `transactionHash`, ... (9 total) |
+| `blockFields` | `number`, `hash`, `timestamp`, `gasUsed`, `gasLimit`, `miner`, `size`, ... (24 total) |
+| `transactionFields` | `hash`, `from`, `to`, `value`, `gas`, `gasPrice`, `input`, `nonce`, ... (28 total) |
+| `callTraceFields` | `from`, `to`, `value`, `gas`, `gasUsed`, `input`, `output`, `type`, ... (15 total) |
+| `logFields` | `address`, `data`, `topics`, `blockNumber`, `transactionHash`, ... (10 total) |
+| `transferFields` | `from`, `to`, `value`, `blockNumber`, `transactionHash`, ... (15 total) |
 
-See [`docs/SPEC.md`](./docs/SPEC.md) for the full raw JSON-RPC method specification.
+The field constants list every field that Monad returns, as defined in the "Monad Response Schemas" appendix of [MIP-16](https://github.com/monad-crypto/MIPs/blob/main/MIPs/MIP-16.md). A request that selects a field not in these lists fails with error `-32602`.
+
+See [MIP-16](https://github.com/monad-crypto/MIPs/blob/main/MIPs/MIP-16.md) for the full raw JSON-RPC method specification.

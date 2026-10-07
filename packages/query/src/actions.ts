@@ -365,7 +365,7 @@ function decodeContractTrace<
     abi: request.abi,
     data: row.input,
   });
-  if (row.error === undefined && row.output !== undefined) {
+  if (row.error == null && row.output !== undefined) {
     const abiFunction = request.abi.find(
       (item): item is AbiFunction =>
         isAbiFunction(item) &&

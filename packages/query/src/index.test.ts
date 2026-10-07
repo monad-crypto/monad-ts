@@ -130,8 +130,6 @@ test("formatQueryTransactionsResponse formats receipt and EIP-7702 fields", () =
                 yParity: "0x1",
               },
             ],
-            blobGasPrice: "0x3",
-            blobGasUsed: "0x4",
             blockNumber: "0x1",
             blockTimestamp: "0x2",
             chainId: "0x8f",
@@ -140,7 +138,6 @@ test("formatQueryTransactionsResponse formats receipt and EIP-7702 fields", () =
             effectiveGasPrice: "0x6",
             gasUsed: "0x7",
             logsBloom: "0x00",
-            root: block.hash,
             status: "0x1",
             transactionIndex: "0x0",
             type: "0x4",
@@ -163,8 +160,6 @@ test("formatQueryTransactionsResponse formats receipt and EIP-7702 fields", () =
           yParity: 1,
         },
       ],
-      blobGasPrice: 3n,
-      blobGasUsed: 4n,
       blockNumber: 1n,
       blockTimestamp: 2n,
       chainId: 143,
@@ -173,7 +168,6 @@ test("formatQueryTransactionsResponse formats receipt and EIP-7702 fields", () =
       effectiveGasPrice: 6n,
       gasUsed: 7n,
       logsBloom: "0x00",
-      root: block.hash,
       status: "success",
       transactionIndex: 0,
       type: "eip7702",
@@ -191,6 +185,7 @@ test("formatQueryTracesResponse passes reverted through", () => {
         traces: [
           {
             blockNumber: "0x1",
+            error: null,
             reverted: false,
           },
           {
@@ -206,6 +201,7 @@ test("formatQueryTracesResponse passes reverted through", () => {
   expect(traces.data.traces as unknown).toEqual([
     {
       blockNumber: 1n,
+      error: null,
       reverted: false,
     },
     {
@@ -290,4 +286,39 @@ test("field inventories are exhaustive for raw response rows", () => {
   expectTypeOf<
     Exclude<keyof RpcTransferResponse, (typeof transferFields)[number]>
   >().toEqualTypeOf<never>();
+});
+
+test("formatQueryTransfersResponse formats quantity fields like traces", () => {
+  const transfers = formatQueryTransfersResponse(
+    rpcFixture<Parameters<typeof formatQueryTransfersResponse>[0]>({
+      ...envelope,
+      data: {
+        transfers: [
+          {
+            blockNumber: "0x1",
+            error: null,
+            gas: "0x10",
+            gasUsed: "0x8",
+            to: null,
+            transactionIndex: "0x2",
+            type: "CREATE",
+            value: "0x5",
+          },
+        ],
+      },
+    }),
+  );
+
+  expect(transfers.data.transfers as unknown).toEqual([
+    {
+      blockNumber: 1n,
+      error: null,
+      gas: 16n,
+      gasUsed: 8n,
+      to: null,
+      transactionIndex: 2,
+      type: "CREATE",
+      value: 5n,
+    },
+  ]);
 });
