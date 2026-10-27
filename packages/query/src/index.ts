@@ -52,6 +52,23 @@ export {
   queryTransfersWithPagination,
 } from "./actions.js";
 export type {
+  LiveBlock,
+  LiveCursor,
+  LiveTag,
+  QueryLiveBlockEvent,
+  QueryLiveData,
+  QueryLiveEvent,
+  QueryLiveFields,
+  QueryLiveFilter,
+  QueryLiveFinalizeEvent,
+  QueryLiveReorgEvent,
+  QueryLiveRequest,
+  StreamQueryParameters,
+  WatchQueryCallbacks,
+  WatchQueryParameters,
+} from "./live.js";
+export { streamQuery, watchQuery } from "./live.js";
+export type {
   PaginationRequest,
   PaginationResponse,
 } from "./pagination.js";

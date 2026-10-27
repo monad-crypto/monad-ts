@@ -253,7 +253,7 @@ type ExtractField<TRequest, TKey extends string> = TRequest extends {
     : undefined
   : undefined;
 
-type ResolveSelect<TResponse, TSelect> = [TSelect] extends [
+export type ResolveSelect<TResponse, TSelect> = [TSelect] extends [
   readonly (keyof TResponse)[],
 ]
   ? Prettify<Pick<TResponse, (TSelect & readonly (keyof TResponse)[])[number]>>
@@ -269,9 +269,9 @@ type ResolveInclude<TResponse, TInclude> = [TInclude] extends ["all"]
 
 type EmptyObject = Record<never, never>;
 
-type ResolveTransactionSelect<TSelect, quantity, index> = [TSelect] extends [
-  readonly (keyof RpcTransactionResponse)[],
-]
+export type ResolveTransactionSelect<TSelect, quantity, index> = [
+  TSelect,
+] extends [readonly (keyof RpcTransactionResponse)[]]
   ? Prettify<
       Pick<
         TransactionResponse<quantity, index>,

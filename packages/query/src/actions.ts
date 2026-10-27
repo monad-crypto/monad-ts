@@ -27,6 +27,15 @@ import {
   formatQueryTransfersResponse,
 } from "./index.js";
 import {
+  type LiveTag,
+  type QueryLiveFields,
+  type QueryLiveFilter,
+  type StreamQueryParameters,
+  streamQuery,
+  type WatchQueryParameters,
+  watchQuery,
+} from "./live.js";
+import {
   isLastPage,
   pinRequestRange,
   updateRequestPagination,
@@ -663,5 +672,31 @@ export function queryActions(client: QueryClient) {
     >(
       request: request,
     ) => queryContractTracesWithPagination(client, request),
+    watchQuery: <
+      const filter extends QueryLiveFilter,
+      const fields extends QueryLiveFields | undefined = undefined,
+      tag extends LiveTag | undefined = undefined,
+      includeFinalization extends boolean | undefined = undefined,
+    >(
+      parameters: WatchQueryParameters<
+        tag,
+        filter,
+        fields,
+        includeFinalization
+      >,
+    ) => watchQuery(client, parameters),
+    streamQuery: <
+      const filter extends QueryLiveFilter,
+      const fields extends QueryLiveFields | undefined = undefined,
+      tag extends LiveTag | undefined = undefined,
+      includeFinalization extends boolean | undefined = undefined,
+    >(
+      parameters: StreamQueryParameters<
+        tag,
+        filter,
+        fields,
+        includeFinalization
+      >,
+    ) => streamQuery(client, parameters),
   };
 }
