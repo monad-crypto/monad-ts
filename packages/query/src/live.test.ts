@@ -5,7 +5,8 @@
  */
 
 import { expectTypeOf, test } from "bun:test";
-import type { Prettify } from "viem";
+import type { Client, Hex, Prettify, Transport } from "viem";
+import { zeroAddress, zeroHash } from "viem";
 import { queryActions } from "./actions.js";
 import {
   type LiveBlock,
@@ -14,6 +15,10 @@ import {
   type QueryLiveEvent,
   type QueryLiveFinalizeEvent,
   type QueryLiveReorgEvent,
+  type QueryLiveRpcSchema,
+  type RpcQueryLiveEvent,
+  type RpcQueryLiveNotification,
+  type RpcQueryLiveReorgEvent,
   streamQuery,
   watchQuery,
 } from "./live.js";
@@ -22,6 +27,7 @@ import type {
   BlocksFilter,
   LogResponse,
   LogsFilter,
+  RpcLogResponse,
   TransactionResponse,
 } from "./types.js";
 
@@ -220,4 +226,72 @@ test("queryActions exposes live actions with inference", () => {
     }
   }
   expectTypeOf(_types).toBeFunction();
+});
+
+test("QueryLiveRpcSchema types eth_subscribe and eth_unsubscribe", () => {
+  // Type-only: never called.
+  async function _types() {
+    const rpcClient = {} as Client<
+      Transport,
+      undefined,
+      undefined,
+      QueryLiveRpcSchema
+    >;
+
+    const id = await rpcClient.request({
+      method: "eth_subscribe",
+      params: [
+        "query",
+        {
+          tag: "latest",
+          cursorBlock: { number: "0x1", hash: zeroHash },
+          filter: { logs: [{ address: zeroAddress }] },
+          fields: { logs: ["address"] },
+        },
+      ],
+    });
+    expectTypeOf(id).toEqualTypeOf<Hex>();
+
+    const removed = await rpcClient.request({
+      method: "eth_unsubscribe",
+      params: [id],
+    });
+    expectTypeOf(removed).toEqualTypeOf<boolean>();
+
+    await rpcClient.request({
+      method: "eth_subscribe",
+      params: [
+        "query",
+        {
+          filter: {},
+          // @ts-expect-error cursorBlock is hex encoded on the wire
+          cursorBlock: { number: 1n, hash: zeroHash },
+        },
+      ],
+    });
+  }
+  expectTypeOf(_types).toBeFunction();
+});
+
+test("raw notifications narrow by tag and use RPC rows", () => {
+  type Params = {
+    tag: "latest";
+    filter: { logs: readonly [LogsFilter] };
+    fields: { logs: readonly ["address", "blockNumber"] };
+    includeFinalization: true;
+  };
+  type Result = RpcQueryLiveNotification<Params>["params"]["result"];
+
+  expectTypeOf<Result["type"]>().toEqualTypeOf<
+    "block" | "reorg" | "finalize"
+  >();
+  expectTypeOf<Extract<Result, { type: "block" }>["data"]>().toEqualTypeOf<{
+    logs: Prettify<Pick<RpcLogResponse, "address" | "blockNumber">>[];
+  }>();
+  expectTypeOf<
+    Extract<Result, { type: "reorg" }>
+  >().toEqualTypeOf<RpcQueryLiveReorgEvent>();
+  expectTypeOf<
+    RpcQueryLiveEvent<{ filter: { logs: readonly [LogsFilter] } }>["type"]
+  >().toEqualTypeOf<"block">();
 });

@@ -1,4 +1,4 @@
-import type { Account, Chain, Client, Prettify, Transport } from "viem";
+import type { Account, Chain, Client, Hex, Prettify, Transport } from "viem";
 import type {
   BlockResponse,
   BlocksFilter,
@@ -12,6 +12,11 @@ import type {
   QueryTransfersFields,
   ResolveSelect,
   ResolveTransactionSelect,
+  RpcBlockResponse,
+  RpcCallTraceResponse,
+  RpcLogResponse,
+  RpcTransactionResponse,
+  RpcTransferResponse,
   TableName,
   TracesFilter,
   TransactionsFilter,
@@ -99,6 +104,14 @@ type LiveRow<table extends TableName, select> = {
   logs: ResolveSelect<LogResponse, select>;
   traces: ResolveSelect<CallTraceResponse, select>;
   transfers: ResolveSelect<TransferResponse, select>;
+}[table];
+
+type RpcLiveRow<table extends TableName, select> = {
+  blocks: ResolveSelect<RpcBlockResponse, select>;
+  transactions: ResolveSelect<RpcTransactionResponse, select>;
+  logs: ResolveSelect<RpcLogResponse, select>;
+  traces: ResolveSelect<RpcCallTraceResponse, select>;
+  transfers: ResolveSelect<RpcTransferResponse, select>;
 }[table];
 
 type FilterOf<request, table extends TableName> = request extends {
@@ -335,3 +348,96 @@ export function streamQuery<
 > {
   throw new Error("streamQuery is not implemented");
 }
+
+/** `eth_subscribe("query", params)` parameters as sent over JSON-RPC. */
+export type RpcQueryLiveParams = Omit<QueryLiveRequest, "cursorBlock"> & {
+  /**
+   * Resume after this block. If the block is no longer canonical, the first
+   * event is a `reorg`. If omitted, the first event is the current head of
+   * `tag`.
+   */
+  cursorBlock?: LiveCursor<Hex>;
+};
+
+/** Matched rows and requested relations, keyed by table, as sent over JSON-RPC. */
+export type RpcQueryLiveData<
+  request extends RpcQueryLiveParams = RpcQueryLiveParams,
+> = Prettify<
+  {
+    [table in RequiredTables<request>]: RpcLiveRow<
+      table,
+      FieldsOf<request, table>
+    >[];
+  } & {
+    [table in OptionalTables<request>]?: RpcLiveRow<
+      table,
+      FieldsOf<request, table>
+    >[];
+  }
+>;
+
+/** Raw `block` event. See {@link QueryLiveBlockEvent}. */
+export type RpcQueryLiveBlockEvent<
+  request extends RpcQueryLiveParams = RpcQueryLiveParams,
+> = {
+  type: "block";
+  fromBlock: LiveBlock<Hex>;
+  toBlock: LiveBlock<Hex>;
+  data: RpcQueryLiveData<request>;
+};
+
+/**
+ * Raw `reorg` event. Unlike {@link QueryLiveReorgEvent}, it carries no
+ * `removed` rows; the client computes them from the rows it retained.
+ */
+export type RpcQueryLiveReorgEvent = {
+  type: "reorg";
+  block: LiveBlock<Hex>;
+};
+
+/** Raw `finalize` event. See {@link QueryLiveFinalizeEvent}. */
+export type RpcQueryLiveFinalizeEvent = {
+  type: "finalize";
+  block: LiveBlock<Hex>;
+};
+
+export type RpcQueryLiveEvent<
+  request extends RpcQueryLiveParams = RpcQueryLiveParams,
+> =
+  | RpcQueryLiveBlockEvent<request>
+  | (IsFinalizedTag<request> extends true ? never : RpcQueryLiveReorgEvent)
+  | (IncludesFinalization<request> extends true
+      ? RpcQueryLiveFinalizeEvent
+      : never);
+
+/**
+ * Notification pushed for a `query` subscription. Viem's `RpcSchema` only
+ * types request and response pairs, so notifications are typed separately.
+ */
+export type RpcQueryLiveNotification<
+  request extends RpcQueryLiveParams = RpcQueryLiveParams,
+> = {
+  jsonrpc: "2.0";
+  method: "eth_subscription";
+  params: {
+    subscription: Hex;
+    result: RpcQueryLiveEvent<request>;
+  };
+};
+
+/**
+ * Viem `RpcSchema` for live query subscriptions. `eth_subscribe` returns the
+ * subscription id that identifies {@link RpcQueryLiveNotification}s.
+ */
+export type QueryLiveRpcSchema = [
+  {
+    Method: "eth_subscribe";
+    Parameters: ["query", RpcQueryLiveParams];
+    ReturnType: Hex;
+  },
+  {
+    Method: "eth_unsubscribe";
+    Parameters: [subscriptionId: Hex];
+    ReturnType: boolean;
+  },
+];
