@@ -2021,6 +2021,16 @@ test("queryContractLogs supports overloaded and anonymous events", async () => {
     (selected.calls[0].params as [{ filter: { topics: unknown } }])[0].filter
       .topics,
   ).toEqual([anonymousTopic]);
+
+  const anonymousOnly = mockClient([response({ logs: [] })]);
+  await queryContractLogs(anonymousOnly.client, {
+    abi: [anonymousEvent],
+    fromBlock: 1n,
+    toBlock: 1n,
+  });
+  expect(
+    (anonymousOnly.calls[0].params as [{ filter?: unknown }])[0].filter,
+  ).toBeUndefined();
 });
 
 test("queryContractLogsWithPagination decodes every page without mutating the request", async () => {

@@ -66,41 +66,45 @@ export type LightBlock<quantity = bigint> = {
 };
 
 export type BlocksFilter = {
-  /** Block miner / coinbase address. Scalar or array (OR within field). */
+  /** Block miner / coinbase address. Scalar or non-empty array (OR within field). */
   miner?: Address | Address[];
 };
 
 export type TransactionsFilter = {
-  /** Sender address. Scalar or array (OR within field). */
+  /** Sender address. Scalar or non-empty array (OR within field). */
   from?: Address | Address[];
-  /** Recipient address. Scalar or array (OR within field). */
+  /** Recipient address. Scalar or non-empty array (OR within field). */
   to?: Address | Address[];
-  /** 4-byte function selector. Scalar or array (OR within field). */
+  /** 4-byte function selector. Scalar or non-empty array (OR within field). */
   selector?: Hex | Hex[];
 };
 
 export type LogsFilter = {
-  /** Contract address. Scalar or array (OR within field). */
+  /** Contract address. Scalar or non-empty array (OR within field). */
   address?: Address | Address[];
-  /** Positional topic filter (same semantics as eth_getLogs). */
+  /**
+   * Positional topic filter (same semantics as eth_getLogs). Must have 1 to 4
+   * positions. `null` at a position is a wildcard; an array at a position must
+   * be non-empty and must not contain `null`. Omit to match any topics.
+   */
   topics?: (Hex | Hex[] | null)[];
 };
 
 export type TracesFilter = {
-  /** Sender address. Scalar or array (OR within field). */
+  /** Sender address. Scalar or non-empty array (OR within field). */
   from?: Address | Address[];
-  /** Recipient address. Scalar or array (OR within field). */
+  /** Recipient address. Scalar or non-empty array (OR within field). */
   to?: Address | Address[];
-  /** 4-byte function selector. Scalar or array (OR within field). */
+  /** 4-byte function selector. Scalar or non-empty array (OR within field). */
   selector?: Hex | Hex[];
   /** If true, reverted traces are also returned. Defaults to `false`. */
   includeReverted?: boolean;
 };
 
 export type TransfersFilter = {
-  /** Sender address. Scalar or array (OR within field). */
+  /** Sender address. Scalar or non-empty array (OR within field). */
   from?: Address | Address[];
-  /** Recipient address. Scalar or array (OR within field). */
+  /** Recipient address. Scalar or non-empty array (OR within field). */
   to?: Address | Address[];
   /** If true, reverted transfers are also returned. Defaults to `false`. */
   includeReverted?: boolean;

@@ -252,7 +252,7 @@ function prepareContractLogsRequest<
         );
   const includesAnonymous = selectedEvents.some((event) => event.anonymous);
   const includesNamed = selectedEvents.some((event) => !event.anonymous);
-  const topics =
+  const mergedTopics =
     includesAnonymous && includesNamed
       ? undefined
       : mergeEventTopics(
@@ -260,6 +260,9 @@ function prepareContractLogsRequest<
             ? encodedTopics.map((filter) => filter.slice(1))
             : encodedTopics,
         );
+  // MIP-16 rejects an empty topics array. Anonymous events without args have
+  // no topic constraint, so omit topics.
+  const topics = mergedTopics?.length ? mergedTopics : undefined;
   const filter = {
     ...(address !== undefined && { address }),
     ...(topics !== undefined && { topics }),
